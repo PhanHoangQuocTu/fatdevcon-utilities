@@ -1,0 +1,49 @@
+{
+  "name": "@fatdevcon/utilities",
+  "version": "0.1.0",
+  "description": "A TypeScript utility library for calculations and formatting",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src --ext .ts",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test && npm run lint"
+  },
+  "keywords": [
+    "utilities",
+    "typescript",
+    "calculations",
+    "formatting"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.0.0",
+    "ts-jest": "^29.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PhanHoangQuocTu/-fatdevcon-utilities.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/tu-utilities/issues"
+  },
+  "homepage": "https://github.com/yourusername/tu-utilities#readme"
+}
