@@ -30,6 +30,11 @@ import {
   heapSort,
   countingSort,
   radixSort,
+  factorial,
+  gcd,
+  lcm,
+  isPrime,
+  fibonacci,
 } from "../index";
 
 describe("Calculation Utilities", () => {
@@ -177,6 +182,95 @@ describe("Math Utilities", () => {
       expect(round(1.2345e-10, 12)).toBe(1.23e-10);
     });
   });
+
+  describe("factorial", () => {
+    test("calculates factorial correctly for small numbers", () => {
+      expect(factorial(0)).toBe(1);
+      expect(factorial(1)).toBe(1);
+      expect(factorial(5)).toBe(120);
+      expect(factorial(10)).toBe(3628800);
+    });
+
+    test("handles larger factorials with approximation", () => {
+      expect(factorial(15)).toBe(1307674368000);
+      expect(factorial(20)).toBeCloseTo(2.43290200817664e18, -15); // Approximate due to Number precision limits
+    });
+
+    test("throws error for negative numbers", () => {
+      expect(() => factorial(-1)).toThrow(
+        "Factorial of negative number is not defined"
+      );
+    });
+  });
+
+  describe("gcd", () => {
+    test("calculates greatest common divisor correctly", () => {
+      expect(gcd(48, 18)).toBe(6);
+      expect(gcd(101, 103)).toBe(1);
+      expect(gcd(0, 5)).toBe(5);
+      expect(gcd(0, 0)).toBe(0);
+      expect(gcd(-48, 18)).toBe(6);
+      expect(gcd(1.5, 2.5)).toBeCloseTo(0.5);
+    });
+
+    test("handles large numbers", () => {
+      expect(gcd(9007199254740992, 9007199254740991)).toBe(1);
+    });
+  });
+
+  describe("lcm", () => {
+    test("calculates least common multiple correctly", () => {
+      expect(lcm(4, 6)).toBe(12);
+      expect(lcm(21, 6)).toBe(42);
+      expect(lcm(0, 5)).toBe(0);
+      expect(lcm(101, 103)).toBe(101 * 103);
+      expect(lcm(-4, 6)).toBe(12);
+    });
+
+    test("handles large numbers", () => {
+      expect(lcm(123456, 654321)).toBeCloseTo((123456 * 654321) / 3, -5); // Approximate if needed
+    });
+  });
+
+  describe("isPrime", () => {
+    test("checks if number is prime correctly", () => {
+      expect(isPrime(2)).toBe(true);
+      expect(isPrime(3)).toBe(true);
+      expect(isPrime(17)).toBe(true);
+      expect(isPrime(1)).toBe(false);
+      expect(isPrime(0)).toBe(false);
+      expect(isPrime(-5)).toBe(false);
+      expect(isPrime(4)).toBe(false);
+      expect(isPrime(9)).toBe(false);
+    });
+
+    test("handles larger primes", () => {
+      expect(isPrime(997)).toBe(true);
+      expect(isPrime(1000)).toBe(false);
+    });
+  });
+
+  describe("fibonacci", () => {
+    test("calculates fibonacci correctly for small numbers", () => {
+      expect(fibonacci(0)).toBe(0);
+      expect(fibonacci(1)).toBe(1);
+      expect(fibonacci(5)).toBe(5);
+      expect(fibonacci(10)).toBe(55);
+      expect(fibonacci(15)).toBe(610);
+    });
+
+    test("handles larger fibonacci with approximation", () => {
+      expect(fibonacci(20)).toBe(6765);
+      expect(fibonacci(30)).toBe(832040);
+      expect(fibonacci(40)).toBe(102334155);
+    });
+
+    test("throws error for negative numbers", () => {
+      expect(() => fibonacci(-1)).toThrow(
+        "Fibonacci of negative number is not defined"
+      );
+    });
+  });
 });
 
 describe("Array Utilities", () => {
@@ -305,14 +399,24 @@ describe("Search and Sort Utilities", () => {
   describe("findMin and findMax", () => {
     test("finds minimum value", () => {
       expect(findMin(testArray)).toBe(1);
-      expect(findMin(objectsArray, (a, b) => a.age - b.age)?.name).toBe(
-        "Charlie"
-      );
+      expect(
+        findMin(
+          objectsArray,
+          (a: (typeof objectsArray)[0], b: (typeof objectsArray)[0]) =>
+            a.age - b.age
+        )?.name
+      ).toBe("Charlie");
     });
 
     test("finds maximum value", () => {
       expect(findMax(testArray)).toBe(8);
-      expect(findMax(objectsArray, (a, b) => a.age - b.age)?.name).toBe("Bob");
+      expect(
+        findMax(
+          objectsArray,
+          (a: (typeof objectsArray)[0], b: (typeof objectsArray)[0]) =>
+            a.age - b.age
+        )?.name
+      ).toBe("Bob");
     });
 
     test("returns undefined for empty array", () => {
@@ -323,7 +427,10 @@ describe("Search and Sort Utilities", () => {
 
   describe("groupBy", () => {
     test("groups array by key", () => {
-      const grouped = groupBy(objectsArray, (item) => item.age);
+      const grouped = groupBy(
+        objectsArray,
+        (item: (typeof objectsArray)[0]) => item.age
+      );
       expect(grouped["30"]).toHaveLength(2);
       expect(grouped["20"]).toHaveLength(1);
       expect(grouped["25"]).toHaveLength(1);
@@ -341,7 +448,10 @@ describe("Search and Sort Utilities", () => {
         ...objectsArray,
         { id: 5, name: "Eve", age: 25 },
       ];
-      const uniqueByAge = unique(withDuplicateAges, (item) => item.age);
+      const uniqueByAge = unique(
+        withDuplicateAges,
+        (item: (typeof objectsArray)[0]) => item.age
+      );
       expect(uniqueByAge).toHaveLength(3);
     });
   });
@@ -358,13 +468,20 @@ describe("Search and Sort Utilities", () => {
 
   describe("sortBy", () => {
     test("sorts by key in ascending order", () => {
-      const sorted = sortBy(objectsArray, (item) => item.age);
+      const sorted = sortBy(
+        objectsArray,
+        (item: (typeof objectsArray)[0]) => item.age
+      );
       expect(sorted[0].name).toBe("Charlie");
       expect(sorted[3].name).toBe("David");
     });
 
     test("sorts by key in descending order", () => {
-      const sorted = sortBy(objectsArray, (item) => item.age, "desc");
+      const sorted = sortBy(
+        objectsArray,
+        (item: (typeof objectsArray)[0]) => item.age,
+        "desc"
+      );
       expect(sorted[0].name).toBe("Bob");
       expect(sorted[3].name).toBe("Charlie");
     });
@@ -427,7 +544,11 @@ describe("Additional Search and Sort Algorithms", () => {
     });
 
     test("sorts objects by key", () => {
-      const sorted = insertionSort([...objectsArray], (a, b) => a.age - b.age);
+      const sorted = insertionSort(
+        [...objectsArray],
+        (a: (typeof objectsArray)[0], b: (typeof objectsArray)[0]) =>
+          a.age - b.age
+      );
       expect(sorted[0].name).toBe("Charlie");
       expect(sorted[3].name).toBe("Bob");
     });

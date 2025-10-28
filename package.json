@@ -1,13 +1,14 @@
 {
   "name": "@fatdevcon/utilities",
-  "version": "0.1.01",
+  "version": "0.1.06",
   "description": "A TypeScript utility library for calculations and formatting",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "private": false,
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "scripts": {
     "build": "tsup",
