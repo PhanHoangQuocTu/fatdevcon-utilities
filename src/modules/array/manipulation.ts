@@ -1,7 +1,9 @@
 import { Comparator, KeySelector } from "@/types";
+import { assertArray, assertInteger } from "../../utils/validate";
 
 // O(n) - Get unique values in array
 const unique = <T>(arr: T[], keySelector?: KeySelector<T>): T[] => {
+  assertArray(arr, "arr");
   if (!keySelector) {
     return [...new Set(arr)];
   }
@@ -20,6 +22,7 @@ const filterBy = <T>(
   arr: T[],
   predicate: (item: T, index: number, array: T[]) => boolean
 ): T[] => {
+  assertArray(arr, "arr");
   return arr.filter(predicate);
 };
 
@@ -29,6 +32,7 @@ const sortBy = <T>(
   keySelector: KeySelector<T>,
   order: "asc" | "desc" = "asc"
 ): T[] => {
+  assertArray(arr, "arr");
   const compareFn: Comparator<T> = (a, b) => {
     const valA = keySelector(a);
     const valB = keySelector(b);
@@ -43,6 +47,11 @@ const sortBy = <T>(
 
 // O(n) - Chunk array into smaller arrays
 const chunk = <T>(arr: T[], size: number): T[][] => {
+  assertArray(arr, "arr");
+  assertInteger(size, "size");
+  if (size < 1) {
+    throw new RangeError("size must be a positive integer");
+  }
   return Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
     arr.slice(i * size, i * size + size)
   );
@@ -50,7 +59,8 @@ const chunk = <T>(arr: T[], size: number): T[][] => {
 
 // O(n) - Flatten array of arrays
 const flatten = <T>(arr: T[][]): T[] => {
-  return arr.reduce((flat, next) => flat.concat(next), []);
+  assertArray(arr, "arr");
+  return arr.flat() as T[];
 };
 
 // O(n) - Find indexes of matching elements
@@ -58,6 +68,7 @@ const findIndexes = <T>(
   arr: T[],
   predicate: (item: T, index: number, array: T[]) => boolean
 ): number[] => {
+  assertArray(arr, "arr");
   return arr.reduce((indexes, item, index) => {
     if (predicate(item, index, arr)) {
       indexes.push(index);
@@ -71,14 +82,16 @@ const groupBy = <T>(
   arr: T[],
   keySelector: KeySelector<T>
 ): Record<string, T[]> => {
+  assertArray(arr, "arr");
+  // Null-prototype object so keys like "__proto__" are treated as plain keys
   return arr.reduce((result, item) => {
     const key = String(keySelector(item));
-    if (!result[key]) {
+    if (!Object.prototype.hasOwnProperty.call(result, key)) {
       result[key] = [];
     }
     result[key].push(item);
     return result;
-  }, {} as Record<string, T[]>);
+  }, Object.create(null) as Record<string, T[]>);
 };
 
 export { unique, filterBy, sortBy, chunk, flatten, findIndexes, groupBy };

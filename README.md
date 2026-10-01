@@ -191,14 +191,14 @@ console.log(merged); // { a: 1, b: 2 }
 - `summary(a: number, b: number): number` - Add two numbers
 - `subtract(a: number, b: number): number` - Subtract b from a
 - `multiply(a: number, b: number): number` - Multiply two numbers
-- `divide(a: number, b: number): number` - Divide a by b (throws on division by zero)
+- `divide(a: number, b: number): number` - Divide a by b (throws `RangeError` on division by zero)
 - `percentage(value: number, total: number): number` - Calculate percentage
-- `round(value: number, decimals: number = 2): number` - Round number to specified decimals
-- `factorial(n: number): number` - Calculate factorial of a number
+- `round(value: number, decimals: number = 2): number` - Round number to specified decimals (`decimals` must be a non-negative integer)
+- `factorial(n: number): number` - Calculate factorial of a non-negative integer (n ≤ 170)
 - `gcd(a: number, b: number): number` - Calculate greatest common divisor of two numbers
 - `lcm(a: number, b: number): number` - Calculate least common multiple of two numbers
-- `isPrime(n: number): boolean` - Check if a number is prime
-- `fibonacci(n: number): number` - Calculate fibonacci number at position n
+- `isPrime(n: number): boolean` - Check if a number is prime (`false` for non-integers and `NaN`)
+- `fibonacci(n: number): number` - Calculate fibonacci number at position n (non-negative integer, n ≤ 1476)
 
 ### Formatting Functions
 
@@ -210,7 +210,7 @@ console.log(merged); // { a: 1, b: 2 }
 - `unique<T>(arr: T[], keySelector?: KeySelector<T>): T[]` - Get unique values in array (optionally by key)
 - `filterBy<T>(arr: T[], predicate: (item: T, index: number, array: T[]) => boolean): T[]` - Filter array by predicate
 - `sortBy<T>(arr: T[], keySelector: KeySelector<T>, order?: "asc" | "desc"): T[]` - Sort array by key
-- `chunk<T>(arr: T[], size: number): T[][]` - Chunk array into smaller arrays
+- `chunk<T>(arr: T[], size: number): T[][]` - Chunk array into smaller arrays (`size` must be a positive integer)
 - `flatten<T>(arr: T[][]): T[]` - Flatten array of arrays
 - `findIndexes<T>(arr: T[], predicate: (item: T, index: number, array: T[]) => boolean): number[]` - Find indexes of matching elements
 - `groupBy<T>(arr: T[], keySelector: KeySelector<T>): Record<string, T[]>` - Group array by key
@@ -223,7 +223,7 @@ console.log(merged); // { a: 1, b: 2 }
 - `selectionSort<T>(arr: T[], compareFn?: Comparator<T>): T[]` - Selection sort
 - `bubbleSort<T>(arr: T[], compareFn?: Comparator<T>): T[]` - Bubble sort
 - `heapSort<T>(arr: T[], compareFn?: Comparator<T>): T[]` - Heap sort
-- `countingSort(arr: number[]): number[]` - Counting sort for non-negative integers
+- `countingSort(arr: number[]): number[]` - Counting sort for non-negative integers (max value ≤ 10,000,000)
 - `radixSort(arr: number[]): number[]` - Radix sort for non-negative integers
 
 ### Search Algorithms
@@ -240,10 +240,25 @@ console.log(merged); // { a: 1, b: 2 }
 
 ### Object Utilities
 
-- `deepClone<T>(obj: T): T` - Create a deep clone of an object
-- `mergeObjects<T, U>(target: T, source: U): T & U` - Deep merge two objects
-- `pick<T, K extends keyof T>(obj: T, keys: K[]): Pick<T, K>` - Pick specific properties from an object
-- `omit<T, K extends keyof T>(obj: T, keys: K[]): Omit<T, K>` - Omit specific properties from an object
+- `deepClone<T>(obj: T): T` - Create a deep clone using `structuredClone` (supports `Date`, `Map`, `Set`, circular references)
+- `mergeObjects<T, U>(target: T, source: U): T & U` - Shallow merge two objects
+
+### Error Handling
+
+Functions validate their input and throw standard errors:
+
+- `TypeError` - argument is not a finite number / integer / array (e.g. `NaN`, `Infinity`, `null`)
+- `RangeError` - value is out of the supported range (division by zero, negative factorial, `chunk` size < 1, `countingSort` with negative numbers, ...)
+
+```typescript
+try {
+  factorial(Infinity);
+} catch (error) {
+  if (error instanceof TypeError) {
+    // invalid input type
+  }
+}
+```
 
 ### Types
 
@@ -306,6 +321,20 @@ This project and everyone participating in it is governed by our [Code of Conduc
 ## Versioning
 
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/fatdevcon/utilities/tags).
+
+## Changelog
+
+### 0.2.0
+
+- Added input validation (`TypeError` / `RangeError`) across math, array, search and sort functions
+- Fixed infinite loops in `factorial` / `fibonacci` with `Infinity`; added upper bounds (n ≤ 170 / n ≤ 1476)
+- Fixed `isPrime` for `NaN` and non-integers
+- Fixed `countingSort` / `radixSort` with negative or non-integer numbers, and stack overflow on large arrays
+- Fixed `groupBy` with `__proto__` keys; `chunk` with invalid sizes
+- `quickSort` no longer degrades to O(n²) on sorted or duplicate-heavy input
+- `deepClone` now uses `structuredClone`
+- `formatDate` throws a clear `RangeError` for invalid dates
+- Removed unused `install` and `npm` dependencies
 
 ## License
 

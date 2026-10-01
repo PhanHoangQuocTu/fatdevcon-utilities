@@ -1,6 +1,8 @@
 /* Object utilities */
 const deepClone = <T>(obj: T): T => {
-  return JSON.parse(JSON.stringify(obj));
+  // structuredClone preserves Date, Map, Set, undefined, NaN, BigInt and
+  // circular references; it throws DataCloneError for functions/symbols.
+  return structuredClone(obj);
 };
 
 const mergeObjects = <T extends object, U extends object>(

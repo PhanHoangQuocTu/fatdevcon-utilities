@@ -19,6 +19,10 @@ const formatDate = (
       ? new Date(date)
       : date;
 
+  if (Number.isNaN(dateObj.getTime())) {
+    throw new RangeError(`Invalid date: ${String(date)}`);
+  }
+
   return format(dateObj, formatStr, options);
 };
 

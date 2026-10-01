@@ -1,6 +1,7 @@
 /* Search utilities */
 
 import { Comparator } from "@/types";
+import { assertArray } from "../../utils/validate";
 
 // O(log n) - Binary search on sorted array
 const binarySearch = <T>(
@@ -8,6 +9,7 @@ const binarySearch = <T>(
   target: T,
   compareFn: Comparator<T> = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
 ): number => {
+  assertArray(arr, "arr");
   let left = 0;
   let right = arr.length - 1;
 
@@ -34,6 +36,7 @@ const linearSearch = <T>(
   target: T,
   compareFn: Comparator<T> = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
 ): number => {
+  assertArray(arr, "arr");
   for (let i = 0; i < arr.length; i++) {
     if (compareFn(arr[i], target) === 0) {
       return i;

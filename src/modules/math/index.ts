@@ -1,27 +1,41 @@
 import Decimal from "decimal.js";
+import { assertFiniteNumber, assertInteger } from "../../utils/validate";
+
+const MAX_FACTORIAL_INPUT = 170; // 171! overflows IEEE 754 doubles
+const MAX_FIBONACCI_INPUT = 1476; // F(1477) overflows IEEE 754 doubles
+
+const assertPair = (a: number, b: number): void => {
+  assertFiniteNumber(a, "a");
+  assertFiniteNumber(b, "b");
+};
+
 
 /* Calculation utilities */
 const summary = (a: number, b: number): number => {
+  assertPair(a, b);
   const aValue = new Decimal(a);
   const bValue = new Decimal(b);
   return aValue.add(bValue).toNumber();
 };
 
 const subtract = (a: number, b: number): number => {
+  assertPair(a, b);
   const aValue = new Decimal(a);
   const bValue = new Decimal(b);
   return aValue.sub(bValue).toNumber();
 };
 
 const multiply = (a: number, b: number): number => {
+  assertPair(a, b);
   const aValue = new Decimal(a);
   const bValue = new Decimal(b);
   return aValue.mul(bValue).toNumber();
 };
 
 const divide = (a: number, b: number): number => {
+  assertPair(a, b);
   if (b === 0) {
-    throw new Error("Division by zero");
+    throw new RangeError("Division by zero");
   }
 
   const aValue = new Decimal(a);
@@ -31,12 +45,18 @@ const divide = (a: number, b: number): number => {
 
 /* Math utilities */
 const percentage = (value: number, total: number): number => {
+  assertPair(value, total);
   if (total === 0) return 0;
 
   return multiply(divide(value, total), 100);
 };
 
 const round = (value: number, decimals = 2): number => {
+  assertFiniteNumber(value, "value");
+  assertInteger(decimals, "decimals");
+  if (decimals < 0) {
+    throw new RangeError("decimals must be a non-negative integer");
+  }
   const numberValue = new Decimal(value);
   return numberValue.toDecimalPlaces(decimals).toNumber();
 };
@@ -53,8 +73,14 @@ const gcdDecimal = (a: Decimal, b: Decimal): Decimal => {
 };
 
 const factorial = (n: number): number => {
+  assertInteger(n, "n");
   if (n < 0) {
-    throw new Error("Factorial of negative number is not defined");
+    throw new RangeError("Factorial of negative number is not defined");
+  }
+  if (n > MAX_FACTORIAL_INPUT) {
+    throw new RangeError(
+      `Factorial of ${n} exceeds the maximum representable number`
+    );
   }
   if (n === 0 || n === 1) {
     return 1;
@@ -67,10 +93,12 @@ const factorial = (n: number): number => {
 };
 
 const gcd = (a: number, b: number): number => {
+  assertPair(a, b);
   return gcdDecimal(new Decimal(a), new Decimal(b)).toNumber();
 };
 
 const lcm = (a: number, b: number): number => {
+  assertPair(a, b);
   if (a === 0 || b === 0) {
     return 0;
   }
@@ -80,8 +108,7 @@ const lcm = (a: number, b: number): number => {
 };
 
 const isPrime = (n: number): boolean => {
-  n = Math.floor(n);
-  if (n <= 1) return false;
+  if (!Number.isInteger(n) || n <= 1) return false;
   if (n <= 3) return true;
   if (n % 2 === 0 || n % 3 === 0) return false;
   for (let i = 5; i * i <= n; i += 6) {
@@ -91,8 +118,14 @@ const isPrime = (n: number): boolean => {
 };
 
 const fibonacci = (n: number): number => {
+  assertInteger(n, "n");
   if (n < 0) {
-    throw new Error("Fibonacci of negative number is not defined");
+    throw new RangeError("Fibonacci of negative number is not defined");
+  }
+  if (n > MAX_FIBONACCI_INPUT) {
+    throw new RangeError(
+      `Fibonacci of ${n} exceeds the maximum representable number`
+    );
   }
   if (n === 0) return 0;
   if (n === 1) return 1;

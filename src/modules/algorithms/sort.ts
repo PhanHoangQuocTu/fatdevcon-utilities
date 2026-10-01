@@ -1,26 +1,51 @@
 import { Comparator } from "@/types";
-import { countingSortByDigit, heapify, merge } from "../helper";
+import { assertArray } from "../../utils/validate";
+import { countingSortByDigit, heapify, merge } from "./helpers";
+
+// Upper bound for counting sort's auxiliary array to avoid huge allocations
+const MAX_COUNTING_SORT_VALUE = 10_000_000;
+
+const assertNonNegativeIntegers = (arr: number[]): number => {
+  assertArray(arr, "arr");
+  let max = 0;
+  for (const num of arr) {
+    if (!Number.isSafeInteger(num) || num < 0) {
+      throw new RangeError(
+        `Only non-negative integers are supported, received ${String(num)}`
+      );
+    }
+    if (num > max) max = num;
+  }
+  return max;
+};
 
 // O(n log n) average, O(n²) worst case - Quick sort
 const quickSort = <T>(
   arr: T[],
   compareFn: Comparator<T> = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
 ): T[] => {
+  assertArray(arr, "arr");
   if (arr.length <= 1) return [...arr];
 
-  const pivot = arr[0];
+  // Middle pivot + three-way partition: avoids O(n²) on sorted input and
+  // on arrays with many duplicates
+  const pivot = arr[Math.floor(arr.length / 2)];
   const left: T[] = [];
+  const equal: T[] = [];
   const right: T[] = [];
 
-  for (let i = 1; i < arr.length; i++) {
-    if (compareFn(arr[i], pivot) <= 0) {
-      left.push(arr[i]);
-    } else {
-      right.push(arr[i]);
-    }
+  for (const item of arr) {
+    const cmp = compareFn(item, pivot);
+    if (cmp < 0) left.push(item);
+    else if (cmp > 0) right.push(item);
+    else equal.push(item);
   }
 
-  return [...quickSort(left, compareFn), pivot, ...quickSort(right, compareFn)];
+  return [
+    ...quickSort(left, compareFn),
+    ...equal,
+    ...quickSort(right, compareFn),
+  ];
 };
 
 // O(n log n) - Merge sort
@@ -28,6 +53,7 @@ const mergeSort = <T>(
   arr: T[],
   compareFn: Comparator<T> = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
 ): T[] => {
+  assertArray(arr, "arr");
   if (arr.length <= 1) return [...arr];
 
   const mid = Math.floor(arr.length / 2);
@@ -43,6 +69,7 @@ export const insertionSort = <T>(
   arr: T[],
   compareFn: Comparator<T> = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
 ): T[] => {
+  assertArray(arr, "arr");
   const result = [...arr];
   for (let i = 1; i < result.length; i++) {
     const current = result[i];
@@ -62,6 +89,7 @@ export const selectionSort = <T>(
   arr: T[],
   compareFn: Comparator<T> = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
 ): T[] => {
+  assertArray(arr, "arr");
   const result = [...arr];
   for (let i = 0; i < result.length - 1; i++) {
     let minIndex = i;
@@ -83,6 +111,7 @@ export const bubbleSort = <T>(
   arr: T[],
   compareFn: Comparator<T> = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
 ): T[] => {
+  assertArray(arr, "arr");
   const result = [...arr];
   let swapped: boolean;
 
@@ -105,8 +134,9 @@ export const heapSort = <T>(
   arr: T[],
   compareFn: Comparator<T> = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
 ): T[] => {
+  assertArray(arr, "arr");
   const result = [...arr];
-  let n = result.length;
+  const n = result.length;
 
   // Build max heap
   for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
@@ -125,9 +155,14 @@ export const heapSort = <T>(
 // O(n + k) - Counting sort for non-negative integers
 // where k is the range of input
 export const countingSort = (arr: number[]): number[] => {
+  const max = assertNonNegativeIntegers(arr);
   if (arr.length <= 1) return [...arr];
+  if (max > MAX_COUNTING_SORT_VALUE) {
+    throw new RangeError(
+      `Max value ${max} exceeds counting sort limit of ${MAX_COUNTING_SORT_VALUE}; use radixSort or mergeSort`
+    );
+  }
 
-  const max = Math.max(...arr);
   const count = new Array(max + 1).fill(0);
   const result = new Array(arr.length);
 
@@ -153,9 +188,9 @@ export const countingSort = (arr: number[]): number[] => {
 // O(nk) - Radix sort for non-negative integers
 // where k is the number of digits in the maximum number
 export const radixSort = (arr: number[]): number[] => {
+  const max = assertNonNegativeIntegers(arr);
   if (arr.length <= 1) return [...arr];
 
-  const max = Math.max(...arr);
   let result = [...arr];
 
   // Do counting sort for every digit

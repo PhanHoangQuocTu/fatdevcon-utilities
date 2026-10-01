@@ -1,12 +1,15 @@
 import { Comparator } from "@/types";
 import { divide, summary } from "../math";
+import { assertArray } from "../../utils/validate";
 
 /* Array utilities */
 const sumValueInArray = (arr: number[]): number => {
+  assertArray(arr, "arr");
   return arr.reduce((a, b) => summary(a, b), 0);
 };
 
 const averageValueInArray = (arr: number[]): number => {
+  assertArray(arr, "arr");
   if (arr.length === 0) return 0;
   return divide(sumValueInArray(arr), arr.length);
 };
@@ -16,6 +19,7 @@ const findMin = <T>(
   arr: T[],
   compareFn: Comparator<T> = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
 ): T | undefined => {
+  assertArray(arr, "arr");
   if (arr.length === 0) return undefined;
 
   return arr.reduce((min, current) =>
@@ -28,6 +32,7 @@ const findMax = <T>(
   arr: T[],
   compareFn: Comparator<T> = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
 ): T | undefined => {
+  assertArray(arr, "arr");
   if (arr.length === 0) return undefined;
 
   return arr.reduce((max, current) =>
