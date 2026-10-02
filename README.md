@@ -1,4 +1,4 @@
-# @fatdevcon/utilities v0.2.1
+# @fatdevcon/utilities v0.2.2
 
 [![npm version](https://img.shields.io/npm/v/@fatdevcon/utilities.svg)](https://www.npmjs.com/package/@fatdevcon/utilities)
 
@@ -180,7 +180,26 @@ Exported formatting option types: `CompactNumberOptions`, `PercentFormatOptions`
 
 Legacy algorithm helpers `merge(left, right, compareFn)`, `heapify(arr, n, i, compareFn)` and `countingSortByDigit(arr, exp)` remain exported for compatibility. Prefer the documented sorting functions for application code.
 
+## Installation notes
+
+The published package includes compiled ESM/CommonJS and declarations. Installing it from npm does not require a compiler or run a build. Source builds use Node.js 24+ and npm 11.19+; the published runtime API continues to support Node.js 18+ and Bun.
+
+Version 0.2.2 refreshes the dependency lockfile, including development tools. TypeScript 7.0.2 runs typechecking; TypeScript's official 6.x compatibility package supplies the compiler API required by ts-jest, tsup and typescript-eslint. This follows [Microsoft's side-by-side setup](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/). The build runs at pack/release time, rather than on every install.
+
+The source project records explicit npm install-script decisions for native build tools. Glob 13 overrides in sucrase and test-exclude remove their deprecated Glob 10 dependency; build and coverage checks validate this combination. Dependency advisories can change after a release, so a clean audit reflects the release verification date.
+
+An npm warning about an unknown `python` setting comes from a local/user npm configuration, not this package. Remove that obsolete setting from your user .npmrc if it exists; installing this package does not modify users' npm configuration.
+
 ## Changelog
+
+### 0.2.2
+
+- Updated runtime dependencies and all direct development tools to current stable releases, with TypeScript 7 and the official 6.x compiler-API compatibility alias.
+- Refreshed transitive dependencies to address the full project's npm audit findings.
+- Added explicit install-script policy and replaced deprecated transitive Glob 10.
+- Moved the installation-time build to prepack; removed the deprecated TypeScript baseUrl option and separated declaration bundling from tsup's deprecated configuration.
+- Updated package verification to exercise normal consumer installation and TypeScript 7.
+- Corrected repository links to the current GitHub location.
 
 ### 0.2.1
 

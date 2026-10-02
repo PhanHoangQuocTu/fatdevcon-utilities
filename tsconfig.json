@@ -16,7 +16,6 @@
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./src/*"
@@ -26,7 +25,10 @@
     "isolatedModules": true,
     "noEmit": false,
     "allowSyntheticDefaultImports": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "types": [
+      "node"
+    ]
   },
   "include": [
     "src"

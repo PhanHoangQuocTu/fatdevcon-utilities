@@ -11,6 +11,7 @@ assert.ok(npm, "Run through npm run test:tarball");
 function run(binary, args, cwd = root) {
   const result = spawnSync(binary, args, { cwd, encoding: "utf8", env: process.env });
   if (result.status !== 0) throw new Error([binary, ...args].join(" ") + "\n" + result.stdout + result.stderr + (result.error ?? ""));
+  if (/npm warn|npm error/i.test(result.stderr)) throw new Error(result.stderr);
   return result.stdout;
 }
 const release = join(root, ".release");
@@ -20,9 +21,9 @@ const names = pack.files.map(file => file.path);
 for (const name of ["dist/index.js", "dist/index.mjs", "dist/index.d.ts", "dist/index.d.mts", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"]) assert.ok(names.includes(name), name);
 assert.ok(names.every(name => name.startsWith("dist/") || ["package.json", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"].includes(name)), "Unexpected packaged file");
 const artifact = resolve(release, pack.filename);
-const consumer = mkdtempSync(join(tmpdir(), "fatdevcon-021-"));
+const consumer = mkdtempSync(join(tmpdir(), "fatdevcon-022-"));
 writeFileSync(join(consumer, "package.json"), JSON.stringify({ name: "release-consumer", version: "1.0.0", private: true }));
-run(process.execPath, [npm, "install", "--ignore-scripts", "--no-audit", "--no-fund", "--fetch-retries=0", artifact], consumer);
+run(process.execPath, [npm, "install", "--no-fund", "--fetch-retries=0", artifact], consumer);
 let probe = readFileSync(join(root, "scripts/verify-package.mjs"), "utf8");
 probe = probe.replace('new URL("../package.json", import.meta.url)', 'new URL("./node_modules/@fatdevcon/utilities/package.json", import.meta.url)');
 writeFileSync(join(consumer, "probe.mjs"), probe);
@@ -41,7 +42,7 @@ const badOptions: BytesFormatOptions = { base: 2 };
 void [countries, compare, options, badOptions];
 `;
 for (const ext of ["mts", "cts"]) writeFileSync(join(consumer, "consumer." + ext), fixture);
-console.log(run(process.execPath, [join(root, "node_modules/typescript/bin/tsc"),
+console.log(run(process.execPath, [join(root, "node_modules/typescript-native/bin/tsc"),
   "--noEmit", "--strict", "--module", "NodeNext", "--moduleResolution", "NodeNext",
   "--target", "ES2020", "--skipLibCheck", "false", "consumer.mts", "consumer.cts"], consumer));
 writeFileSync(join(release, "verification.json"), JSON.stringify({

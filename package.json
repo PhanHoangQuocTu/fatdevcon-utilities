@@ -1,6 +1,6 @@
 {
   "name": "@fatdevcon/utilities",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "TypeScript utilities for math, Unicode text, locale-aware numbers, currencies, arrays and objects",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -13,21 +13,22 @@
     "THIRD_PARTY_NOTICES.md"
   ],
   "scripts": {
-    "build": "tsup",
-    "build:types": "tsc --emitDeclarationOnly --outDir dist",
-    "dev": "tsup --watch",
+    "build": "tsup && npm run build:types",
+    "build:types": "rollup --config rollup.config.mjs",
+    "dev": "tsup --watch --onSuccess \"npm run build:types\"",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
-    "prepare": "npm run build",
     "prepublishOnly": "npm run check && npm run test:package",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm run lint && npm test -- --runInBand && npm run build",
     "test:package": "node scripts/verify-package.mjs",
     "test:bun": "bun test",
-    "test:tarball": "node scripts/verify-tarball.mjs"
+    "test:tarball": "node scripts/verify-tarball.mjs",
+    "prepack": "npm run build",
+    "audit": "npm audit --audit-level=low"
   },
   "keywords": [
     "utilities",
@@ -55,32 +56,35 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "date-fns": "^4.1.0",
+    "date-fns": "^4.4.0",
     "decimal.js": "^10.6.0"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
-    "@types/node": "^24.3.0",
-    "@typescript-eslint/eslint-plugin": "^8.41.0",
-    "@typescript-eslint/parser": "^8.41.0",
-    "eslint": "^9.34.0",
+    "@types/node": "^26.6.4",
+    "@typescript-eslint/eslint-plugin": "^8.71.0",
+    "@typescript-eslint/parser": "^8.71.0",
+    "eslint": "^10.11.0",
     "eslint-config-prettier": "^10.1.8",
-    "jest": "^30.1.1",
-    "ts-jest": "^29.4.1",
-    "tsup": "^8.5.0",
-    "typescript": "^5.9.2"
+    "jest": "^30.5.2",
+    "ts-jest": "^29.4.14",
+    "tsup": "^8.5.1",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "typescript-native": "npm:typescript@^7.0.2",
+    "rollup": "^4.64.0",
+    "rollup-plugin-dts": "^6.5.1"
   },
   "engines": {
     "node": ">=18.0.0"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PhanHoangQuocTu/-fatdevcon-utilities.git"
+    "url": "git+https://github.com/PhanHoangQuocTu/fatdevcon-utilities.git"
   },
   "bugs": {
-    "url": "https://github.com/PhanHoangQuocTu/-fatdevcon-utilities/issues"
+    "url": "https://github.com/PhanHoangQuocTu/fatdevcon-utilities/issues"
   },
-  "homepage": "https://github.com/PhanHoangQuocTu/-fatdevcon-utilities#readme",
+  "homepage": "https://github.com/PhanHoangQuocTu/fatdevcon-utilities#readme",
   "publishConfig": {
     "access": "public"
   },
@@ -98,5 +102,18 @@
     },
     "./package.json": "./package.json",
     "./dist/*": "./dist/*"
+  },
+  "allowScripts": {
+    "esbuild@0.27.2": true,
+    "unrs-resolver@1.12.2": true,
+    "@parcel/watcher": false
+  },
+  "overrides": {
+    "sucrase": {
+      "glob": "^13.0.6"
+    },
+    "test-exclude": {
+      "glob": "^13.0.6"
+    }
   }
 }
