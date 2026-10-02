@@ -1,14 +1,16 @@
 {
   "name": "@fatdevcon/utilities",
-  "version": "0.2.0",
-  "description": "A TypeScript utility library for calculations and formatting",
+  "version": "0.2.1",
+  "description": "TypeScript utilities for math, Unicode text, locale-aware numbers, currencies, arrays and objects",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "private": false,
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
   ],
   "scripts": {
     "build": "tsup",
@@ -17,16 +19,38 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
     "prepare": "npm run build",
-    "prepublishOnly": "npm test"
+    "prepublishOnly": "npm run check && npm run test:package",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run lint && npm test -- --runInBand && npm run build",
+    "test:package": "node scripts/verify-package.mjs",
+    "test:bun": "bun test",
+    "test:tarball": "node scripts/verify-tarball.mjs"
   },
   "keywords": [
     "utilities",
     "typescript",
     "calculations",
-    "formatting"
+    "formatting",
+    "currency",
+    "math",
+    "array",
+    "object",
+    "locale",
+    "date",
+    "number",
+    "text",
+    "bun",
+    "npm",
+    "yarn",
+    "pnpm",
+    "unicode",
+    "commonjs",
+    "esm",
+    "cjs",
+    "mjs"
   ],
   "author": "",
   "license": "MIT",
@@ -51,7 +75,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/PhanHoangQuocTu/-fatdevcon-utilities.git"
+    "url": "git+https://github.com/PhanHoangQuocTu/-fatdevcon-utilities.git"
   },
   "bugs": {
     "url": "https://github.com/PhanHoangQuocTu/-fatdevcon-utilities/issues"
@@ -59,5 +83,20 @@
   "homepage": "https://github.com/PhanHoangQuocTu/-fatdevcon-utilities#readme",
   "publishConfig": {
     "access": "public"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "./package.json": "./package.json",
+    "./dist/*": "./dist/*"
   }
 }

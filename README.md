@@ -1,209 +1,119 @@
-# @fatdevcon/utilities
+# @fatdevcon/utilities v0.2.1
 
-[![npm version](https://img.shields.io/npm/v/@fatdevcon/utilities.svg?style=flat-square)](https://www.npmjs.com/package/@fatdevcon/utilities)
+[![npm version](https://img.shields.io/npm/v/@fatdevcon/utilities.svg)](https://www.npmjs.com/package/@fatdevcon/utilities)
 
-A comprehensive TypeScript utility library for common calculations, formatting operations, and data manipulation.
-
-## Table of Contents
-
-- [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-  - [Basic Calculations](#basic-calculations)
-  - [Formatting](#formatting)
-  - [Array and Object Utilities](#array-and-object-utilities)
-- [API Reference](#api-reference)
-- [Development](#development)
-- [Testing](#testing)
-- [Contributing](#contributing)
-- [Code of Conduct](#code-of-conduct)
-- [Versioning](#versioning)
-- [License](#license)
-- [Acknowledgments](#acknowledgments)
-
-## Features
-
-- 🧮 **Math Operations**: Basic arithmetic, percentage calculations, and rounding
-- 💰 **Currency Handling**: Formatting and conversion utilities
-- 📅 **Date & Time**: Comprehensive date manipulation and formatting
-- 🔢 **Array Utilities**: Common array operations and transformations
-- 📦 **Object Utilities**: Deep cloning, merging, and manipulation
-- � **Type Safety**: Full TypeScript support with strict typing
-- 🚀 **Lightweight**: Zero dependencies, minimal bundle size
-- ✅ **Well-tested**: Comprehensive test coverage
+Typed utilities for locale-aware formatting, Unicode text, currency metadata, math, arrays, objects, sorting and searching. ESM and CommonJS builds include TypeScript declarations. Runtime dependencies: `date-fns` and `decimal.js`.
 
 ## Installation
 
-```bash
-# Using npm
+Requires Node.js 18+ or Bun 1.1.34+. Formatting uses the runtime's Intl/ICU data, including Intl.Segmenter and Intl.DisplayNames. Locale-specific spacing, names and abbreviations can differ between runtimes.
+
+```sh
 npm install @fatdevcon/utilities
-
-# Using yarn
 yarn add @fatdevcon/utilities
-
-# Using pnpm
 pnpm add @fatdevcon/utilities
+bun add @fatdevcon/utilities
 ```
 
 ## Usage
 
-### Basic Calculations
+```ts
+import { formatCompactNumber, formatCurrency, truncateText, shortenString, getCountryCurrencies, slugify } from '@fatdevcon/utilities';
 
-```typescript
-import {
-  summary,
-  subtract,
-  multiply,
-  divide,
-  percentage,
-  factorial,
-  gcd,
-  lcm,
-  isPrime,
-  fibonacci,
-} from "@fatdevcon/utilities";
-
-// Basic arithmetic
-console.log(summary(1, 2)); // 3
-console.log(subtract(5, 2)); // 3
-console.log(multiply(3, 4)); // 12
-console.log(divide(10, 2)); // 5
-
-// Advanced calculations
-console.log(percentage(25, 100)); // 25
-
-// Math utilities
-console.log(factorial(5)); // 120
-console.log(gcd(12, 18)); // 6
-console.log(lcm(12, 18)); // 36
-console.log(isPrime(17)); // true
-console.log(fibonacci(10)); // 55
+formatCompactNumber(12500); // '12.5K'
+formatCurrency(1234.5, 'USD'); // '$1,234.50'
+getCountryCurrencies('VN'); // ['VND']
+truncateText('Hello world', 8); // 'Hello...'
+shortenString('abcdefghijklxyzc'); // 'abcd...xyzc'
+slugify('??ng Th? T?'); // 'dang-thi-tu'
 ```
 
-### Formatting
+CommonJS: `const { formatCurrency } = require('@fatdevcon/utilities');`
 
-```typescript
-import { formatNumber, formatDate } from "@fatdevcon/utilities";
+Bun uses the same imports. Save the example in `example.ts` and run `bun run example.ts` after installation. See the [Bun package manager documentation](https://bun.com/docs/pm/cli/install).
 
-// Format numbers
-console.log(formatNumber(1234567.89, "vi-VN")); // "1.234.567,89"
+## Number formatting
 
-// Format dates (using date-fns format strings)
-console.log(formatDate(new Date(), "dd MMMM yyyy HH:mm")); // Formatted date string
+New number formatters require finite numbers; NaN, infinities and non-number inputs throw TypeError. Locale arguments accept Intl.LocalesArgument; defaults below are en-US unless stated otherwise. Intl validates locale, currency syntax, unit and digit options.
+
+| Function | Behavior |
+| --- | --- |
+|`formatNumber(value, locale?, options?)`|Existing Intl.NumberFormat wrapper; preserves the runtime locale default and native NaN/Infinity behavior.|
+|`formatCompactNumber(value, locale?, options?)`|Compact notation, maximum 1 fractional digit by default. Supports compactDisplay: 'long'.|
+|`formatPercent(value, locale?, options?)`|Ratio input: 0.125 becomes 12.5%; maximum 2 fractional digits by default.|
+|`formatCurrency(value, currency, locale?, options?)`|ISO 4217 code (case-insensitive); standard currency minor units; supports accounting, display and precision options.|
+|`formatUnit(value, unit, locale?, options?)`|Intl unit such as 'kilometer-per-hour', 'celsius' or 'liter'.|
+|`formatBytes(value, options?)`|Non-negative bytes; SI base 1000 by default, IEC base 1024 optional; units through EB/EiB.|
+
+Number options extend Intl.NumberFormatOptions, excluding the fixed notation/style/currency/unit as appropriate. These fixed fields cannot be overridden. Bytes options: `{ base?: 1000 | 1024, decimals?: number, locale?: Intl.LocalesArgument }`. decimals defaults to 2, must be an integer from 0 to 20, and does not pad trailing zeroes. Values rounding up to the next unit are promoted. Values above EB/EiB remain in the largest unit. Fractional bytes are accepted.
+
+```ts
+import { formatPercent, formatUnit, formatBytes, formatCurrency } from '@fatdevcon/utilities';
+formatPercent(0.125); // '12.5%'
+formatUnit(12, 'kilometer-per-hour'); // '12 km/h'
+formatBytes(1500); // '1.5 kB'
+formatBytes(1536, { base: 1024 }); // '1.5 KiB'
+formatCurrency(-12, 'USD', 'en-US', { currencySign: 'accounting' }); // '($12.00)'
 ```
 
-### Array Manipulation
+## Currency metadata
 
-```typescript
-import {
-  unique,
-  filterBy,
-  sortBy,
-  chunk,
-  flatten,
-  findIndexes,
-  groupBy,
-} from "@fatdevcon/utilities";
+| Function | Behavior |
+| --- | --- |
+|`getCountryCurrencies(countryCode)`|Returns a fresh string[] of active legal-tender currency codes for a two-letter CLDR region code, case-insensitive.|
+|`getCurrencySymbol(currency, locale?, display?)`|Localized currency symbol; display is 'symbol' (default) or 'narrowSymbol'.|
+|`getCurrencyName(currency, locale?)`|Localized currency name, e.g. 'US Dollar'.|
 
-const arr = [1, 2, 2, 3, 4, 4, 5];
-console.log(unique(arr)); // [1, 2, 3, 4, 5]
+Country data is a bundled snapshot derived from [Unicode CLDR 48.2.0](https://github.com/unicode-org/cldr-json/tree/48.2.0), filtered for 2026-10-03: 255 regions. Historical and non-tender currencies are excluded. Some countries have multiple currencies: `getCountryCurrencies('PA')` includes PAB and USD. Array order does not imply a preferred currency. Unknown regions or regions without recorded tender return []; malformed codes throw RangeError and non-string codes throw TypeError. Region codes include CLDR territories, not only sovereign countries.
 
-const objects = [
-  { id: 1, name: "A" },
-  { id: 2, name: "B" },
-  { id: 1, name: "A" },
-];
-console.log(unique(objects, (o) => o.id)); // [{id: 1, ...}, {id: 2, ...}]
+Currency functions validate three-letter code syntax; Intl may echo unknown well-formed codes such as ZZZ. Symbols are not unique identifiers. This package does not fetch exchange rates, convert currencies, or provide live monetary data. Names and symbols come from the runtime's Intl data; country mappings come from the bundled snapshot and may differ from older runtimes. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-console.log(filterBy(arr, x => x > 2)); // [3, 4, 4, 5]
-console.log(sortBy(objects, o => o.name, "desc")); // Sorted by name descending
-console.log(chunk(arr, 2)); // [[1,2],[2,3],[4,4],[5]]
-console.log(flatten([[1,2],[3,4]])); // [1,2,3,4]
-console.log(findIndexes(arr, x => x === 2)); // [1,2]
-console.log(groupBy(objects, o => o.id)); // {"1": [...], "2": [...]}
+## Text formatting
+
+Length-based functions count Unicode grapheme clusters (user-perceived characters), preserving emoji sequences, flags and combining accents. Inputs must be strings. Lengths must be non-negative safe integers (TypeError for non-integers, RangeError for negative values).
+
+| Function | Defaults and behavior |
+| --- | --- |
+|`truncateText(text, maxLength, options?)`|Total output length includes ellipsis ('...' by default). Options: ellipsis, preserveWords (false). If marker exceeds maxLength, marker itself is clipped. Zero returns ''.|
+|`shortenString(text, options?)`|Keep startLength: 4 and endLength: 4, joined by separator: '...'. Returns original text if it already fits the resulting length.|
+|`normalizeWhitespace(text)`|Trim and collapse whitespace to a single space.|
+|`removeDiacritics(text)`|NFD decomposition and removal of Unicode combining marks; also maps Vietnamese ?/? to d/D. Not a general transliteration engine.|
+|`slugify(text)`|Remove diacritics, lowercase, join non-letter/number runs with '-', trim separators. Retains non-Latin letters and numbers.|
+|`capitalize(text, locale?)`|Uppercase the first grapheme, preserving the remainder; uses runtime locale by default. Some uppercase mappings expand to multiple characters.|
+|`maskString(text, options?)`|visibleStart: 0, visibleEnd: 4, mask: '*'. Mask must be exactly one grapheme; each hidden grapheme gets one mask.|
+
+preserveWords uses whitespace boundaries and falls back to grapheme clipping when the first word does not fit. It is not language-specific word segmentation. Short strings within maskString's visible lengths remain visible. Masking is presentation only, not encryption or secure redaction. slugify does not guarantee uniqueness or safe HTML/URL encoding; encode where appropriate.
+
+```ts
+import { truncateText, shortenString, maskString, capitalize } from '@fatdevcon/utilities';
+truncateText('Hello beautiful world', 12, { preserveWords: true }); // 'Hello...'
+shortenString('abcdefghijklmnop', { startLength: 2, endLength: 3 }); // 'ab...nop'
+maskString('1234567890'); // '******7890'
+capitalize('istanbul', 'tr'); // '?stanbul'
 ```
 
-### Sorting Algorithms
+## Date formatting
 
-```typescript
-import {
-  quickSort,
-  mergeSort,
-  insertionSort,
-  selectionSort,
-  bubbleSort,
-  heapSort,
-  countingSort,
-  radixSort,
-} from "@fatdevcon/utilities";
+`formatDate(date: Date | string | number, formatStr: string, options?: FormatOptions): string` uses date-fns format tokens and locale options. Invalid dates throw RangeError. Strings/numbers use the native Date constructor; numeric timestamps are milliseconds. Output follows the local timezone.
 
-const unsorted = [5, 2, 9, 1, 5, 6];
-console.log(quickSort(unsorted)); // [1,2,5,5,6,9]
-console.log(mergeSort(unsorted));
-console.log(insertionSort(unsorted));
-console.log(selectionSort(unsorted));
-console.log(bubbleSort(unsorted));
-console.log(heapSort(unsorted));
-console.log(countingSort(unsorted));
-console.log(radixSort(unsorted));
+```ts
+import { formatDate } from '@fatdevcon/utilities';
+formatDate(new Date(2026, 9, 3), 'yyyy-MM-dd'); // '2026-10-03'
 ```
 
-### Search Algorithms
+## Math
 
-```typescript
-import { binarySearch, linearSearch } from "@fatdevcon/utilities";
+| Function | Behavior |
+| --- | --- |
+|`summary(a, b)`, `subtract(a, b)`, `multiply(a, b)`, `divide(a, b)`|Arithmetic; division by zero throws RangeError.|
+|`percentage(value, total)`|Compute value / total * 100 (returns 0 when total is 0); distinct from formatPercent's ratio input.|
+|`round(value, decimals = 2)`|Round to a non-negative integer number of decimal places.|
+|`factorial(n)`|Non-negative integer, n <= 170.|
+|`gcd(a, b)`, `lcm(a, b)`|Greatest common divisor and least common multiple.|
+|`isPrime(n)`|Primality; false for non-integers and non-finite input.|
+|`fibonacci(n)`|Non-negative integer, n <= 1476.|
 
-const sortedArr = [1, 2, 3, 4, 5];
-console.log(binarySearch(sortedArr, 3)); // 2
-console.log(linearSearch(sortedArr, 4)); // 3
-```
-
-### Array and Object Utilities
-
-```typescript
-import {
-  sumValueInArray,
-  averageValueInArray,
-  findMin,
-  findMax,
-  deepClone,
-  mergeObjects,
-} from "@fatdevcon/utilities";
-
-const numbers = [1, 2, 3, 4, 5];
-console.log(sumValueInArray(numbers)); // 15
-console.log(averageValueInArray(numbers)); // 3
-console.log(findMin(numbers)); // 1
-console.log(findMax(numbers)); // 5
-
-const obj = { a: 1, b: { c: 2 } };
-const clone = deepClone(obj);
-console.log(clone); // { a: 1, b: { c: 2 } }
-
-const merged = mergeObjects({ a: 1 }, { b: 2 });
-console.log(merged); // { a: 1, b: 2 }
-```
-
-## API Reference
-
-### Calculation Functions
-
-- `summary(a: number, b: number): number` - Add two numbers
-- `subtract(a: number, b: number): number` - Subtract b from a
-- `multiply(a: number, b: number): number` - Multiply two numbers
-- `divide(a: number, b: number): number` - Divide a by b (throws `RangeError` on division by zero)
-- `percentage(value: number, total: number): number` - Calculate percentage
-- `round(value: number, decimals: number = 2): number` - Round number to specified decimals (`decimals` must be a non-negative integer)
-- `factorial(n: number): number` - Calculate factorial of a non-negative integer (n ≤ 170)
-- `gcd(a: number, b: number): number` - Calculate greatest common divisor of two numbers
-- `lcm(a: number, b: number): number` - Calculate least common multiple of two numbers
-- `isPrime(n: number): boolean` - Check if a number is prime (`false` for non-integers and `NaN`)
-- `fibonacci(n: number): number` - Calculate fibonacci number at position n (non-negative integer, n ≤ 1476)
-
-### Formatting Functions
-
-- `formatNumber(value: number, locale?: string, options?: Intl.NumberFormatOptions): string` - Format number with locale-specific separators
-- `formatDate(date: Date | string | number, formatStr: string, options?: FormatOptions): string` - Format date using date-fns format strings
+## Array, object and algorithm API
 
 ### Array Manipulation
 
@@ -245,7 +155,7 @@ console.log(merged); // { a: 1, b: 2 }
 
 ### Error Handling
 
-Functions validate their input and throw standard errors:
+Math, array and algorithm helpers validate their inputs. Existing formatNumber follows native Intl behavior; new formatter validation is documented above:
 
 - `TypeError` - argument is not a finite number / integer / array (e.g. `NaN`, `Infinity`, `null`)
 - `RangeError` - value is out of the supported range (division by zero, negative factorial, `chunk` size < 1, `countingSort` with negative numbers, ...)
@@ -265,83 +175,30 @@ try {
 - `Comparator<T>` - Type for comparison function `(a: T, b: T) => number`
 - `KeySelector<T>` - Type for key selector function `(item: T) => any`
 
-## Development
 
-1. Clone the repository
+Exported formatting option types: `CompactNumberOptions`, `PercentFormatOptions`, `CurrencyFormatOptions`, `UnitFormatOptions`, `BytesFormatOptions`, `TruncateTextOptions`, `ShortenStringOptions`, `MaskStringOptions`. Comparator and KeySelector are also exported from the package root.
 
-   ```bash
-   git clone https://github.com/fatdevcon/utilities.git
-   cd utilities
-   ```
-
-2. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-3. Make your changes
-
-4. Run tests
-
-   ```bash
-   npm test
-   ```
-
-5. Build the project
-   ```bash
-   npm run build
-   ```
-
-## Testing
-
-Run the test suite:
-
-```bash
-npm test
-
-# With coverage report
-npm run test:coverage
-```
-
-## Contributing
-
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## Code of Conduct
-
-This project and everyone participating in it is governed by our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
-
-## Versioning
-
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/fatdevcon/utilities/tags).
+Legacy algorithm helpers `merge(left, right, compareFn)`, `heapify(arr, n, i, compareFn)` and `countingSortByDigit(arr, exp)` remain exported for compatibility. Prefer the documented sorting functions for application code.
 
 ## Changelog
 
+### 0.2.1
+
+- Added compact, percent, currency, unit and byte formatting.
+- Added currency symbols/names and CLDR country-currency lookup.
+- Added grapheme-aware truncation, middle shortening, masking, whitespace normalization, diacritic removal, slugs and capitalization.
+- Added Bun usage and runtime package checks; separate ESM/CommonJS declaration resolution.
+- Fixed ESLint 9 configuration and release checks; exported shared types.
+- Corrected dependency claims and removed contributor/development instructions.
+
 ### 0.2.0
 
-- Added input validation (`TypeError` / `RangeError`) across math, array, search and sort functions
-- Fixed infinite loops in `factorial` / `fibonacci` with `Infinity`; added upper bounds (n ≤ 170 / n ≤ 1476)
-- Fixed `isPrime` for `NaN` and non-integers
-- Fixed `countingSort` / `radixSort` with negative or non-integer numbers, and stack overflow on large arrays
-- Fixed `groupBy` with `__proto__` keys; `chunk` with invalid sizes
-- `quickSort` no longer degrades to O(n²) on sorted or duplicate-heavy input
-- `deepClone` now uses `structuredClone`
-- `formatDate` throws a clear `RangeError` for invalid dates
-- Removed unused `install` and `npm` dependencies
+- Hardened input validation and edge cases in math, arrays, searching and sorting.
+- Fixed large-array sorting and prototype-key grouping; switched deepClone to structuredClone.
+- Added invalid-date errors and removed unused dependencies.
 
-## License
+## Maintenance and license
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Maintained independently by the package owner. External contributions are not accepted. Version numbers follow SemVer.
 
-## Acknowledgments
-
-- Thanks to all contributors who have helped improve this project
-- Inspired by various utility libraries in the JavaScript ecosystem
-- Built with ❤️ by the FatDevCon team
+MIT; see [LICENSE](LICENSE). Derived Unicode data retains its own notice in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

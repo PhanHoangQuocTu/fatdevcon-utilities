@@ -1,4 +1,4 @@
-import { Comparator, KeySelector } from "@/types";
+import { Comparator } from "@/types";
 
 // O(n) - Merge helper function for merge sort
 const merge = <T>(left: T[], right: T[], compareFn: Comparator<T>): T[] => {

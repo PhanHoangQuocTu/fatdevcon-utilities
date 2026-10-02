@@ -27,3 +27,8 @@ const formatDate = (
 };
 
 export { formatNumber, formatDate };
+
+export { formatCompactNumber, formatPercent, formatCurrency, formatUnit, formatBytes } from "./number";
+export type { CompactNumberOptions, PercentFormatOptions, CurrencyFormatOptions, UnitFormatOptions, BytesFormatOptions } from "./number";
+export * from "./text";
+export * from "./currency";

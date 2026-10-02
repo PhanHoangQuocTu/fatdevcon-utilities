@@ -14,7 +14,6 @@ export default defineConfig({
   external: ["node:buffer", "node:util"],
   noExternal: [],
   tsconfig: "./tsconfig.json",
-  onSuccess: "npm run build:types",
   esbuildOptions: (options) => {
     options.minify = true;
     options.minifyIdentifiers = true;
