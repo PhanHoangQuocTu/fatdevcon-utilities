@@ -429,6 +429,11 @@ The error classes `NumericTypeError` and `NumericRangeError` are exported as val
 
 ## Changelog
 
+### 0.3.4
+
+- Redesigned the documentation site as a developer-focused package landing page with a faster path from installation to verified examples and API discovery
+- Added technical SEO metadata, structured software data, canonical URL, crawlable API overview, robots.txt and sitemap.xml; links point to the published npm package, repository, issues, releases and MIT license
+
 ### 0.3.3
 
 - `getTimeZoneOffset` now accepts no arguments for the current local offset and can return `seconds`, `minutes` or `hours` (`UTC+7` is `+7` with `{ unit: "hours" }`)

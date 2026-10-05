@@ -1,6 +1,6 @@
 {
   "name": "@fatdevcon/utilities",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "TypeScript utilities with exact big-number math, timezone/date formatting, collections, cancellable waits, retries and validators",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -21,7 +21,7 @@
     "test:coverage": "jest --coverage",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
-    "prepublishOnly": "npm run check && npm run test:package && npm run test:docs",
+    "prepublishOnly": "npm run check && npm run test:package && npm run test:docs && npm run test:site",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm run lint && npm test -- --runInBand && npm run build",
     "test:package": "node scripts/verify-package.mjs",
@@ -29,7 +29,8 @@
     "test:tarball": "node scripts/verify-tarball.mjs",
     "prepack": "npm run build",
     "audit": "npm audit --audit-level=low",
-    "test:docs": "node scripts/verify-docs.mjs"
+    "test:docs": "node scripts/verify-docs.mjs",
+    "test:site": "node scripts/verify-site.mjs"
   },
   "keywords": [
     "utilities",

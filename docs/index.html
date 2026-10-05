@@ -1,286 +1,69 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>@fatdevcon/utilities – Documentation</title>
-<meta name="description" content="API documentation for @fatdevcon/utilities: exact decimal math on bigint and numeric strings, big factorial, fibonacci and primes, locale-aware number, currency and date formatting, Unicode text, arrays, objects, debounce, retry and validators.">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#101827"><meta name="robots" content="index,follow">
+<title>TypeScript Utility Library for Exact Decimal Math | @fatdevcon/utilities</title>
+<meta name="description" content="A TypeScript utility library for exact decimal math, bigint and numeric-string calculations, Intl formatting, time zones, Unicode text, collections, async helpers and algorithms.">
+<link rel="canonical" href="https://phanhoangquoctu.github.io/fatdevcon-utilities/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="@fatdevcon/utilities"><meta property="og:title" content="TypeScript utility library for exact decimal math and everyday helpers"><meta property="og:description" content="Exact decimal math, formatting, time zones, Unicode text, collections and async helpers for JavaScript and TypeScript."><meta property="og:url" content="https://phanhoangquoctu.github.io/fatdevcon-utilities/"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="@fatdevcon/utilities"><meta name="twitter:description" content="A TypeScript utility library for exact decimal math, formatting, time zones and everyday helpers.">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"@fatdevcon/utilities","applicationCategory":"DeveloperApplication","operatingSystem":"Node.js, Bun, browsers","programmingLanguage":["JavaScript","TypeScript"],"license":"https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/LICENSE","codeRepository":"https://github.com/PhanHoangQuocTu/fatdevcon-utilities","url":"https://phanhoangquoctu.github.io/fatdevcon-utilities/","downloadUrl":"https://www.npmjs.com/package/@fatdevcon/utilities"}</script>
 <style>
-  :root {
-    --bg: #ffffff; --panel: #f6f7f9; --border: #e3e6ea; --text: #1b1f24; --muted: #5d6673;
-    --accent: #0b6bcb; --code-bg: #f1f3f6; --tag-bg: #e7f0fb; --tag-text: #0a4f96;
-    --warn-bg: #fdf0e6; --warn-text: #8a4600; --err-bg: #fbe9ea; --err-text: #9b1c24;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0f1216; --panel: #161a20; --border: #272d36; --text: #e6e9ee; --muted: #98a2b0;
-      --accent: #6cb2ff; --code-bg: #1b2028; --tag-bg: #1a2c42; --tag-text: #9ccbff;
-      --warn-bg: #2d2113; --warn-text: #f0b46c; --err-bg: #331a1d; --err-text: #f0959b;
-    }
-  }
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; scroll-padding-top: 16px; }
-  body {
-    margin: 0; background: var(--bg); color: var(--text);
-    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  }
-  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.875em; }
-  code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; }
-  pre { background: var(--code-bg); padding: 12px 14px; border-radius: 8px; overflow-x: auto; margin: 10px 0 0; line-height: 1.5; }
-  pre code { background: none; padding: 0; font-size: 1em; }
-  a { color: var(--accent); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-
-  .layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); max-width: 1180px; margin: 0 auto; }
-  nav {
-    position: sticky; top: 0; height: 100vh; overflow-y: auto;
-    padding: 24px 16px; border-right: 1px solid var(--border);
-  }
-  nav .brand { font-weight: 700; display: block; color: var(--text); margin-bottom: 14px; }
-  nav input {
-    width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px;
-    background: var(--panel); color: var(--text); font: inherit; font-size: 14px;
-  }
-  nav h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 20px 0 6px; }
-  nav h2 a { color: inherit; }
-  nav ul { list-style: none; margin: 0; padding: 0; }
-  nav li a { display: block; padding: 2px 8px; border-radius: 4px; color: var(--text); font-size: 14px; font-family: ui-monospace, Menlo, Consolas, monospace; }
-  nav li a:hover { background: var(--panel); text-decoration: none; }
-
-  main { padding: 32px 32px 80px; min-width: 0; }
-  h1 { font-size: 30px; margin: 0 0 8px; }
-  .lead { color: var(--muted); margin: 0 0 20px; max-width: 62ch; }
-  main > section > h2 { font-size: 22px; margin: 44px 0 4px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-  main h3.sub { font-size: 16px; margin: 24px 0 4px; }
-  .section-note { color: var(--muted); margin: 8px 0 0; }
-  .fn { border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin-top: 16px; }
-  .fn h3 { margin: 0; font-size: 17px; font-family: ui-monospace, Menlo, Consolas, monospace; }
-  .fn .sig { display: block; margin-top: 8px; color: var(--muted); background: none; padding: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-  .fn p { margin: 10px 0 0; }
-  .fn h4 { margin: 14px 0 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
-  .fn .returns { margin: 4px 0 0; }
-  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-  .tag { background: var(--tag-bg); color: var(--tag-text); font-size: 12.5px; padding: 2px 8px; border-radius: 999px; }
-  .scroll { overflow-x: auto; }
-  table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 14.5px; }
-  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
-  th { color: var(--muted); font-weight: 600; font-size: 12.5px; white-space: nowrap; }
-  td.type, td.name { white-space: nowrap; }
-  td.type code, td.name code { white-space: pre; }
-  .throws { list-style: none; margin: 6px 0 0; padding: 0; }
-  .throws li { margin: 4px 0; font-size: 14.5px; }
-  .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; padding: 1px 7px; border-radius: 4px; margin-right: 6px; background: var(--err-bg); color: var(--err-text); white-space: nowrap; }
-  .code.plain { background: var(--code-bg); color: var(--muted); }
-  .callout { background: var(--warn-bg); color: var(--warn-text); border-radius: 8px; padding: 10px 14px; margin-top: 14px; font-size: 15px; }
-  .empty { color: var(--muted); margin-top: 24px; }
-  footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; }
-
-  @media (max-width: 800px) {
-    .layout { grid-template-columns: 1fr; }
-    nav { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--border); padding: 16px; }
-    nav .groups { display: none; }
-    main { padding: 24px 16px 64px; }
-  }
+:root{--bg:#fbfcfe;--surface:#fff;--soft:#f3f6fa;--border:#dce3ec;--text:#142033;--muted:#58677a;--accent:#1769d2;--accent-soft:#e8f1ff;--code:#101827;--code-text:#e8edf5;--shadow:0 8px 28px #14203314;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}@media(prefers-color-scheme:dark){:root{--bg:#0c111b;--surface:#121a27;--soft:#182231;--border:#2a3748;--text:#e7edf7;--muted:#a8b5c5;--accent:#82b8ff;--accent-soft:#172d4a;--code:#080d16;--shadow:none}}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:80px}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}code,pre{font-family:var(--mono)}:not(pre)>code{padding:.08em .32em;border:1px solid var(--border);border-radius:4px;background:var(--soft);font-size:.9em}.skip{position:absolute;top:-50px;left:12px;z-index:9;padding:8px 12px;border-radius:6px;background:var(--accent);color:#fff}.skip:focus{top:12px}.head{position:sticky;top:0;z-index:4;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px)}.head-in{display:flex;gap:20px;align-items:center;min-height:62px;max-width:1240px;margin:auto;padding:0 24px}.brand{color:var(--text);font:700 15px/1 var(--mono);white-space:nowrap}.brand:hover{color:var(--text);text-decoration:none}.topnav{display:flex;gap:15px;margin-left:auto;overflow-x:auto}.topnav a,.head-links{color:var(--muted);font-size:14px;white-space:nowrap}.topnav a[aria-current="true"]{color:var(--accent);font-weight:700}.head-links{display:flex;gap:12px}.page{max-width:1240px;margin:auto;padding:0 24px 72px}.hero{display:grid;grid-template-columns:1.2fr .8fr;gap:48px;align-items:center;padding:72px 0 60px;border-bottom:1px solid var(--border)}.eyebrow{margin:0 0 10px;color:var(--accent);font:700 12px/1.5 var(--mono);letter-spacing:.04em;text-transform:uppercase}h1,h2,h3,h4{line-height:1.16}h1{max-width:14ch;margin:0;font-size:clamp(2.3rem,5vw,4.2rem);letter-spacing:-.045em}.lead{max-width:60ch;margin:20px 0 0;color:var(--muted);font-size:1.12rem}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}.button{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 14px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--text);font-size:14px;font-weight:700}.button:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}.button.primary{border-color:var(--accent);background:var(--accent);color:#fff}.panel,.card,.api-category,details{border:1px solid var(--border);border-radius:10px;background:var(--surface);box-shadow:var(--shadow)}.panel{padding:20px}.label{margin:0 0 8px;color:var(--muted);font:700 12px/1.4 var(--mono);letter-spacing:.05em;text-transform:uppercase}.command{display:flex;gap:8px;align-items:center;padding:12px;border-radius:8px;background:var(--code);color:var(--code-text)}.command code{min-width:0;overflow:auto;white-space:nowrap}.copy{flex:0 0 auto;padding:4px 8px;border:1px solid #40506a;border-radius:5px;background:transparent;color:var(--code-text);font:12px system-ui;cursor:pointer}.badges{display:flex;flex-wrap:wrap;gap:7px;margin:15px 0 0;padding:0;list-style:none}.badges li,.tag{padding:3px 8px;border:1px solid var(--border);border-radius:99px;background:var(--soft);color:var(--muted);font-size:12px}section{padding:62px 0;border-bottom:1px solid var(--border)}.section-heading{max-width:760px}.section-heading h2{margin:0;font-size:clamp(1.65rem,3vw,2.45rem);letter-spacing:-.025em}.section-heading p{margin:10px 0 0;color:var(--muted)}.install,.grid2,.features,.api-cats{display:grid;gap:14px;margin-top:26px}.install,.grid2,.api-cats{grid-template-columns:repeat(2,minmax(0,1fr))}.install .card{padding:14px}.install p{margin:0 0 8px;color:var(--muted);font-size:13px;font-weight:700}.card{overflow:hidden}.card h3{margin:0;padding:14px 16px;border-bottom:1px solid var(--border);font-size:15px}pre{margin:0;padding:16px;overflow:auto;background:var(--code);color:var(--code-text);font-size:.82rem;line-height:1.6}.features{grid-template-columns:repeat(3,minmax(0,1fr))}.feature{padding:18px}.feature h3,.api-category h3{margin:0;font-size:16px}.feature p,.api-category p{margin:8px 0 0;color:var(--muted);font-size:14px}.tag{display:inline-block;margin-top:12px;border:0;background:var(--accent-soft);color:var(--accent);font-family:var(--mono)}.api-layout{display:grid;grid-template-columns:235px minmax(0,1fr);gap:28px;margin-top:28px}.api-side{position:sticky;top:80px;align-self:start;max-height:calc(100vh - 95px);overflow:auto;padding:14px;border:1px solid var(--border);border-radius:9px;background:var(--surface)}.api-side label{display:block;margin-bottom:7px;color:var(--muted);font-size:12px;font-weight:700}.api-side input{width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font:14px var(--mono)}.api-nav h3{margin:18px 0 5px;color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase}.api-nav ul{margin:0;padding:0;list-style:none}.api-nav a{display:block;padding:3px 6px;border-radius:4px;color:var(--text);font:12px/1.45 var(--mono)}.api-nav a:hover{background:var(--soft);text-decoration:none}.api-category{padding:16px}.api-category ul{margin:10px 0 0;padding-left:18px;color:var(--muted);font:12px/1.65 var(--mono)}.api-reference>section>h3{margin:42px 0 4px;padding-bottom:8px;border-bottom:1px solid var(--border);font-size:22px}.section-note{margin:8px 0 0;color:var(--muted)}.fn{margin-top:16px;padding:17px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}.fn h4{margin:0;font:700 16px/1.3 var(--mono)}.fn h4 a{color:var(--text)}.sig{display:block;margin-top:9px;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}.fn p{margin:10px 0 0}.fn h5{margin:14px 0 0;color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase}.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.scroll{overflow:auto}table{width:100%;margin-top:8px;border-collapse:collapse;font-size:13px}th,td{padding:8px 9px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}th{color:var(--muted);font-size:11px;letter-spacing:.03em;text-transform:uppercase}td.type,td.name{white-space:nowrap}.throws{margin:6px 0 0;padding:0;list-style:none}.throws li{margin:5px 0;font-size:13px}.err{display:inline-block;margin-right:5px;padding:1px 5px;border-radius:4px;background:#fff0f1;color:#a51d2d;font:11px var(--mono)}.err.plain{background:var(--soft);color:var(--muted)}.callout{margin-top:16px;padding:14px;border-left:3px solid var(--accent);border-radius:0 8px 8px 0;background:var(--accent-soft)}.empty{margin-top:22px;color:var(--muted)}.faq{display:grid;gap:10px;margin-top:24px}details{padding:0 16px}summary{padding:15px 0;cursor:pointer;font-weight:700}details p{margin:0 0 15px;color:var(--muted)}footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;padding:30px 0 0;color:var(--muted);font-size:14px}@media(max-width:980px){.hero{grid-template-columns:1fr;gap:28px}.features{grid-template-columns:repeat(2,minmax(0,1fr))}.api-layout{grid-template-columns:1fr}.api-side{position:static;max-height:none}}@media(max-width:720px){.head-in,.page{padding-left:16px;padding-right:16px}.topnav{display:none}.head-links{margin-left:auto}.hero{padding:48px 0}section{padding:46px 0}.install,.grid2,.features,.api-cats{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<div class="layout">
-  <nav>
-    <a class="brand" href="#top">@fatdevcon/utilities</a>
-    <input id="search" type="search" placeholder="Search functions…" aria-label="Search functions">
-    <div class="groups" id="nav-groups"></div>
-  </nav>
+<a class="skip" href="#content">Skip to content</a>
+<header class="head"><div class="head-in"><a class="brand" href="#overview">@fatdevcon/utilities</a><nav class="topnav" aria-label="Primary navigation"><a href="#overview">Overview</a><a href="#install">Install</a><a href="#quick-start">Quick start</a><a href="#features">Features</a><a href="#api">API</a><a href="#examples">Examples</a><a href="#faq">FAQ</a></nav><div class="head-links"><a href="https://www.npmjs.com/package/@fatdevcon/utilities">npm</a><a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities">GitHub</a></div></div></header>
+<main class="page" id="content">
+<section class="hero" id="overview"><div><p class="eyebrow">TypeScript utility library</p><h1>Exact decimal math and everyday JavaScript helpers.</h1><p class="lead">Use one typed package for bigint-safe and numeric-string calculations, locale-aware formatting, IANA time zones, Unicode text, collections, async control flow and classic algorithms.</p><div class="actions"><a class="button primary" href="#quick-start">Get started</a><a class="button" href="https://www.npmjs.com/package/@fatdevcon/utilities">View on npm</a><a class="button" href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities">View on GitHub</a></div></div><aside class="panel"><p class="label">Install</p><div class="command"><code id="hero-install">npm install @fatdevcon/utilities</code><button class="copy" type="button" data-copy="hero-install">Copy</button></div><ul class="badges"><li>Node.js 18+</li><li>Bun 1.1.34+</li><li>ESM + CommonJS</li><li>Type definitions</li></ul><p class="section-note">Runtime dependencies: <code>decimal.js</code> and <code>date-fns</code>.</p></aside></section>
+<section id="install"><div class="section-heading"><p class="eyebrow">Installation</p><h2>Install with the package manager you already use.</h2><p>The package is prebuilt, so installation needs no compiler or project setup.</p></div><div class="install"><div class="card"><p>npm</p><div class="command"><code id="npm-install">npm install @fatdevcon/utilities</code><button class="copy" type="button" data-copy="npm-install">Copy</button></div></div><div class="card"><p>pnpm</p><div class="command"><code id="pnpm-install">pnpm add @fatdevcon/utilities</code><button class="copy" type="button" data-copy="pnpm-install">Copy</button></div></div><div class="card"><p>Yarn</p><div class="command"><code id="yarn-install">yarn add @fatdevcon/utilities</code><button class="copy" type="button" data-copy="yarn-install">Copy</button></div></div><div class="card"><p>Bun</p><div class="command"><code id="bun-install">bun add @fatdevcon/utilities</code><button class="copy" type="button" data-copy="bun-install">Copy</button></div></div></div></section>
+<section id="quick-start"><div class="section-heading"><p class="eyebrow">Quick start</p><h2>Start with exact math, then import only the helpers you need.</h2><p>Every public utility is a named export, so applications can make focused imports.</p></div><div class="grid2"><article class="card"><h3>Exact decimal math in TypeScript</h3><pre><code>import { divide, summary } from "@fatdevcon/utilities";
 
-  <main id="top">
-    <h1>@fatdevcon/utilities</h1>
-    <p class="lead">Typed utilities for everyday JavaScript and TypeScript: exact decimal math that works on numbers, bigints and numeric strings of any practical size, locale-aware formatting, Unicode-safe text, arrays, objects, timing helpers and validators.</p>
+summary(0.1, 0.2); // 0.3
+divide("1", "3", { precision: 5 }); // "0.33333"
+summary("100000000000000000000000", "1");
+// "100000000000000000000001"</code></pre></article><article class="card"><h3>Format values for a real user</h3><pre><code>import { formatCurrency, formatInTimeZone } from "@fatdevcon/utilities";
 
-    <pre><code>npm install @fatdevcon/utilities</code></pre>
-    <pre><code>import { summary, factorial, isPrime, formatCurrency, formatBytes } from "@fatdevcon/utilities";
+formatCurrency("12345678901234567890.129", "USD");
+// "$12,345,678,901,234,567,890.13"
 
-summary(0.1, 0.2);                                // 0.3
-summary("100000000000000000000000000000", "1");   // "100000000000000000000000000001"
-factorial(25n);                                   // 15511210043330985984000000n
-isPrime(2n ** 127n - 1n);                         // true
-formatCurrency("12345678901234567890.129", "USD"); // "$12,345,678,901,234,567,890.13"
-formatBytes("1500000000000000000000000000000");   // "1.5 QB"</code></pre>
-    <p class="section-note">Ships ESM and CommonJS builds with type definitions. Requires Node.js 18+ or Bun 1.1.34+ (Node 20+ to format bigint and string values with every digit). Functions never mutate the arrays or objects you pass in.</p>
+formatInTimeZone(new Date("2026-01-15T12:00:00Z"), "Asia/Ho_Chi_Minh");</code></pre></article></div></section>
+<section id="features"><div class="section-heading"><p class="eyebrow">What it provides</p><h2>Concrete utilities for common JavaScript and TypeScript work.</h2><p>Each category is backed by exported APIs documented below; no feature claims depend on a service or hidden runtime.</p></div><div class="features"><article class="feature card"><h3>Exact decimal &amp; big-number math</h3><p>Calculate with numbers, bigints and numeric strings while preserving practical-size decimal values. Invalid input and overflow use explicit error types.</p><span class="tag">summary · divide · factorial</span></article><article class="feature card"><h3>Intl formatting &amp; currencies</h3><p>Format numbers, currencies, percentages, units, bytes and dates with runtime locale data and ISO 4217 metadata.</p><span class="tag">formatCurrency · formatBytes</span></article><article class="feature card"><h3>Time zones</h3><p>Validate IANA zones, format instants and calculate DST-aware offsets in seconds, minutes or hours.</p><span class="tag">formatInTimeZone · getTimeZoneOffset</span></article><article class="feature card"><h3>Unicode-safe text</h3><p>Truncate, mask, slugify and transform text without splitting user-perceived characters such as emoji and combining accents.</p><span class="tag">truncateText · slugify</span></article><article class="feature card"><h3>Collections &amp; objects</h3><p>Work with arrays and objects using grouping, chunking, deep merge, structural equality and safe deep-property reads.</p><span class="tag">groupBy · deepMerge · getByPath</span></article><article class="feature card"><h3>Async &amp; algorithms</h3><p>Control timing and retries, or choose familiar sorting and searching helpers with documented behavior and limits.</p><span class="tag">withRetry · quickSort · binarySearch</span></article></div></section>
+<section id="api"><div class="section-heading"><p class="eyebrow">API reference</p><h2>Discover utilities by problem, then inspect the full signature.</h2><p>This static overview is crawlable without JavaScript. With JavaScript enabled, the complete reference includes every exported function, parameters, return values, errors and verified examples.</p></div><div class="api-layout"><aside class="api-side"><label for="search">Filter functions</label><input id="search" type="search" placeholder="e.g. format, retry, array"><nav class="api-nav" id="nav-groups" aria-label="API groups"></nav></aside><div><div class="api-cats"><article class="api-category"><h3>Exact math</h3><p>Arithmetic, rounding, comparison, integer math and aggregates.</p><ul><li>summary, divide, round</li><li>factorial, fibonacci, isPrime</li><li>sumBig, averageBig, medianBig</li></ul></article><article class="api-category"><h3>Formatting &amp; time</h3><p>Locale, currency, text, dates and IANA timezone utilities.</p><ul><li>formatCurrency, formatBytes</li><li>formatDate, formatRelativeTime</li><li>formatInTimeZone, getTimeZoneName</li></ul></article><article class="api-category"><h3>Data helpers</h3><p>Arrays, objects, sorting, searching and common transformations.</p><ul><li>groupBy, chunk, range</li><li>deepMerge, deepEqual, getByPath</li><li>quickSort, binarySearch</li></ul></article><article class="api-category"><h3>Function utilities</h3><p>Rate limiting, memoization, cancellation, retries and validation.</p><ul><li>debounce, throttle, memoize</li><li>wait, withRetry, withTimeout</li><li>isEmail, isUrl, isUuid</li></ul></article></div><div class="api-reference" id="api-reference"><noscript><p class="callout">The complete API cards are enhanced with JavaScript. This overview and the <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities#api">README API index</a> remain available without it.</p></noscript></div><p class="empty" id="empty" hidden>No function matches that filter.</p></div></div></section>
+<section id="examples"><div class="section-heading"><p class="eyebrow">Examples</p><h2>Common developer tasks with real package APIs.</h2><p>These examples answer useful JavaScript and TypeScript utility problems without introducing unexported abstractions.</p></div><div class="grid2"><article class="card"><h3>How to group data in JavaScript</h3><pre><code>import { groupBy } from "@fatdevcon/utilities";
 
-    <section id="big-numbers">
-      <h2>Big numbers</h2>
-      <p class="section-note">A JavaScript <code>number</code> is a 64-bit double: it carries about 16 significant digits, tops out near 1.8 × 10<sup>308</sup> and cannot store 0.1 exactly. The numeric functions keep working past those limits when you give them a <code>bigint</code> or a numeric string, and they refuse, with a clear error, to hand back a wrong answer.</p>
+const byRole = groupBy([
+  { name: "An", role: "dev" }, { name: "Binh", role: "qa" },
+], (user) =&gt; user.role);
+// { dev: [{ name: "An", ... }], qa: [{ name: "Binh", ... }] }</code></pre></article><article class="card"><h3>How to retry an async operation</h3><pre><code>import { withRetry } from "@fatdevcon/utilities";
 
-      <h3 class="sub">What you can pass</h3>
-      <div class="scroll"><table>
-        <tr><th>Kind</th><th>Accepted</th><th>Rejected with <code>ERR_INVALID_NUMBER</code></th></tr>
-        <tr><td><code>number</code></td><td>Any finite number</td><td><code>NaN</code>, <code>Infinity</code>, <code>-Infinity</code></td></tr>
-        <tr><td><code>bigint</code></td><td>Up to about 10<sup>300,000</sup> in magnitude (about 996,000 bits)</td><td>Larger values (<code>ERR_OVERFLOW</code>)</td></tr>
-        <tr><td><code>string</code></td><td>Plain or exponent decimal notation: <code>"12.5"</code>, <code>"-.5"</code>, <code>"5."</code>, <code>"+7"</code>, <code>"1e-30"</code>, <code>"1E+5"</code></td><td>Empty or blank text, surrounding spaces, <code>"1,000"</code>, <code>"1_000"</code>, <code>"0x10"</code>, <code>"NaN"</code>, <code>"Infinity"</code>, <code>"1e"</code>, <code>"١٢٣"</code></td></tr>
-        <tr><td>anything else</td><td>–</td><td><code>null</code>, <code>undefined</code>, booleans, objects, arrays, symbols</td></tr>
-      </table></div>
-      <p class="section-note">Use <a href="#isNumeric"><code>isNumeric</code></a> to test a value first. In TypeScript the accepted union is exported as <code>NumericInput</code>.</p>
+const loadConfig = () =&gt; fetch("/config.json").then((response) =&gt; response.json());
+const value = await withRetry(loadConfig, {
+  retryCount: 3,
+  delay: ({ count }) =&gt; 200 * 2 ** count,
+  shouldRetry: ({ error }) =&gt; error.name !== "AuthError",
+});</code></pre></article><article class="card"><h3>How to format a timezone-aware date</h3><pre><code>import { getTimeZoneOffset, formatInTimeZone } from "@fatdevcon/utilities";
 
-      <h3 class="sub">What you get back</h3>
-      <p class="section-note">The return kind follows the input kind, so existing number code keeps returning numbers.</p>
-      <div class="scroll"><table>
-        <tr><th>Arguments</th><th>Result</th><th>Example</th></tr>
-        <tr><td>all <code>number</code></td><td><code>number</code></td><td><code>summary(0.1, 0.2)</code> → <code>0.3</code></td></tr>
-        <tr><td>all <code>bigint</code></td><td><code>bigint</code> when the result is always whole (<code>summary</code>, <code>subtract</code>, <code>multiply</code>, <code>modulo</code>, <code>power</code>, <code>gcd</code>, <code>lcm</code>, <code>factorial</code>, <code>fibonacci</code>, <code>clamp</code>, <code>abs</code>, <code>randomInt</code>)</td><td><code>multiply(2n ** 64n, 2n ** 64n)</code> → <code>2n ** 128n</code></td></tr>
-        <tr><td>all <code>bigint</code>, fractional result</td><td><code>string</code> (<code>divide</code>, <code>percentage</code>)</td><td><code>divide(10n, 4n)</code> → <code>"2.5"</code></td></tr>
-        <tr><td>any <code>string</code>, or a mix of kinds</td><td><code>string</code> in plain decimal notation, no exponent</td><td><code>summary("0.1", 2n)</code> → <code>"2.1"</code></td></tr>
-        <tr><td>arrays of numbers</td><td><code>number</code> (<code>sumValueInArray</code>, <code>averageValueInArray</code>, <code>median</code>)</td><td><code>sumValueInArray([0.1, 0.2, 0.3])</code> → <code>0.6</code></td></tr>
-        <tr><td>arrays of any numeric kind</td><td><code>string</code> via <code>sumBig</code>, <code>averageBig</code>, <code>medianBig</code></td><td><code>sumBig(["0.1", 10n ** 30n])</code> → <code>"1000000000000000000000000000000.1"</code></td></tr>
-      </table></div>
-      <div class="callout">Strings are the safe way to carry big or decimal values between systems: JSON has no bigint, and a 20-digit id or amount parsed by <code>JSON.parse</code> is already rounded. Keep it as text and pass it straight in.</div>
+const instant = new Date("2026-01-15T12:00:00Z");
+getTimeZoneOffset(instant, "Asia/Ho_Chi_Minh", { unit: "hours" }); // 7
+formatInTimeZone(instant, "Asia/Ho_Chi_Minh", "en-GB", {
+  dateStyle: "short", timeStyle: "short", hourCycle: "h23",
+}); // "15/01/2026, 19:00"</code></pre></article><article class="card"><h3>How to format large currency values</h3><pre><code>import { formatCurrency } from "@fatdevcon/utilities";
 
-      <h3 class="sub">Precision and rounding</h3>
-      <p class="section-note">All arithmetic runs on <a href="https://github.com/MikeMcl/decimal.js">decimal.js</a>, never on binary floating point. The package uses private decimal.js instances, so it never touches the global decimal.js configuration of an application that also uses the library, and that configuration never affects it. Addition, subtraction, multiplication, modulo and integer powers are exact. Division is exact when the quotient terminates and otherwise keeps <code>precision</code> significant digits (1 to 10000, default 40), rounding half up. Converting an exact result back to a <code>number</code> rounds once, to the nearest double. Decimal inputs are read the way they are written (<code>0.1</code> is one tenth, not 0.1000000000000000055…), which is why <code>round(1.005, 2)</code> is <code>1.01</code>.</p>
-
-      <h3 class="sub">Limits</h3>
-      <div class="scroll"><table>
-        <tr><th>What</th><th>Limit</th><th>Beyond it</th></tr>
-        <tr><td>Magnitude of any input or result</td><td>about 10<sup>300,000</sup>, down to 10<sup>-300,000</sup></td><td><code>ERR_OVERFLOW</code> / <code>ERR_UNDERFLOW</code></td></tr>
-        <tr><td>Result of a <code>number</code> operation</td><td>1.797 × 10<sup>308</sup> down to 5 × 10<sup>-324</sup></td><td><code>ERR_OVERFLOW</code> / <code>ERR_UNDERFLOW</code>, never <code>Infinity</code> or a silent <code>0</code></td></tr>
-        <tr><td><code>precision</code> (division, power, percentage, averages)</td><td>1 to 10,000 significant digits</td><td><code>ERR_OUT_OF_RANGE</code></td></tr>
-        <tr><td><code>round</code> decimals</td><td>0 to 300,000</td><td><code>ERR_OUT_OF_RANGE</code></td></tr>
-        <tr><td><code>factorial</code></td><td>170 as a number; 65,000 as bigint or string</td><td><code>ERR_OUT_OF_RANGE</code></td></tr>
-        <tr><td><code>fibonacci</code></td><td>1476 as a number; 1,000,000 as bigint or string</td><td><code>ERR_OUT_OF_RANGE</code></td></tr>
-        <tr><td><code>isPrime</code> size</td><td>2048 bits</td><td><code>ERR_OUT_OF_RANGE</code></td></tr>
-        <tr><td><code>gcd</code> / <code>lcm</code> decimals</td><td>1000 decimal places</td><td><code>ERR_OUT_OF_RANGE</code></td></tr>
-        <tr><td><code>range</code> length</td><td>10,000,000 items, bounds within ±(2<sup>53</sup> − 1)</td><td><code>ERR_OUT_OF_RANGE</code></td></tr>
-        <tr><td><code>countingSort</code> spread</td><td>max − min ≤ 10,000,000</td><td><code>ERR_OUT_OF_RANGE</code>; use <code>radixSort</code></td></tr>
-        <tr><td><code>randomInt</code> with numbers</td><td>span of at most 2<sup>53</sup> values</td><td><code>ERR_OUT_OF_RANGE</code>; pass bigint bounds</td></tr>
-      </table></div>
-
-      <h3 class="sub">Speed</h3>
-      <p class="section-note">Whole numbers take a native fast path: calls on safe integers never build a decimal object, and <code>sumValueInArray</code> adds a million integers in about 40 ms (a million fractions take about 0.4 s). <code>factorial(65000n)</code> and <code>fibonacci(1000000n)</code> finish well under 0.2 s on Node and Bun, and a 521-bit <code>isPrime</code> takes about 10 ms. <code>Intl.NumberFormat</code> instances are cached per locale and option set. The limits above are identical on every runtime: JavaScriptCore (Bun, Safari) caps a <code>BigInt</code> near 2<sup>20</sup> bits, so the package stays inside that on purpose.</p>
-    </section>
-
-    <div id="api"></div>
-    <p class="empty" id="empty" hidden>No function matches that search.</p>
-
-    <section id="errors">
-      <h2>Error handling</h2>
-      <p class="section-note">Invalid input throws a standard error instead of returning <code>NaN</code> or a wrong result. Numeric errors are <code>NumericTypeError</code> (extends <code>TypeError</code>) or <code>NumericRangeError</code> (extends <code>RangeError</code>) and carry a stable <code>code</code>, so <code>instanceof TypeError</code> and <code>instanceof RangeError</code> keep working while you can branch on the exact reason. Messages name the argument and show the offending value, for example <code>a must be a finite number, bigint or numeric string, received "12abc"</code>.</p>
-      <div class="scroll"><table>
-        <tr><th>code</th><th>Class</th><th>Meaning</th><th>Example</th></tr>
-        <tr><td><code>ERR_INVALID_NUMBER</code></td><td>TypeError</td><td>Not a finite number, bigint or numeric string; also <code>NaN</code> met by the default comparison</td><td><code>summary(NaN, 1)</code>, <code>divide("12abc", 2)</code>, <code>findMin([1, NaN])</code></td></tr>
-        <tr><td><code>ERR_NOT_INTEGER</code></td><td>TypeError</td><td>A whole number is required</td><td><code>factorial(1.5)</code>, <code>round(1, 1.5)</code>, <code>power(2, 0.5)</code></td></tr>
-        <tr><td><code>ERR_DIVISION_BY_ZERO</code></td><td>RangeError</td><td>Divisor or modulus is 0, or 0 raised to a negative power</td><td><code>divide(1, 0)</code>, <code>modulo(1, 0)</code>, <code>power(0, -1)</code></td></tr>
-        <tr><td><code>ERR_OVERFLOW</code></td><td>RangeError</td><td>An input or result is too large for the kind it must be returned as</td><td><code>multiply(1e200, 1e200)</code>, <code>summary("1e1000001", 1)</code></td></tr>
-        <tr><td><code>ERR_UNDERFLOW</code></td><td>RangeError</td><td>A non-zero result is too small to represent</td><td><code>multiply(1e-200, 1e-200)</code>, <code>divide(1e-300, 1e300)</code></td></tr>
-        <tr><td><code>ERR_OUT_OF_RANGE</code></td><td>RangeError</td><td>An argument is outside its supported range</td><td><code>factorial(171)</code>, <code>clamp(1, 5, 0)</code>, <code>round(1, -1)</code>, <code>formatBytes(-1)</code></td></tr>
-        <tr><td><code>ERR_PRECISION_LOSS</code></td><td>RangeError</td><td>The runtime cannot format a bigint-sized string exactly (needs Node 20+)</td><td><code>formatNumber("12345678901234567890.5")</code> on Node 18</td></tr>
-      </table></div>
-      <p class="section-note">Non-numeric argument mistakes (a non-array, a non-function callback, a non-string text) throw a plain <code>TypeError</code> or <code>RangeError</code> without a <code>code</code>.</p>
-      <pre><code>import { divide, NumericRangeError } from "@fatdevcon/utilities";
-
-try {
-  const share = divide(total, count);
-} catch (error) {
-  if (error instanceof NumericRangeError &amp;&amp; error.code === "ERR_DIVISION_BY_ZERO") {
-    // count was 0
-  } else {
-    throw error;
-  }
-}</code></pre>
-    </section>
-
-    <section id="types">
-      <h2>Types</h2>
-      <pre><code>import type {
-  NumericInput, DivideOptions, RoundingMode, NumericErrorCode,
-  Comparator, KeySelector,
-} from "@fatdevcon/utilities";
-
-type NumericInput = number | bigint | string;
-type RoundingMode = "half-up" | "half-down" | "half-even" | "up" | "down" | "ceil" | "floor";
-interface DivideOptions { precision?: number } // significant digits, 1 to 10000, default 40
-type NumericErrorCode =
-  | "ERR_INVALID_NUMBER" | "ERR_NOT_INTEGER" | "ERR_DIVISION_BY_ZERO"
-  | "ERR_OVERFLOW" | "ERR_UNDERFLOW" | "ERR_OUT_OF_RANGE" | "ERR_PRECISION_LOSS";
-
-// Negative, zero or positive, like Array.prototype.sort
-type Comparator&lt;T&gt; = (a: T, b: T) =&gt; number;
-type KeySelector&lt;T&gt; = (item: T) =&gt; any;</code></pre>
-      <p class="section-note">The error classes <code>NumericTypeError</code> and <code>NumericRangeError</code> are exported as values. Option types are exported too: <code>CompactNumberOptions</code>, <code>PercentFormatOptions</code>, <code>CurrencyFormatOptions</code>, <code>UnitFormatOptions</code>, <code>BytesFormatOptions</code>, <code>TruncateTextOptions</code>, <code>ShortenStringOptions</code>, <code>MaskStringOptions</code>, <code>RelativeTimeOptions</code>, <code>DurationOptions</code>, <code>DebounceOptions</code>, <code>ThrottleOptions</code>, <code>MemoizeOptions</code>, <code>RetryOptions</code>, <code>IsUrlOptions</code>.</p>
-    </section>
-
-    <footer>
-      MIT licensed · <a href="https://www.npmjs.com/package/@fatdevcon/utilities">View on npm</a>
-    </footer>
-  </main>
-</div>
-
-<script src="api-data.js"></script>
-<script>
-const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-const paramsTable = (params) => `
-  <h4>Parameters</h4>
-  <div class="scroll"><table>
-    <tr><th>Name</th><th>Type</th><th>Default</th><th>Description</th></tr>
-    ${params.map((q) => `<tr>
-      <td class="name"><code>${esc(q.name)}</code></td>
-      <td class="type"><code>${esc(q.type)}</code></td>
-      <td>${q.def === undefined ? "<em>required</em>" : `<code>${esc(q.def)}</code>`}</td>
-      <td>${esc(q.desc)}</td></tr>`).join("")}
-  </table></div>`;
-
-const throwsList = (list) => `
-  <h4>Throws</h4>
-  <ul class="throws">${list.map((t) => `<li>
-    ${t.code ? `<span class="code">${esc(t.code)}</span>` : `<span class="code plain">${esc(t.kind)}</span>`}
-    <span><strong>${esc(t.kind)}</strong> when ${esc(t.when)}</span></li>`).join("")}</ul>`;
-
-const extraTable = (t) => `
-  <div class="scroll"><table>
-    <tr>${t.head.map((h) => `<th>${esc(h)}</th>`).join("")}</tr>
-    ${t.rows.map((row) => `<tr>${row.map((c, i) => `<td>${i === 0 ? `<code>${esc(c)}</code>` : esc(c)}</td>`).join("")}</tr>`).join("")}
-  </table></div>`;
-
-const api = document.getElementById("api");
-const nav = document.getElementById("nav-groups");
-
-api.innerHTML = GROUPS.map((g) => `
-  <section id="${g.id}">
-    <h2>${esc(g.title)}</h2>
-    ${g.note ? `<p class="section-note">${esc(g.note)}</p>` : ""}
-    ${g.fns.map((f) => `
-      <article class="fn" id="${f.name}" data-name="${f.name.toLowerCase()}">
-        <h3><a href="#${f.name}">${f.name}</a></h3>
-        <code class="sig">${esc(f.sig)}</code>
-        <p>${esc(f.desc)}</p>
-        ${f.tags ? `<div class="tags">${f.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>` : ""}
-        ${f.params && f.params.length ? paramsTable(f.params) : ""}
-        ${f.table ? extraTable(f.table) : ""}
-        ${f.returns ? `<h4>Returns</h4><p class="returns">${esc(f.returns)}</p>` : ""}
-        ${f.throws && f.throws.length ? throwsList(f.throws) : ""}
-        <h4>Example</h4>
-        <pre><code>${esc(f.ex)}</code></pre>
-      </article>`).join("")}
-  </section>`).join("");
-
-nav.innerHTML =
-  `<h2><a href="#big-numbers">Big numbers</a></h2>` +
-  GROUPS.map((g) => `
-  <h2><a href="#${g.id}">${esc(g.title)}</a></h2>
-  <ul>${g.fns.map((f) => `<li data-name="${f.name.toLowerCase()}"><a href="#${f.name}">${f.name}</a></li>`).join("")}</ul>`).join("") +
-  `<h2><a href="#errors">Error handling</a></h2><h2><a href="#types">Types</a></h2>`;
-
-document.getElementById("search").addEventListener("input", (event) => {
-  const query = event.target.value.trim().toLowerCase();
-  let visible = 0;
-  document.querySelectorAll("[data-name]").forEach((el) => {
-    const match = el.dataset.name.includes(query);
-    el.hidden = !match;
-    if (match && el.classList.contains("fn")) visible++;
-  });
-  api.querySelectorAll("section").forEach((section) => {
-    section.hidden = !section.querySelector(".fn:not([hidden])");
-  });
-  document.getElementById("empty").hidden = visible > 0;
-});
-</script>
-</body>
-</html>
+formatCurrency("12345678901234567890.129", "USD");
+// "$12,345,678,901,234,567,890.13"</code></pre></article></div></section>
+<section id="faq"><div class="section-heading"><p class="eyebrow">FAQ</p><h2>Before you add another utility dependency.</h2></div><div class="faq"><details><summary>Does this package support TypeScript?</summary><p>Yes. It ships ESM and CommonJS type definitions, and public option and utility types are exported alongside functions.</p></details><details><summary>Can it handle bigint and very large numeric strings?</summary><p>Yes. Exact numeric utilities accept <code>number</code>, <code>bigint</code> and decimal strings. Return kinds follow the documented input rules.</p></details><details><summary>Does it work in Node.js, Bun and browsers?</summary><p>It supports Node.js 18+ and Bun 1.1.34+. Formatting and timezone helpers use standard <code>Intl</code> capabilities, so output follows the runtime locale data.</p></details><details><summary>Is this a replacement for every utility library?</summary><p>No. It is a focused collection of typed helpers for exact decimal arithmetic, formatting, text, collections, async flow and algorithms. Import the functions that fit your application.</p></details></div></section>
+<footer><span>MIT licensed · <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/LICENSE">License</a></span><span><a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/issues">Issues</a> · <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/releases">Releases</a> · <a href="https://www.npmjs.com/package/@fatdevcon/utilities">npm</a></span></footer>
+</main>
+<script src="api-data.js"></script><script>
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const params=p=>`<h5>Parameters</h5><div class="scroll"><table><tr><th>Name</th><th>Type</th><th>Default</th><th>Description</th></tr>${p.map(q=>`<tr><td class="name"><code>${esc(q.name)}</code></td><td class="type"><code>${esc(q.type)}</code></td><td>${q.def===undefined?"<em>required</em>":`<code>${esc(q.def)}</code>`}</td><td>${esc(q.desc)}</td></tr>`).join("")}</table></div>`;
+const throws=l=>`<h5>Throws</h5><ul class="throws">${l.map(t=>`<li>${t.code?`<span class="err">${esc(t.code)}</span>`:`<span class="err plain">${esc(t.kind)}</span>`}<strong>${esc(t.kind)}</strong> when ${esc(t.when)}</li>`).join("")}</ul>`;
+const extra=t=>`<div class="scroll"><table><tr>${t.head.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>${t.rows.map(r=>`<tr>${r.map((c,i)=>`<td>${i===0?`<code>${esc(c)}</code>`:esc(c)}</td>`).join("")}</tr>`).join("")}</table></div>`;
+const api=document.getElementById("api-reference"),nav=document.getElementById("nav-groups");
+api.innerHTML=GROUPS.map(g=>`<section id="${g.id}"><h3>${esc(g.title)}</h3>${g.note?`<p class="section-note">${esc(g.note)}</p>`:""}${g.fns.map(f=>`<article class="fn" id="${f.name}" data-name="${f.name.toLowerCase()}"><h4><a href="#${f.name}">${f.name}</a></h4><code class="sig">${esc(f.sig)}</code><p>${esc(f.desc)}</p>${f.tags?`<div class="tags">${f.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div>`:""}${f.params?.length?params(f.params):""}${f.table?extra(f.table):""}${f.returns?`<h5>Returns</h5><p>${esc(f.returns)}</p>`:""}${f.throws?.length?throws(f.throws):""}<h5>Example</h5><pre><code>${esc(f.ex)}</code></pre></article>`).join("")}</section>`).join("");
+nav.innerHTML=GROUPS.map(g=>`<h3><a href="#${g.id}">${esc(g.title)}</a></h3><ul>${g.fns.map(f=>`<li data-name="${f.name.toLowerCase()}"><a href="#${f.name}">${f.name}</a></li>`).join("")}</ul>`).join("");
+document.getElementById("search").addEventListener("input",e=>{const q=e.target.value.trim().toLowerCase();let n=0;document.querySelectorAll("[data-name]").forEach(el=>{const ok=el.dataset.name.includes(q);el.hidden=!ok;if(ok&&el.classList.contains("fn"))n++});api.querySelectorAll("section").forEach(s=>s.hidden=!s.querySelector(".fn:not([hidden])"));document.getElementById("empty").hidden=n>0});
+document.querySelectorAll("[data-copy]").forEach(b=>b.addEventListener("click",async()=>{const s=document.getElementById(b.dataset.copy);if(!s)return;try{await navigator.clipboard.writeText(s.textContent);b.textContent="Copied";setTimeout(()=>b.textContent="Copy",1400)}catch{b.textContent="Select text"}}));
+const links=[...document.querySelectorAll(".topnav a")],observer=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)links.forEach(a=>a.setAttribute("aria-current",String(a.getAttribute("href")===`#${e.target.id}`)))}),{rootMargin:"-35% 0px -60%"});document.querySelectorAll("main>section[id]").forEach(s=>observer.observe(s));
+</script></body></html>
