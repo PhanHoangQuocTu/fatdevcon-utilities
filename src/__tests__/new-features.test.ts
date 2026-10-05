@@ -7,6 +7,7 @@ import {
   camelCase, pascalCase, kebabCase, snakeCase, titleCase, escapeHtml, unescapeHtml,
   countWords, reverseText, slugify, removeDiacritics,
   formatDate, formatBytes, formatRelativeTime, formatDuration, isValidDate,
+  isTimeZone, getTimeZoneOffset, getTimeZoneName, formatInTimeZone,
   debounce, throttle, memoize, once, sleep, retry, withTimeout,
   getAbortError, isAbortError, wait, withRetry,
   isEmail, isUrl, isUuid,
@@ -53,6 +54,44 @@ describe("fixes to existing functions", () => {
     expect(slugify("Straße Ørsted Łódź Æon")).toBe("strasse-orsted-lodz-aeon");
     expect(slugify("Đặng Thị Tứ")).toBe("dang-thi-tu");
     expect(removeDiacritics("Crème Brûlée")).toBe("Creme Brulee");
+  });
+});
+
+describe("timezone utilities", () => {
+  const winter = new Date("2026-01-15T12:34:56.789Z");
+  const summer = new Date("2026-07-15T12:34:56.789Z");
+
+  test("recognizes runtime IANA time zones", () => {
+    expect(isTimeZone("Asia/Ho_Chi_Minh")).toBe(true);
+    expect(isTimeZone("America/New_York")).toBe(true);
+    expect(isTimeZone("Not/A_Timezone")).toBe(false);
+    expect(isTimeZone(7)).toBe(false);
+  });
+
+  test("gets offsets in minutes and observes daylight saving time", () => {
+    expect(getTimeZoneOffset(winter, "Asia/Ho_Chi_Minh")).toBe(420);
+    expect(getTimeZoneOffset(winter, "America/New_York")).toBe(-300);
+    expect(getTimeZoneOffset(summer, "America/New_York")).toBe(-240);
+    expect(getTimeZoneOffset(winter, "UTC")).toBe(0);
+  });
+
+  test("formats and names zones through Intl", () => {
+    const options: Intl.DateTimeFormatOptions = {
+      year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+    };
+    const expected = new Intl.DateTimeFormat("en-GB", { ...options, timeZone: "Asia/Ho_Chi_Minh" }).format(winter);
+    expect(formatInTimeZone(winter, "Asia/Ho_Chi_Minh", "en-GB", options)).toBe(expected);
+
+    const expectedName = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", timeZoneName: "shortOffset" })
+      .formatToParts(winter)
+      .find(({ type }) => type === "timeZoneName")?.value;
+    expect(getTimeZoneName(winter, "America/New_York", "en-US", "shortOffset")).toBe(expectedName);
+  });
+
+  test("rejects invalid dates and time zones", () => {
+    expect(() => getTimeZoneOffset("nope", "UTC")).toThrow(RangeError);
+    expect(() => getTimeZoneOffset(winter, "Not/A_Timezone")).toThrow(RangeError);
+    expect(() => formatInTimeZone(winter, null as any)).toThrow(TypeError);
   });
 });
 

@@ -5,12 +5,13 @@
 [![types](https://img.shields.io/npm/types/@fatdevcon/utilities.svg?style=flat-square)](https://www.npmjs.com/package/@fatdevcon/utilities)
 [![license](https://img.shields.io/npm/l/@fatdevcon/utilities.svg?style=flat-square)](LICENSE)
 
-Typed utilities for everyday JavaScript and TypeScript: exact decimal math that also works on `bigint` and numeric strings of any practical size, locale-aware number, currency and date formatting, Unicode-safe text and case helpers, array and object helpers, debounce / throttle / cancellable retry, validators, and classic sort / search algorithms.
+Typed utilities for everyday JavaScript and TypeScript: exact decimal math that also works on `bigint` and numeric strings of any practical size, locale-aware number, currency, date and timezone formatting, Unicode-safe text and case helpers, array and object helpers, debounce / throttle / cancellable retry, validators, and classic sort / search algorithms.
 
 **[Documentation](https://phanhoangquoctu.github.io/fatdevcon-utilities/)** – every function with its signature, options and examples.
 
 - **Locale-aware formatting** – compact numbers, percentages, currencies, units and byte sizes, built on `Intl`
 - **Unicode-safe text** – truncating, masking and shortening count user-perceived characters, so emoji and accents are never cut in half
+- **Timezone-aware** – validate IANA zones, format an instant anywhere, get localized names and DST-aware UTC offsets through `Intl`
 - **Precise, big-number math** – `summary(0.1, 0.2)` is `0.3`, and `bigint` or numeric-string inputs keep every digit: `multiply("1e-400", "1e-400")`, `factorial(1000n)`, `isPrime(2n ** 127n - 1n)`
 - **No silent wrong answers** – overflow, underflow and bad input throw `NumericTypeError` / `NumericRangeError` with a stable `code`, never `Infinity`, `NaN` or a quiet `0`
 - **Everyday helpers** – `camelCase`, `deepMerge`, `pick` / `omit`, `debounce`, `throttle`, abort-aware `wait` / `withRetry`, `formatRelativeTime`, `isEmail` and more, with no lodash required
@@ -92,6 +93,7 @@ The tables below are a quick reference; the [documentation site](https://phanhoa
 - [Currency metadata](#currency-metadata)
 - [Text](#text)
 - [Dates](#dates)
+- [Time zones](#time-zones)
 - [Math](#math)
 - [Integer math](#integer-math)
 - [Statistics and random](#statistics-and-random)
@@ -178,6 +180,29 @@ maskString("user@example.com", { visibleStart: 2, visibleEnd: 4 }); // "us******
 | `formatRelativeTime(date, options?)` | "3 hours ago" / "in 2 days" via `Intl.RelativeTimeFormat`. Options: `locale`, `now`, `numeric` | `formatRelativeTime(yesterday)` → `"yesterday"` |
 | `formatDuration(milliseconds, options?)` | Compact duration; `maxUnits` keeps the largest N units | `formatDuration(3723000)` → `"1h 2m 3s"` |
 | `isValidDate(value)` | `true` for a `Date` that holds a real moment | `isValidDate(new Date("nope"))` → `false` |
+
+### Time zones
+
+Timezone helpers use the runtime's IANA data through `Intl` and operate on a moment in time. Offsets are in minutes east of UTC, so `Asia/Ho_Chi_Minh` is `420`; daylight-saving zones can return a different offset at different dates.
+
+| Function | Description | Example |
+| --- | --- | --- |
+| `isTimeZone(value)` | Test whether the runtime recognizes an IANA timezone | `isTimeZone("Asia/Ho_Chi_Minh")` → `true` |
+| `getTimeZoneOffset(date, timeZone)` | DST-aware UTC offset in minutes, positive east of UTC | `getTimeZoneOffset(date, "America/New_York")` → `-300` in winter |
+| `getTimeZoneName(date, timeZone, locale?, style?)` | Localized name or GMT offset label | `getTimeZoneName(date, "Asia/Ho_Chi_Minh", "en-US", "shortOffset")` → `"GMT+7"` |
+| `formatInTimeZone(date, timeZone, locale?, options?)` | Format an instant in an IANA timezone with `Intl.DateTimeFormat` | `formatInTimeZone(date, "Asia/Ho_Chi_Minh")` |
+
+```typescript
+const instant = new Date("2026-01-15T12:00:00Z");
+
+getTimeZoneOffset(instant, "Asia/Ho_Chi_Minh"); // 420
+getTimeZoneOffset(instant, "America/New_York"); // -300
+formatInTimeZone(instant, "Asia/Ho_Chi_Minh", "en-GB", {
+  dateStyle: "short",
+  timeStyle: "short",
+  hourCycle: "h23",
+}); // "15/01/2026, 19:00"
+```
 
 ### Math
 
@@ -380,7 +405,7 @@ try {
 ### Types
 
 ```typescript
-import type { Comparator, KeySelector, NumericInput, DivideOptions, RoundingMode, NumericErrorCode, ErrorType, AbortErrorType, WithRetryParameters } from "@fatdevcon/utilities";
+import type { Comparator, KeySelector, NumericInput, DivideOptions, RoundingMode, NumericErrorCode, ErrorType, AbortErrorType, WithRetryParameters, DateInput, TimeZoneNameStyle } from "@fatdevcon/utilities";
 
 type Comparator<T> = (a: T, b: T) => number; // negative, zero or positive, like Array.prototype.sort
 type KeySelector<T> = (item: T) => any;
@@ -390,11 +415,18 @@ interface DivideOptions { precision?: number } // significant digits, 1 to 10000
 type ErrorType<Name extends string = "Error"> = Error & { name: Name };
 type AbortErrorType = ErrorType<"AbortError">;
 interface WithRetryParameters { delay?: number | ({ count, error }) => number; retryCount?: number; shouldRetry?: ({ count, error }) => boolean | Promise<boolean>; signal?: AbortSignal }
+type DateInput = Date | string | number;
+type TimeZoneNameStyle = "short" | "long" | "shortOffset" | "longOffset" | "shortGeneric" | "longGeneric";
 ```
 
-The error classes `NumericTypeError` and `NumericRangeError` are exported as values. Option types are exported too: `CompactNumberOptions`, `PercentFormatOptions`, `CurrencyFormatOptions`, `UnitFormatOptions`, `BytesFormatOptions`, `TruncateTextOptions`, `ShortenStringOptions`, `MaskStringOptions`, `RelativeTimeOptions`, `DurationOptions`, `DebounceOptions`, `ThrottleOptions`, `MemoizeOptions`, `RetryOptions`, `WithRetryParameters`, `IsUrlOptions`.
+The error classes `NumericTypeError` and `NumericRangeError` are exported as values. Option types are exported too: `CompactNumberOptions`, `PercentFormatOptions`, `CurrencyFormatOptions`, `UnitFormatOptions`, `BytesFormatOptions`, `TruncateTextOptions`, `ShortenStringOptions`, `MaskStringOptions`, `RelativeTimeOptions`, `DurationOptions`, `DebounceOptions`, `ThrottleOptions`, `MemoizeOptions`, `RetryOptions`, `WithRetryParameters`, `TimeZoneNameStyle`, `IsUrlOptions`.
 
 ## Changelog
+
+### 0.3.2
+
+- Added a dedicated Time zones category: `isTimeZone`, `getTimeZoneOffset`, `getTimeZoneName` and `formatInTimeZone`
+- Timezone offsets are DST-aware and expressed as minutes east of UTC; formatting and localized labels use the runtime's `Intl` / IANA data without adding a dependency
 
 ### 0.3.1
 

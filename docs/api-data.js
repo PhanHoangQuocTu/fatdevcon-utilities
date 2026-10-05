@@ -471,6 +471,34 @@ isValidDate(new Date("nope")); // false` },
   },
   /* ------------------------------------------------------------------ */
   {
+    id: "time-zones", title: "Time zones",
+    note: "Timezone helpers use the runtime's Intl / IANA timezone data and always operate on an instant. Offsets are minutes east of UTC, so Asia/Ho_Chi_Minh is 420 and America/New_York is -300 in winter. Results follow daylight-saving transitions at the supplied date.",
+    fns: [
+      { name: "isTimeZone", sig: "isTimeZone(value: unknown): value is string",
+        desc: "True when value is an IANA timezone identifier recognized by the current runtime, including UTC. Never throws.",
+        params: [p("value", "unknown", "Anything to test.")], returns: "boolean.",
+        ex: `isTimeZone("Asia/Ho_Chi_Minh"); // true
+isTimeZone("Not/A_Timezone");   // false` },
+      { name: "getTimeZoneOffset", sig: "getTimeZoneOffset(date: DateInput, timeZone: string): number",
+        desc: "UTC offset in minutes at date. Positive is east of UTC; the answer changes automatically when the zone observes daylight saving time.",
+        params: [p("date", "DateInput", "The instant to inspect."), p("timeZone", "string", "IANA timezone identifier, such as Asia/Ho_Chi_Minh.")], returns: "number of minutes east of UTC.", throws: [e("TypeError", "", "date is the wrong type or timeZone is not a string"), e("RangeError", "", "date or timeZone is invalid")],
+        ex: `getTimeZoneOffset(new Date("2026-01-15T12:00:00Z"), "Asia/Ho_Chi_Minh"); // 420
+getTimeZoneOffset(new Date("2026-01-15T12:00:00Z"), "America/New_York"); // -300
+getTimeZoneOffset(new Date("2026-07-15T12:00:00Z"), "America/New_York"); // -240` },
+      { name: "getTimeZoneName", run: false, sig: "getTimeZoneName(date: DateInput, timeZone: string, locale?: Intl.LocalesArgument, style?: TimeZoneNameStyle): string",
+        desc: "Returns the localized zone label at date: a short or long name, a generic name, or a GMT offset label. The availability of abbreviations depends on the runtime locale data.",
+        params: [p("date", "DateInput", "The instant to inspect."), p("timeZone", "string", "IANA timezone identifier."), p("locale", LOCALE, "Language used for the label.", '"en-US"'), p("style", "TimeZoneNameStyle", '"short", "long", "shortOffset", "longOffset", "shortGeneric" or "longGeneric".', '"short"')], returns: "string.", throws: [e("TypeError", "", "date is the wrong type or timeZone is not a string"), e("RangeError", "", "date or timeZone is invalid")],
+        ex: `getTimeZoneName(new Date(), "Asia/Ho_Chi_Minh", "en-US", "shortOffset"); // e.g. "GMT+7"` },
+      { name: "formatInTimeZone", run: false, sig: "formatInTimeZone(date: DateInput, timeZone: string, locale?: Intl.LocalesArgument, options?: Intl.DateTimeFormatOptions): string",
+        desc: "Formats an instant in timeZone with Intl.DateTimeFormat. It defaults to a medium date and time; pass any Intl options for a custom result. timeZone in options is ignored in favor of the required argument.",
+        params: [p("date", "DateInput", "The instant to format."), p("timeZone", "string", "IANA timezone identifier."), p("locale", LOCALE, "Language used for formatting.", '"en-US"'), p("options", "Intl.DateTimeFormatOptions", "Formatting options. Default: medium date and time.", '{ dateStyle: "medium", timeStyle: "medium" }')], returns: "string.", throws: [e("TypeError", "", "date is the wrong type or timeZone is not a string"), e("RangeError", "", "date or timeZone is invalid")],
+        ex: `formatInTimeZone(new Date("2026-01-15T12:00:00Z"), "Asia/Ho_Chi_Minh", "en-GB", {
+  dateStyle: "short", timeStyle: "short", hourCycle: "h23",
+}); // 15/01/2026, 19:00` },
+    ],
+  },
+  /* ------------------------------------------------------------------ */
+  {
     id: "arrays", title: "Arrays",
     note: "Every function returns a new value and throws a TypeError when the first argument is not an array or a callback is not a function.",
     fns: [

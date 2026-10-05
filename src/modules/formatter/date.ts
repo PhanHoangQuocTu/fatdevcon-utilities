@@ -1,28 +1,10 @@
-import { format, FormatOptions, parseISO } from "date-fns";
+import { format, FormatOptions } from "date-fns";
 import { ExactDecimal, outOfRange, toDecimal } from "../../utils/numeric";
 import type { NumericInput } from "../../utils/numeric";
+import { toValidDate } from "../../utils/date";
+import type { DateInput } from "../../utils/date";
 
-export type DateInput = Date | string | number;
-
-const toDate = (date: unknown): Date => {
-  if (date instanceof Date) return date;
-  if (typeof date === "number") return new Date(date);
-  if (typeof date === "string") {
-    // parseISO reads date-only strings ("2026-10-03") as local time, whereas
-    // new Date() reads them as UTC, which shifts the day in negative offsets.
-    const iso = parseISO(date);
-    return Number.isNaN(iso.getTime()) ? new Date(date) : iso;
-  }
-  throw new TypeError("date must be a Date, string or number");
-};
-
-const toValidDate = (date: unknown): Date => {
-  const dateObj = toDate(date);
-  if (Number.isNaN(dateObj.getTime())) {
-    throw new RangeError(`Invalid date: ${String(date)}`);
-  }
-  return dateObj;
-};
+export type { DateInput } from "../../utils/date";
 
 /** True for a `Date` instance that holds a real moment (not `Invalid Date`). */
 export function isValidDate(value: unknown): value is Date {
