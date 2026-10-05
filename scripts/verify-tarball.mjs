@@ -29,7 +29,7 @@ probe = probe.replace('new URL("../package.json", import.meta.url)', 'new URL(".
 writeFileSync(join(consumer, "probe.mjs"), probe);
 console.log(run(process.execPath, ["probe.mjs"], consumer).trim());
 console.log(run("bun", ["run", "probe.mjs"], consumer).trim());
-const fixture = `import { formatCurrency, shortenString, getCountryCurrencies, summary, factorial, divide, NumericRangeError, type Comparator, type BytesFormatOptions, type NumericInput } from "@fatdevcon/utilities";
+const fixture = `import { formatCurrency, shortenString, getCountryCurrencies, summary, factorial, divide, NumericRangeError, getAbortError, isAbortError, wait, withRetry, type Comparator, type BytesFormatOptions, type NumericInput, type AbortErrorType, type WithRetryParameters } from "@fatdevcon/utilities";
 const value: string = formatCurrency(1, "USD");
 const countries: string[] = getCountryCurrencies("VN");
 const compare: Comparator<number> = (a, b) => a - b;
@@ -46,10 +46,15 @@ const asString: string = summary("1", 2);
 const factorialBig: bigint = factorial(25n);
 const quotient: string = divide(10n, 3n, { precision: 5 });
 const input: NumericInput = "1e30";
+const abortError: AbortErrorType = getAbortError();
+const retryOptions: WithRetryParameters = { retryCount: 1, delay: ({ count }) => count * 10 };
+const pendingWait: Promise<void> = wait(10);
+const retried: Promise<string> = withRetry(async () => "ok", retryOptions);
+if (isAbortError(abortError)) { void abortError.message; }
 // @ts-expect-error a number pair returns a number, not a string
 const wrongKind: string = summary(1, 2);
 try { divide(1, 0); } catch (error) { if (error instanceof NumericRangeError) { const code: string = error.code; void code; } }
-void [countries, compare, options, badOptions, asNumber, asBigint, asString, factorialBig, quotient, input, wrongKind];
+void [countries, compare, options, badOptions, asNumber, asBigint, asString, factorialBig, quotient, input, abortError, retryOptions, pendingWait, retried, wrongKind];
 `;
 for (const ext of ["mts", "cts"]) writeFileSync(join(consumer, "consumer." + ext), fixture);
 console.log(run(process.execPath, [join(root, "node_modules/typescript-native/bin/tsc"),

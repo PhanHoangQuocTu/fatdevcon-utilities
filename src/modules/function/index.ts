@@ -3,6 +3,123 @@ import { assertFiniteNumber, assertFunction } from "../../utils/validate";
 type AnyFunction = (...args: any[]) => any;
 type Timer = ReturnType<typeof setTimeout>;
 
+/** An Error with a specific `name` property. */
+export type ErrorType<Name extends string = "Error"> = Error & { name: Name };
+
+/** The error used when an operation is aborted. */
+export type AbortErrorType = ErrorType<"AbortError">;
+
+/** Returns an AbortError, preserving an explicit reason from the signal when available. */
+export function getAbortError(signal?: AbortSignal | undefined): AbortErrorType {
+  if (signal?.reason) return signal.reason as AbortErrorType;
+  if (typeof DOMException === "function") {
+    return new DOMException("This operation was aborted", "AbortError") as AbortErrorType;
+  }
+  const error = new Error("This operation was aborted") as AbortErrorType;
+  error.name = "AbortError";
+  return error;
+}
+
+/** True when `error` is an error produced by an aborted operation. */
+export function isAbortError(error: unknown): error is AbortErrorType {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "name" in error &&
+    error.name === "AbortError"
+  );
+}
+
+/** Resolves after `time` ms, or rejects with an AbortError when `signal` is aborted. */
+export async function wait(
+  time: number,
+  { signal }: { signal?: AbortSignal | undefined } = {},
+): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(getAbortError(signal));
+      return;
+    }
+
+    const cleanup = () => signal?.removeEventListener("abort", onAbort);
+    const timeout = setTimeout(() => {
+      cleanup();
+      resolve();
+    }, time);
+    const onAbort = () => {
+      clearTimeout(timeout);
+      cleanup();
+      reject(getAbortError(signal));
+    };
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
+}
+
+export type WithRetryParameters = {
+  /** The delay (in ms) between retries. */
+  delay?: ((config: { count: number; error: Error }) => number) | number | undefined;
+  /** The maximum number of times to retry. */
+  retryCount?: number | undefined;
+  /** Whether to retry when an error is thrown. */
+  shouldRetry?: ((config: { count: number; error: Error }) => Promise<boolean> | boolean) | undefined;
+  /** AbortSignal to cancel retries. */
+  signal?: AbortSignal | undefined;
+};
+
+export type WithRetryErrorType = ErrorType;
+
+/** Calls an async operation again after failures, with optional delays and cancellation. */
+export function withRetry<Data>(
+  fn: () => Promise<Data>,
+  {
+    delay: delay_ = 100,
+    retryCount = 2,
+    shouldRetry = () => true,
+    signal,
+  }: WithRetryParameters = {},
+): Promise<Data> {
+  return new Promise<Data>((resolve, reject) => {
+    const attemptRetry = async ({ count = 0 } = {}): Promise<void> => {
+      if (signal?.aborted) {
+        reject(getAbortError(signal));
+        return;
+      }
+
+      const retry = async ({ error }: { error: Error }): Promise<void> => {
+        const delay = typeof delay_ === "function" ? delay_({ count, error }) : delay_;
+        if (delay) {
+          try {
+            await wait(delay, { signal });
+          } catch (error) {
+            reject(error);
+            return;
+          }
+        }
+        return attemptRetry({ count: count + 1 });
+      };
+
+      try {
+        const data = await fn();
+        resolve(data);
+      } catch (error) {
+        if (signal?.aborted) {
+          reject(getAbortError(signal));
+          return;
+        }
+        if (isAbortError(error)) {
+          reject(error);
+          return;
+        }
+        if (count < retryCount && (await shouldRetry({ count, error: error as Error }))) {
+          return retry({ error: error as Error });
+        }
+        reject(error);
+      }
+    };
+    void attemptRetry().catch(reject);
+  });
+}
+
 const assertWait = (value: number, name: string): void => {
   assertFiniteNumber(value, name);
   if (value < 0) throw new RangeError(`${name} must be non-negative`);

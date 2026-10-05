@@ -5,7 +5,7 @@
 [![types](https://img.shields.io/npm/types/@fatdevcon/utilities.svg?style=flat-square)](https://www.npmjs.com/package/@fatdevcon/utilities)
 [![license](https://img.shields.io/npm/l/@fatdevcon/utilities.svg?style=flat-square)](LICENSE)
 
-Typed utilities for everyday JavaScript and TypeScript: exact decimal math that also works on `bigint` and numeric strings of any practical size, locale-aware number, currency and date formatting, Unicode-safe text and case helpers, array and object helpers, debounce / throttle / retry, validators, and classic sort / search algorithms.
+Typed utilities for everyday JavaScript and TypeScript: exact decimal math that also works on `bigint` and numeric strings of any practical size, locale-aware number, currency and date formatting, Unicode-safe text and case helpers, array and object helpers, debounce / throttle / cancellable retry, validators, and classic sort / search algorithms.
 
 **[Documentation](https://phanhoangquoctu.github.io/fatdevcon-utilities/)** – every function with its signature, options and examples.
 
@@ -13,7 +13,7 @@ Typed utilities for everyday JavaScript and TypeScript: exact decimal math that 
 - **Unicode-safe text** – truncating, masking and shortening count user-perceived characters, so emoji and accents are never cut in half
 - **Precise, big-number math** – `summary(0.1, 0.2)` is `0.3`, and `bigint` or numeric-string inputs keep every digit: `multiply("1e-400", "1e-400")`, `factorial(1000n)`, `isPrime(2n ** 127n - 1n)`
 - **No silent wrong answers** – overflow, underflow and bad input throw `NumericTypeError` / `NumericRangeError` with a stable `code`, never `Infinity`, `NaN` or a quiet `0`
-- **Everyday helpers** – `camelCase`, `deepMerge`, `pick` / `omit`, `debounce`, `throttle`, `retry`, `formatRelativeTime`, `isEmail` and more, with no lodash required
+- **Everyday helpers** – `camelCase`, `deepMerge`, `pick` / `omit`, `debounce`, `throttle`, abort-aware `wait` / `withRetry`, `formatRelativeTime`, `isEmail` and more, with no lodash required
 - **Typed, ESM and CommonJS** – type definitions included, tree-shakeable, inputs validated, nothing mutates what you pass in
 
 ## Installation
@@ -318,13 +318,24 @@ Time arguments are milliseconds; callbacks must be functions.
 | `once(fn)` | Run `fn` on the first call only |
 | `sleep(ms)` | Promise that resolves after `ms` |
 | `retry(fn, options?)` | Retry a failing function: `retries`, `delayMs`, `factor` (backoff), `shouldRetry` |
+| `wait(time, { signal }?)` | Promise that resolves after `time`, or rejects with `AbortError` when its signal aborts |
+| `withRetry(fn, options?)` | Abort-aware async retry: `delay`, `retryCount`, async or sync `shouldRetry`, `signal` |
+| `getAbortError(signal?)` / `isAbortError(error)` | Create or identify the standard cancellation error |
 | `withTimeout(promise, ms, message?)` | Reject with a `TimeoutError` if the promise is too slow |
 
 ```typescript
 const onResize = debounce(recalculateLayout, 200);
 const data = await retry(() => fetchJson(url), { retries: 4, delayMs: 200, factor: 2 });
+const controller = new AbortController();
+const resilientData = await withRetry(() => fetchJson(url), {
+  delay: ({ count }) => 200 * 2 ** count,
+  retryCount: 4,
+  signal: controller.signal,
+});
 const result = await withTimeout(fetch(url), 5000);
 ```
+
+`withRetry` retries twice after the initial call by default, waiting 100 ms between attempts. It does not retry an error whose `name` is `"AbortError"`; aborting its `signal` also stops a pending delay and rejects with the signal's `reason` (when present). Use `wait(time, { signal })` for the same cancellable delay behavior.
 
 ### Validators
 
@@ -369,18 +380,27 @@ try {
 ### Types
 
 ```typescript
-import type { Comparator, KeySelector, NumericInput, DivideOptions, RoundingMode, NumericErrorCode } from "@fatdevcon/utilities";
+import type { Comparator, KeySelector, NumericInput, DivideOptions, RoundingMode, NumericErrorCode, ErrorType, AbortErrorType, WithRetryParameters } from "@fatdevcon/utilities";
 
 type Comparator<T> = (a: T, b: T) => number; // negative, zero or positive, like Array.prototype.sort
 type KeySelector<T> = (item: T) => any;
 type NumericInput = number | bigint | string;
 type RoundingMode = "half-up" | "half-down" | "half-even" | "up" | "down" | "ceil" | "floor";
 interface DivideOptions { precision?: number } // significant digits, 1 to 10000, default 40
+type ErrorType<Name extends string = "Error"> = Error & { name: Name };
+type AbortErrorType = ErrorType<"AbortError">;
+interface WithRetryParameters { delay?: number | ({ count, error }) => number; retryCount?: number; shouldRetry?: ({ count, error }) => boolean | Promise<boolean>; signal?: AbortSignal }
 ```
 
-The error classes `NumericTypeError` and `NumericRangeError` are exported as values. Option types are exported too: `CompactNumberOptions`, `PercentFormatOptions`, `CurrencyFormatOptions`, `UnitFormatOptions`, `BytesFormatOptions`, `TruncateTextOptions`, `ShortenStringOptions`, `MaskStringOptions`, `RelativeTimeOptions`, `DurationOptions`, `DebounceOptions`, `ThrottleOptions`, `MemoizeOptions`, `RetryOptions`, `IsUrlOptions`.
+The error classes `NumericTypeError` and `NumericRangeError` are exported as values. Option types are exported too: `CompactNumberOptions`, `PercentFormatOptions`, `CurrencyFormatOptions`, `UnitFormatOptions`, `BytesFormatOptions`, `TruncateTextOptions`, `ShortenStringOptions`, `MaskStringOptions`, `RelativeTimeOptions`, `DurationOptions`, `DebounceOptions`, `ThrottleOptions`, `MemoizeOptions`, `RetryOptions`, `WithRetryParameters`, `IsUrlOptions`.
 
 ## Changelog
+
+### 0.3.1
+
+- Added abort-aware async utilities: `getAbortError`, `isAbortError`, `wait` and `withRetry`, plus `ErrorType`, `AbortErrorType`, `WithRetryParameters` and `WithRetryErrorType` for typed cancellation and retry handling
+- `withRetry` supports a numeric or calculated delay, asynchronous retry decisions, configurable retry count and `AbortSignal` cancellation; it preserves `signal.reason` and never retries `AbortError`
+- Expanded npm search keywords and the README/API reference with cancellation and retry guidance
 
 ### 0.3.0
 

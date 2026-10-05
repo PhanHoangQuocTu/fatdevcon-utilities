@@ -6,7 +6,7 @@ const require = createRequire(import.meta.url);
 const esm = await import("@fatdevcon/utilities");
 const cjs = require("@fatdevcon/utilities");
 const metadata = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
-assert.equal(metadata.version, "0.3.0");
+assert.equal(metadata.version, "0.3.1");
 assert.equal(typeof Intl.Segmenter, "function");
 for (const api of [esm, cjs]) {
   assert.equal(api.formatCompactNumber(12500), "12.5K");
@@ -26,6 +26,8 @@ for (const api of [esm, cjs]) {
   assert.deepEqual(api.deepMerge({ a: { b: 1 } }, { a: { c: 2 } }), { a: { b: 1, c: 2 } });
   assert.equal(api.isEmail("user@example.com"), true);
   assert.equal(typeof api.debounce, "function");
+  assert.equal(typeof api.withRetry, "function");
+  assert.equal(typeof api.wait, "function");
   assert.equal(api.summary("100000000000000000000000000000", "1"), "100000000000000000000000000001");
   assert.equal(api.multiply(2n ** 64n, 2n ** 64n), 2n ** 128n);
   assert.equal(api.factorial(25n), 15511210043330985984000000n);

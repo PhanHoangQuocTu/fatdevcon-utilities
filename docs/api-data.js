@@ -732,6 +732,26 @@ window.addEventListener("scroll", onScroll);` },
         params: [p("fn", "Function", "The function to run once.")], returns: "A function returning the first result.", throws: [e("TypeError", "", "fn is not a function")],
         ex: `const init = once(() => connect());
 init(); init(); // connect() runs once` },
+      { name: "getAbortError", run: false, sig: "getAbortError(signal?: AbortSignal): AbortErrorType",
+        desc: "Returns signal.reason when it is present; otherwise creates an Error named AbortError with the standard abort message.",
+        params: [p("signal", "AbortSignal", "An optional signal whose abort reason is preserved.", "undefined")], returns: "AbortErrorType.",
+        ex: `const controller = new AbortController();
+controller.abort();
+getAbortError(controller.signal).name; // "AbortError"` },
+      { name: "isAbortError", run: false, sig: "isAbortError(error: unknown): error is AbortErrorType",
+        desc: "Type guard for errors whose name is AbortError.",
+        params: [p("error", "unknown", "The caught value to inspect.")], returns: "boolean; narrows to AbortErrorType when true.",
+        ex: `try {
+  await fetch(url, { signal });
+} catch (error) {
+  if (isAbortError(error)) { /* cancellation is expected */ }
+}` },
+      { name: "wait", run: false, sig: "wait(time: number, options?: { signal?: AbortSignal }): Promise<void>",
+        desc: "Resolves after time milliseconds. If the signal aborts before then, clears its timer and rejects with the signal reason or an AbortError.",
+        params: [p("time", "number", "Delay in milliseconds."), p("options.signal", "AbortSignal", "Cancels the pending wait.", "undefined")], returns: "Promise<void>.",
+        ex: `const controller = new AbortController();
+const pending = wait(1000, { signal: controller.signal });
+controller.abort(); // pending rejects with AbortError` },
       { name: "sleep", run: false, sig: "sleep(ms: number): Promise<void>", desc: "Resolves after ms milliseconds.",
         params: [p("ms", "number", "Delay in milliseconds, 0 or more.")], returns: "Promise<void>.", throws: [e("TypeError", "", "ms is not a finite number"), e("RangeError", "", "ms is negative")],
         ex: `await sleep(500);` },
@@ -744,6 +764,14 @@ init(); init(); // connect() runs once` },
   delayMs: 200,
   factor: 2, // waits 200, 400, 800, 1600 ms
   shouldRetry: (error) => !(error instanceof AuthError),
+});` },
+      { name: "withRetry", run: false, sig: "withRetry<T>(fn: () => Promise<T>, options?: WithRetryParameters): Promise<T>",
+        desc: "Retries a rejected async operation. It waits 100 ms and retries twice by default; an aborted signal or an AbortError stops immediately.",
+        params: [p("fn", "() => Promise<T>", "The async operation to attempt."), p("options.delay", "number | ({ count, error }) => number", "Delay before each retry, or a callback that chooses it.", "100"), p("options.retryCount", "number", "Maximum retries after the first attempt.", "2"), p("options.shouldRetry", "({ count, error }) => boolean | Promise<boolean>", "Return false to stop and reject with the current error.", "always retry"), p("options.signal", "AbortSignal", "Cancels a pending retry or prevents the next attempt.", "undefined")], returns: "Promise<T>, the first successful result.",
+        ex: `const data = await withRetry(() => fetchJson(url), {
+  delay: ({ count }) => 200 * 2 ** count,
+  retryCount: 4,
+  signal: controller.signal,
 });` },
       { name: "withTimeout", run: false, sig: "withTimeout<T>(promise: PromiseLike<T>, ms: number, message?: string): Promise<T>",
         desc: 'Rejects with an Error named "TimeoutError" when the promise is not settled within ms. It does not cancel the underlying work.',

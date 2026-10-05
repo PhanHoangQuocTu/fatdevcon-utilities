@@ -8,6 +8,7 @@ import {
   countWords, reverseText, slugify, removeDiacritics,
   formatDate, formatBytes, formatRelativeTime, formatDuration, isValidDate,
   debounce, throttle, memoize, once, sleep, retry, withTimeout,
+  getAbortError, isAbortError, wait, withRetry,
   isEmail, isUrl, isUuid,
 } from "../index";
 
@@ -344,6 +345,33 @@ describe("function utilities", () => {
     expect(done).toHaveBeenCalled();
     expect(() => sleep(-1)).toThrow(RangeError);
   });
+  test("abort helpers identify and preserve abort errors", () => {
+    const controller = new AbortController();
+    const reason = new Error("stopped");
+    reason.name = "AbortError";
+    controller.abort(reason);
+    expect(getAbortError(controller.signal)).toBe(reason);
+    expect(isAbortError(reason)).toBe(true);
+    expect(isAbortError(new Error("other"))).toBe(false);
+
+    const generated = getAbortError();
+    expect(generated.name).toBe("AbortError");
+    expect(generated.message).toBe("This operation was aborted");
+  });
+  test("wait resolves or rejects when aborted", async () => {
+    const done = wait(50);
+    await jest.advanceTimersByTimeAsync(50);
+    await expect(done).resolves.toBeUndefined();
+
+    const controller = new AbortController();
+    const stopped = wait(100, { signal: controller.signal });
+    controller.abort();
+    await expect(stopped).rejects.toMatchObject({ name: "AbortError" });
+
+    const alreadyAborted = new AbortController();
+    alreadyAborted.abort();
+    await expect(wait(1, { signal: alreadyAborted.signal })).rejects.toMatchObject({ name: "AbortError" });
+  });
   test("retry succeeds after failures, with backoff", async () => {
     const fn = jest.fn()
       .mockRejectedValueOnce(new Error("1"))
@@ -364,6 +392,37 @@ describe("function utilities", () => {
     await expect(retry(stop, { retries: 5, shouldRetry: () => false })).rejects.toThrow("fatal");
     expect(stop).toHaveBeenCalledTimes(1);
     await expect(retry(() => 1, { retries: -1 })).rejects.toThrow(RangeError);
+  });
+  test("withRetry retries async work with its configured delay", async () => {
+    const fn = jest.fn()
+      .mockRejectedValueOnce(new Error("first"))
+      .mockRejectedValueOnce(new Error("second"))
+      .mockResolvedValue("ok");
+    const delays = jest.fn(({ count }: { count: number }) => (count + 1) * 50);
+    const shouldRetry = jest.fn(async () => true);
+    const result = withRetry(fn, { delay: delays, retryCount: 2, shouldRetry });
+    await jest.advanceTimersByTimeAsync(50);
+    await jest.advanceTimersByTimeAsync(100);
+    await expect(result).resolves.toBe("ok");
+    expect(fn).toHaveBeenCalledTimes(3);
+    expect(delays).toHaveBeenNthCalledWith(1, expect.objectContaining({ count: 0 }));
+    expect(delays).toHaveBeenNthCalledWith(2, expect.objectContaining({ count: 1 }));
+    expect(shouldRetry).toHaveBeenCalledTimes(2);
+  });
+  test("withRetry stops for abort errors and aborted delays", async () => {
+    const abortError = new Error("cancelled");
+    abortError.name = "AbortError";
+    const noRetry = jest.fn().mockRejectedValue(abortError);
+    await expect(withRetry(noRetry)).rejects.toBe(abortError);
+    expect(noRetry).toHaveBeenCalledTimes(1);
+
+    const controller = new AbortController();
+    const fn = jest.fn().mockRejectedValue(new Error("retry"));
+    const result = withRetry(fn, { delay: 100, signal: controller.signal });
+    await Promise.resolve();
+    controller.abort();
+    await expect(result).rejects.toMatchObject({ name: "AbortError" });
+    expect(fn).toHaveBeenCalledTimes(1);
   });
   test("withTimeout", async () => {
     const slow = new Promise((resolve) => setTimeout(() => resolve("late"), 1000));
