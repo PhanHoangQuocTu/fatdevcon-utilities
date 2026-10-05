@@ -1,223 +1,256 @@
-# @fatdevcon/utilities v0.2.2
+# @fatdevcon/utilities
 
-[![npm version](https://img.shields.io/npm/v/@fatdevcon/utilities.svg)](https://www.npmjs.com/package/@fatdevcon/utilities)
+[![npm version](https://img.shields.io/npm/v/@fatdevcon/utilities.svg?style=flat-square)](https://www.npmjs.com/package/@fatdevcon/utilities)
+[![npm downloads](https://img.shields.io/npm/dm/@fatdevcon/utilities.svg?style=flat-square)](https://www.npmjs.com/package/@fatdevcon/utilities)
+[![types](https://img.shields.io/npm/types/@fatdevcon/utilities.svg?style=flat-square)](https://www.npmjs.com/package/@fatdevcon/utilities)
+[![license](https://img.shields.io/npm/l/@fatdevcon/utilities.svg?style=flat-square)](LICENSE)
 
-Typed utilities for locale-aware formatting, Unicode text, currency metadata, math, arrays, objects, sorting and searching. ESM and CommonJS builds include TypeScript declarations. Runtime dependencies: `date-fns` and `decimal.js`.
+Typed utilities for everyday JavaScript and TypeScript: locale-aware number, currency and date formatting, Unicode-safe text helpers, precise decimal math, array and object helpers, and classic sort / search algorithms.
+
+- **Locale-aware formatting** – compact numbers, percentages, currencies, units and byte sizes, built on `Intl`
+- **Unicode-safe text** – truncating, masking and shortening count user-perceived characters, so emoji and accents are never cut in half
+- **Precise math** – arithmetic runs on `decimal.js`, so `summary(0.1, 0.2)` is `0.3`, not `0.30000000000000004`
+- **Typed, ESM and CommonJS** – type definitions included, tree-shakeable, inputs validated, nothing mutates what you pass in
 
 ## Installation
 
-Requires Node.js 18+ or Bun 1.1.34+. Formatting uses the runtime's Intl/ICU data, including Intl.Segmenter and Intl.DisplayNames. Locale-specific spacing, names and abbreviations can differ between runtimes.
-
-```sh
+```bash
 npm install @fatdevcon/utilities
-yarn add @fatdevcon/utilities
-pnpm add @fatdevcon/utilities
-bun add @fatdevcon/utilities
 ```
 
-## Usage
+Also works with `yarn add`, `pnpm add` and `bun add`. Requires Node.js 18+ or Bun 1.1.34+. The package ships prebuilt, so installing it needs no compiler or build step. Runtime dependencies: `date-fns` and `decimal.js`.
 
-```ts
-import { formatCompactNumber, formatCurrency, truncateText, shortenString, getCountryCurrencies, slugify } from '@fatdevcon/utilities';
+## Quick start
 
-formatCompactNumber(12500); // '12.5K'
-formatCurrency(1234.5, 'USD'); // '$1,234.50'
-getCountryCurrencies('VN'); // ['VND']
-truncateText('Hello world', 8); // 'Hello...'
-shortenString('abcdefghijklxyzc'); // 'abcd...xyzc'
-slugify('??ng Th? T?'); // 'dang-thi-tu'
+```typescript
+import { formatCurrency, formatCompactNumber, truncateText, slugify, summary, groupBy } from "@fatdevcon/utilities";
+
+formatCurrency(1234.5, "USD"); // "$1,234.50"
+formatCompactNumber(12500); // "12.5K"
+truncateText("Hello world", 8); // "Hello..."
+slugify("Đặng Thị Tứ"); // "dang-thi-tu"
+summary(0.1, 0.2); // 0.3
+
+groupBy(
+  [
+    { name: "An", role: "dev" },
+    { name: "Binh", role: "qa" },
+  ],
+  (user) => user.role
+); // { dev: [{ name: "An", ... }], qa: [{ name: "Binh", ... }] }
 ```
 
-CommonJS: `const { formatCurrency } = require('@fatdevcon/utilities');`
+CommonJS:
 
-Bun uses the same imports. Save the example in `example.ts` and run `bun run example.ts` after installation. See the [Bun package manager documentation](https://bun.com/docs/pm/cli/install).
-
-## Number formatting
-
-New number formatters require finite numbers; NaN, infinities and non-number inputs throw TypeError. Locale arguments accept Intl.LocalesArgument; defaults below are en-US unless stated otherwise. Intl validates locale, currency syntax, unit and digit options.
-
-| Function | Behavior |
-| --- | --- |
-|`formatNumber(value, locale?, options?)`|Existing Intl.NumberFormat wrapper; preserves the runtime locale default and native NaN/Infinity behavior.|
-|`formatCompactNumber(value, locale?, options?)`|Compact notation, maximum 1 fractional digit by default. Supports compactDisplay: 'long'.|
-|`formatPercent(value, locale?, options?)`|Ratio input: 0.125 becomes 12.5%; maximum 2 fractional digits by default.|
-|`formatCurrency(value, currency, locale?, options?)`|ISO 4217 code (case-insensitive); standard currency minor units; supports accounting, display and precision options.|
-|`formatUnit(value, unit, locale?, options?)`|Intl unit such as 'kilometer-per-hour', 'celsius' or 'liter'.|
-|`formatBytes(value, options?)`|Non-negative bytes; SI base 1000 by default, IEC base 1024 optional; units through EB/EiB.|
-
-Number options extend Intl.NumberFormatOptions, excluding the fixed notation/style/currency/unit as appropriate. These fixed fields cannot be overridden. Bytes options: `{ base?: 1000 | 1024, decimals?: number, locale?: Intl.LocalesArgument }`. decimals defaults to 2, must be an integer from 0 to 20, and does not pad trailing zeroes. Values rounding up to the next unit are promoted. Values above EB/EiB remain in the largest unit. Fractional bytes are accepted.
-
-```ts
-import { formatPercent, formatUnit, formatBytes, formatCurrency } from '@fatdevcon/utilities';
-formatPercent(0.125); // '12.5%'
-formatUnit(12, 'kilometer-per-hour'); // '12 km/h'
-formatBytes(1500); // '1.5 kB'
-formatBytes(1536, { base: 1024 }); // '1.5 KiB'
-formatCurrency(-12, 'USD', 'en-US', { currencySign: 'accounting' }); // '($12.00)'
+```javascript
+const { formatCurrency } = require("@fatdevcon/utilities");
 ```
 
-## Currency metadata
+## API
 
-| Function | Behavior |
-| --- | --- |
-|`getCountryCurrencies(countryCode)`|Returns a fresh string[] of active legal-tender currency codes for a two-letter CLDR region code, case-insensitive.|
-|`getCurrencySymbol(currency, locale?, display?)`|Localized currency symbol; display is 'symbol' (default) or 'narrowSymbol'.|
-|`getCurrencyName(currency, locale?)`|Localized currency name, e.g. 'US Dollar'.|
+- [Number formatting](#number-formatting)
+- [Currency metadata](#currency-metadata)
+- [Text](#text)
+- [Dates](#dates)
+- [Math](#math)
+- [Arrays](#arrays)
+- [Sorting](#sorting)
+- [Searching](#searching)
+- [Objects](#objects)
+- [Error handling](#error-handling)
+- [Types](#types)
 
-Country data is a bundled snapshot derived from [Unicode CLDR 48.2.0](https://github.com/unicode-org/cldr-json/tree/48.2.0), filtered for 2026-10-03: 255 regions. Historical and non-tender currencies are excluded. Some countries have multiple currencies: `getCountryCurrencies('PA')` includes PAB and USD. Array order does not imply a preferred currency. Unknown regions or regions without recorded tender return []; malformed codes throw RangeError and non-string codes throw TypeError. Region codes include CLDR territories, not only sovereign countries.
+### Number formatting
 
-Currency functions validate three-letter code syntax; Intl may echo unknown well-formed codes such as ZZZ. Symbols are not unique identifiers. This package does not fetch exchange rates, convert currencies, or provide live monetary data. Names and symbols come from the runtime's Intl data; country mappings come from the bundled snapshot and may differ from older runtimes. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+`locale` defaults to `"en-US"` (except in `formatNumber`, which uses the runtime default). `options` are `Intl.NumberFormat` options.
 
-## Text formatting
+| Function | Description | Example |
+| --- | --- | --- |
+| `formatNumber(value, locale?, options?)` | Plain `Intl.NumberFormat` wrapper | `formatNumber(1234567.89, "vi-VN")` → `"1.234.567,89"` |
+| `formatCompactNumber(value, locale?, options?)` | Compact notation, at most 1 decimal by default | `formatCompactNumber(12500)` → `"12.5K"` |
+| `formatPercent(value, locale?, options?)` | Formats a ratio as a percentage, at most 2 decimals by default | `formatPercent(0.125)` → `"12.5%"` |
+| `formatCurrency(value, currency, locale?, options?)` | Formats money for an ISO 4217 code (case-insensitive) | `formatCurrency(1500, "JPY")` → `"¥1,500"` |
+| `formatUnit(value, unit, locale?, options?)` | Formats with an `Intl` unit such as `"celsius"` or `"liter"` | `formatUnit(12, "kilometer-per-hour")` → `"12 km/h"` |
+| `formatBytes(value, options?)` | Human-readable byte size, from B up to EB / EiB | `formatBytes(1500)` → `"1.5 kB"` |
 
-Length-based functions count Unicode grapheme clusters (user-perceived characters), preserving emoji sequences, flags and combining accents. Inputs must be strings. Lengths must be non-negative safe integers (TypeError for non-integers, RangeError for negative values).
+`formatBytes` options: `base` (`1000` by default, or `1024` for KiB / MiB), `decimals` (0–20, default `2`, trailing zeroes dropped) and `locale`.
 
-| Function | Defaults and behavior |
-| --- | --- |
-|`truncateText(text, maxLength, options?)`|Total output length includes ellipsis ('...' by default). Options: ellipsis, preserveWords (false). If marker exceeds maxLength, marker itself is clipped. Zero returns ''.|
-|`shortenString(text, options?)`|Keep startLength: 4 and endLength: 4, joined by separator: '...'. Returns original text if it already fits the resulting length.|
-|`normalizeWhitespace(text)`|Trim and collapse whitespace to a single space.|
-|`removeDiacritics(text)`|NFD decomposition and removal of Unicode combining marks; also maps Vietnamese ?/? to d/D. Not a general transliteration engine.|
-|`slugify(text)`|Remove diacritics, lowercase, join non-letter/number runs with '-', trim separators. Retains non-Latin letters and numbers.|
-|`capitalize(text, locale?)`|Uppercase the first grapheme, preserving the remainder; uses runtime locale by default. Some uppercase mappings expand to multiple characters.|
-|`maskString(text, options?)`|visibleStart: 0, visibleEnd: 4, mask: '*'. Mask must be exactly one grapheme; each hidden grapheme gets one mask.|
-
-preserveWords uses whitespace boundaries and falls back to grapheme clipping when the first word does not fit. It is not language-specific word segmentation. Short strings within maskString's visible lengths remain visible. Masking is presentation only, not encryption or secure redaction. slugify does not guarantee uniqueness or safe HTML/URL encoding; encode where appropriate.
-
-```ts
-import { truncateText, shortenString, maskString, capitalize } from '@fatdevcon/utilities';
-truncateText('Hello beautiful world', 12, { preserveWords: true }); // 'Hello...'
-shortenString('abcdefghijklmnop', { startLength: 2, endLength: 3 }); // 'ab...nop'
-maskString('1234567890'); // '******7890'
-capitalize('istanbul', 'tr'); // '?stanbul'
+```typescript
+formatCompactNumber(1200000, "en-US", { compactDisplay: "long" }); // "1.2 million"
+formatCurrency(-12, "USD", "en-US", { currencySign: "accounting" }); // "($12.00)"
+formatBytes(1536, { base: 1024 }); // "1.5 KiB"
 ```
 
-## Date formatting
+Output comes from the runtime's `Intl` data, so spacing, symbols and abbreviations can differ slightly between runtimes.
 
-`formatDate(date: Date | string | number, formatStr: string, options?: FormatOptions): string` uses date-fns format tokens and locale options. Invalid dates throw RangeError. Strings/numbers use the native Date constructor; numeric timestamps are milliseconds. Output follows the local timezone.
+### Currency metadata
 
-```ts
-import { formatDate } from '@fatdevcon/utilities';
-formatDate(new Date(2026, 9, 3), 'yyyy-MM-dd'); // '2026-10-03'
+| Function | Description | Example |
+| --- | --- | --- |
+| `getCountryCurrencies(countryCode)` | Active legal-tender currency codes for a two-letter region code; `[]` when unknown | `getCountryCurrencies("PA")` → `["PAB", "USD"]` |
+| `getCurrencySymbol(currency, locale?, display?)` | Localized symbol; `display` is `"symbol"` (default) or `"narrowSymbol"` | `getCurrencySymbol("VND")` → `"₫"` |
+| `getCurrencyName(currency, locale?)` | Localized currency name | `getCurrencyName("USD")` → `"US Dollar"` |
+
+Country data is a bundled snapshot of [Unicode CLDR 48.2.0](https://github.com/unicode-org/cldr-json/tree/48.2.0) (see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)). When a country has several currencies, the order does not imply a preferred one. This package does not fetch exchange rates or convert between currencies.
+
+### Text
+
+Lengths count Unicode grapheme clusters (user-perceived characters), so emoji, flags and combining accents stay intact.
+
+| Function | Description | Example |
+| --- | --- | --- |
+| `truncateText(text, maxLength, options?)` | Cut to `maxLength` including the ellipsis. Options: `ellipsis` (`"..."`), `preserveWords` (`false`) | `truncateText("Hello world", 8)` → `"Hello..."` |
+| `shortenString(text, options?)` | Keep both ends. Options: `startLength` (`4`), `endLength` (`4`), `separator` (`"..."`) | `shortenString("abcdefghijklxyzc")` → `"abcd...xyzc"` |
+| `maskString(text, options?)` | Hide characters. Options: `visibleStart` (`0`), `visibleEnd` (`4`), `mask` (`"*"`) | `maskString("1234567890")` → `"******7890"` |
+| `normalizeWhitespace(text)` | Trim and collapse whitespace to single spaces | `normalizeWhitespace("  a   b ")` → `"a b"` |
+| `removeDiacritics(text)` | Strip accents, including Vietnamese `đ` / `Đ` | `removeDiacritics("Đặng Thị Tứ")` → `"Dang Thi Tu"` |
+| `slugify(text)` | Lowercase slug without accents; keeps non-Latin letters and numbers | `slugify("  Hello, World! ")` → `"hello-world"` |
+| `capitalize(text, locale?)` | Uppercase the first character, leave the rest unchanged | `capitalize("istanbul", "tr")` → `"İstanbul"` |
+
+```typescript
+truncateText("Hello beautiful world", 12, { preserveWords: true }); // "Hello..."
+shortenString("0x71C7656EC7ab88b098defB751B7401B5f6d8976F", { startLength: 6 }); // "0x71C7...976F"
+maskString("user@example.com", { visibleStart: 2, visibleEnd: 4 }); // "us**********.com"
 ```
 
-## Math
+`maskString` is for display only; it is not encryption or secure redaction. `slugify` does not guarantee uniqueness.
 
-| Function | Behavior |
-| --- | --- |
-|`summary(a, b)`, `subtract(a, b)`, `multiply(a, b)`, `divide(a, b)`|Arithmetic; division by zero throws RangeError.|
-|`percentage(value, total)`|Compute value / total * 100 (returns 0 when total is 0); distinct from formatPercent's ratio input.|
-|`round(value, decimals = 2)`|Round to a non-negative integer number of decimal places.|
-|`factorial(n)`|Non-negative integer, n <= 170.|
-|`gcd(a, b)`, `lcm(a, b)`|Greatest common divisor and least common multiple.|
-|`isPrime(n)`|Primality; false for non-integers and non-finite input.|
-|`fibonacci(n)`|Non-negative integer, n <= 1476.|
+### Dates
 
-## Array, object and algorithm API
+| Function | Description | Example |
+| --- | --- | --- |
+| `formatDate(date, formatStr, options?)` | Format a `Date`, millisecond timestamp or date string with [date-fns tokens](https://date-fns.org/docs/format), in the local timezone | `formatDate(new Date(2026, 9, 3), "yyyy-MM-dd")` → `"2026-10-03"` |
 
-### Array Manipulation
+### Math
 
-- `unique<T>(arr: T[], keySelector?: KeySelector<T>): T[]` - Get unique values in array (optionally by key)
-- `filterBy<T>(arr: T[], predicate: (item: T, index: number, array: T[]) => boolean): T[]` - Filter array by predicate
-- `sortBy<T>(arr: T[], keySelector: KeySelector<T>, order?: "asc" | "desc"): T[]` - Sort array by key
-- `chunk<T>(arr: T[], size: number): T[][]` - Chunk array into smaller arrays (`size` must be a positive integer)
-- `flatten<T>(arr: T[][]): T[]` - Flatten array of arrays
-- `findIndexes<T>(arr: T[], predicate: (item: T, index: number, array: T[]) => boolean): number[]` - Find indexes of matching elements
-- `groupBy<T>(arr: T[], keySelector: KeySelector<T>): Record<string, T[]>` - Group array by key
+| Function | Description | Example |
+| --- | --- | --- |
+| `summary(a, b)` | Add two numbers | `summary(0.1, 0.2)` → `0.3` |
+| `subtract(a, b)` | Subtract `b` from `a` | `subtract(0.3, 0.1)` → `0.2` |
+| `multiply(a, b)` | Multiply two numbers | `multiply(0.1, 3)` → `0.3` |
+| `divide(a, b)` | Divide `a` by `b`; throws on division by zero | `divide(10, 4)` → `2.5` |
+| `percentage(value, total)` | `value` as a percentage of `total`; `0` when `total` is `0` | `percentage(25, 200)` → `12.5` |
+| `round(value, decimals = 2)` | Round half up to `decimals` places | `round(3.14159)` → `3.14` |
+| `factorial(n)` | Factorial of an integer, `0 ≤ n ≤ 170` | `factorial(5)` → `120` |
+| `fibonacci(n)` | n-th Fibonacci number, `0 ≤ n ≤ 1476` | `fibonacci(10)` → `55` |
+| `gcd(a, b)` | Greatest common divisor | `gcd(12, 18)` → `6` |
+| `lcm(a, b)` | Least common multiple | `lcm(4, 6)` → `12` |
+| `isPrime(n)` | Whether `n` is prime; `false` for non-integers | `isPrime(17)` → `true` |
 
-### Sorting Algorithms
+### Arrays
 
-- `quickSort<T>(arr: T[], compareFn?: Comparator<T>): T[]` - Quick sort
-- `mergeSort<T>(arr: T[], compareFn?: Comparator<T>): T[]` - Merge sort
-- `insertionSort<T>(arr: T[], compareFn?: Comparator<T>): T[]` - Insertion sort
-- `selectionSort<T>(arr: T[], compareFn?: Comparator<T>): T[]` - Selection sort
-- `bubbleSort<T>(arr: T[], compareFn?: Comparator<T>): T[]` - Bubble sort
-- `heapSort<T>(arr: T[], compareFn?: Comparator<T>): T[]` - Heap sort
-- `countingSort(arr: number[]): number[]` - Counting sort for non-negative integers (max value ≤ 10,000,000)
-- `radixSort(arr: number[]): number[]` - Radix sort for non-negative integers
+| Function | Description | Example |
+| --- | --- | --- |
+| `unique(arr, keySelector?)` | Remove duplicates, optionally by key | `unique([1, 2, 2, 3])` → `[1, 2, 3]` |
+| `filterBy(arr, predicate)` | Keep the items that match | `filterBy([1, 2, 3, 4], (x) => x > 2)` → `[3, 4]` |
+| `sortBy(arr, keySelector, order = "asc")` | Sort by a key, `"asc"` or `"desc"` | `sortBy(users, (u) => u.name, "desc")` |
+| `groupBy(arr, keySelector)` | Group items into an object by key | `groupBy(users, (u) => u.role)` |
+| `chunk(arr, size)` | Split into chunks of `size` | `chunk([1, 2, 3, 4, 5], 2)` → `[[1, 2], [3, 4], [5]]` |
+| `flatten(arr)` | Flatten one level | `flatten([[1, 2], [3]])` → `[1, 2, 3]` |
+| `findIndexes(arr, predicate)` | Indexes of every match | `findIndexes([1, 2, 2, 3], (x) => x === 2)` → `[1, 2]` |
+| `sumValueInArray(arr)` | Sum of the numbers | `sumValueInArray([0.1, 0.2, 0.3])` → `0.6` |
+| `averageValueInArray(arr)` | Average of the numbers; `0` for an empty array | `averageValueInArray([1, 2, 3, 4])` → `2.5` |
+| `findMin(arr, compareFn?)` | Smallest item; `undefined` for an empty array | `findMin([3, 1, 2])` → `1` |
+| `findMax(arr, compareFn?)` | Largest item; `undefined` for an empty array | `findMax([3, 1, 2])` → `3` |
 
-### Search Algorithms
+### Sorting
 
-- `binarySearch<T>(arr: T[], target: T, compareFn?: Comparator<T>): number` - Binary search on sorted array
-- `linearSearch<T>(arr: T[], target: T, compareFn?: Comparator<T>): number` - Linear search
+Every sort returns a new array and leaves the input untouched.
 
-### Array Utilities
+| Function | Complexity | Notes |
+| --- | --- | --- |
+| `quickSort(arr, compareFn?)` | O(n log n) average | Three-way partition, stays fast on sorted or duplicate-heavy input |
+| `mergeSort(arr, compareFn?)` | O(n log n) | Stable |
+| `heapSort(arr, compareFn?)` | O(n log n) | |
+| `insertionSort(arr, compareFn?)` | O(n²) | Good for small or nearly sorted arrays |
+| `selectionSort(arr, compareFn?)` | O(n²) | |
+| `bubbleSort(arr, compareFn?)` | O(n²) | |
+| `countingSort(arr)` | O(n + k) | Non-negative integers only, max value 10,000,000 |
+| `radixSort(arr)` | O(d · n) | Non-negative integers only |
 
-- `sumValueInArray(arr: number[]): number` - Sum of array elements
-- `averageValueInArray(arr: number[]): number` - Average of array elements
-- `findMin<T>(arr: T[], compareFn?: Comparator<T>): T | undefined` - Find minimum value in array
-- `findMax<T>(arr: T[], compareFn?: Comparator<T>): T | undefined` - Find maximum value in array
+```typescript
+quickSort([5, 2, 9, 1]); // [1, 2, 5, 9]
+quickSort([5, 2, 9, 1], (a, b) => b - a); // [9, 5, 2, 1]
+```
 
-### Object Utilities
+The low-level helpers `merge`, `heapify` and `countingSortByDigit` are still exported for backward compatibility; prefer the sort functions above.
 
-- `deepClone<T>(obj: T): T` - Create a deep clone using `structuredClone` (supports `Date`, `Map`, `Set`, circular references)
-- `mergeObjects<T, U>(target: T, source: U): T & U` - Shallow merge two objects
+### Searching
 
-### Error Handling
+Both return the index of the match, or `-1` when it is not found.
 
-Math, array and algorithm helpers validate their inputs. Existing formatNumber follows native Intl behavior; new formatter validation is documented above:
+| Function | Complexity | Example |
+| --- | --- | --- |
+| `binarySearch(arr, target, compareFn?)` | O(log n), `arr` must be sorted | `binarySearch([1, 3, 5, 7], 5)` → `2` |
+| `linearSearch(arr, target, compareFn?)` | O(n) | `linearSearch(["a", "b"], "b")` → `1` |
 
-- `TypeError` - argument is not a finite number / integer / array (e.g. `NaN`, `Infinity`, `null`)
-- `RangeError` - value is out of the supported range (division by zero, negative factorial, `chunk` size < 1, `countingSort` with negative numbers, ...)
+### Objects
+
+| Function | Description | Example |
+| --- | --- | --- |
+| `deepClone(obj)` | Deep copy with `structuredClone`; handles `Date`, `Map`, `Set` and circular references, throws on functions | `deepClone({ a: { b: 1 } })` |
+| `mergeObjects(target, source)` | Shallow merge into a new object; `source` wins on conflicts | `mergeObjects({ a: 1, b: 1 }, { b: 2 })` → `{ a: 1, b: 2 }` |
+
+### Error handling
+
+Invalid input throws a standard error instead of returning `NaN` or a wrong result:
+
+| Error | When | Example |
+| --- | --- | --- |
+| `TypeError` | An argument has the wrong type: not a finite number, not an integer, not an array, not a string | `factorial(Infinity)`, `sumValueInArray(null)`, `formatPercent(NaN)` |
+| `RangeError` | A value is outside the supported range or malformed | `divide(1, 0)`, `chunk([1], 0)`, `formatCurrency(1, "US")`, `formatDate("nope", "yyyy")` |
 
 ```typescript
 try {
-  factorial(Infinity);
+  divide(total, count);
 } catch (error) {
-  if (error instanceof TypeError) {
-    // invalid input type
+  if (error instanceof RangeError) {
+    // count was 0
   }
 }
 ```
 
+The one exception is `formatNumber`, which keeps native `Intl` behavior: `formatNumber(NaN)` returns `"NaN"`.
+
 ### Types
 
-- `Comparator<T>` - Type for comparison function `(a: T, b: T) => number`
-- `KeySelector<T>` - Type for key selector function `(item: T) => any`
+```typescript
+import type { Comparator, KeySelector } from "@fatdevcon/utilities";
 
+type Comparator<T> = (a: T, b: T) => number; // negative, zero or positive, like Array.prototype.sort
+type KeySelector<T> = (item: T) => any;
+```
 
-Exported formatting option types: `CompactNumberOptions`, `PercentFormatOptions`, `CurrencyFormatOptions`, `UnitFormatOptions`, `BytesFormatOptions`, `TruncateTextOptions`, `ShortenStringOptions`, `MaskStringOptions`. Comparator and KeySelector are also exported from the package root.
-
-Legacy algorithm helpers `merge(left, right, compareFn)`, `heapify(arr, n, i, compareFn)` and `countingSortByDigit(arr, exp)` remain exported for compatibility. Prefer the documented sorting functions for application code.
-
-## Installation notes
-
-The published package includes compiled ESM/CommonJS and declarations. Installing it from npm does not require a compiler or run a build. Source builds use Node.js 24+ and npm 11.19+; the published runtime API continues to support Node.js 18+ and Bun.
-
-Version 0.2.2 refreshes the dependency lockfile, including development tools. TypeScript 7.0.2 runs typechecking; TypeScript's official 6.x compatibility package supplies the compiler API required by ts-jest, tsup and typescript-eslint. This follows [Microsoft's side-by-side setup](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/). The build runs at pack/release time, rather than on every install.
-
-The source project records explicit npm install-script decisions for native build tools. Glob 13 overrides in sucrase and test-exclude remove their deprecated Glob 10 dependency; build and coverage checks validate this combination. Dependency advisories can change after a release, so a clean audit reflects the release verification date.
-
-An npm warning about an unknown `python` setting comes from a local/user npm configuration, not this package. Remove that obsolete setting from your user .npmrc if it exists; installing this package does not modify users' npm configuration.
+Option types are exported too: `CompactNumberOptions`, `PercentFormatOptions`, `CurrencyFormatOptions`, `UnitFormatOptions`, `BytesFormatOptions`, `TruncateTextOptions`, `ShortenStringOptions`, `MaskStringOptions`.
 
 ## Changelog
 
+### 0.2.3
+
+- Rewrote the README as per-module tables with verified examples, and fixed garbled Unicode in the text examples
+- Expanded the npm keywords; no API changes
+
 ### 0.2.2
 
-- Updated runtime dependencies and all direct development tools to current stable releases, with TypeScript 7 and the official 6.x compiler-API compatibility alias.
-- Refreshed transitive dependencies to address the full project's npm audit findings.
-- Added explicit install-script policy and replaced deprecated transitive Glob 10.
-- Moved the installation-time build to prepack; removed the deprecated TypeScript baseUrl option and separated declaration bundling from tsup's deprecated configuration.
-- Updated package verification to exercise normal consumer installation and TypeScript 7.
-- Corrected repository links to the current GitHub location.
+- Updated runtime dependencies and development tools; refreshed transitive dependencies to clear npm audit findings
+- The build now runs at pack time instead of on every install
+- Corrected repository links
 
 ### 0.2.1
 
-- Added compact, percent, currency, unit and byte formatting.
-- Added currency symbols/names and CLDR country-currency lookup.
-- Added grapheme-aware truncation, middle shortening, masking, whitespace normalization, diacritic removal, slugs and capitalization.
-- Added Bun usage and runtime package checks; separate ESM/CommonJS declaration resolution.
-- Fixed ESLint 9 configuration and release checks; exported shared types.
-- Corrected dependency claims and removed contributor/development instructions.
+- Added compact, percent, currency, unit and byte formatting
+- Added currency symbols and names, and country-to-currency lookup
+- Added grapheme-aware truncation, middle shortening, masking, whitespace normalization, diacritic removal, slugs and capitalization
+- Added Bun support and separate ESM / CommonJS type declarations
 
 ### 0.2.0
 
-- Hardened input validation and edge cases in math, arrays, searching and sorting.
-- Fixed large-array sorting and prototype-key grouping; switched deepClone to structuredClone.
-- Added invalid-date errors and removed unused dependencies.
+- Hardened input validation and edge cases in math, arrays, searching and sorting
+- Fixed large-array sorting and prototype-key grouping; switched `deepClone` to `structuredClone`
+- Added invalid-date errors and removed unused dependencies
 
-## Maintenance and license
+## License
 
-Maintained independently by the package owner. External contributions are not accepted. Version numbers follow SemVer.
+MIT; see [LICENSE](LICENSE). Bundled Unicode data keeps its own notice in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-MIT; see [LICENSE](LICENSE). Derived Unicode data retains its own notice in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Maintained by the package owner; external contributions are not accepted. Versions follow [SemVer](https://semver.org/).
