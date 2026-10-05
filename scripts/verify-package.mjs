@@ -6,7 +6,7 @@ const require = createRequire(import.meta.url);
 const esm = await import("@fatdevcon/utilities");
 const cjs = require("@fatdevcon/utilities");
 const metadata = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
-assert.equal(metadata.version, "0.2.3");
+assert.equal(metadata.version, "0.2.4");
 assert.equal(typeof Intl.Segmenter, "function");
 for (const api of [esm, cjs]) {
   assert.equal(api.formatCompactNumber(12500), "12.5K");

@@ -7,6 +7,8 @@
 
 Typed utilities for everyday JavaScript and TypeScript: locale-aware number, currency and date formatting, Unicode-safe text helpers, precise decimal math, array and object helpers, and classic sort / search algorithms.
 
+**[Documentation](https://phanhoangquoctu.github.io/fatdevcon-utilities/)** – every function with its signature, options and examples.
+
 - **Locale-aware formatting** – compact numbers, percentages, currencies, units and byte sizes, built on `Intl`
 - **Unicode-safe text** – truncating, masking and shortening count user-perceived characters, so emoji and accents are never cut in half
 - **Precise math** – arithmetic runs on `decimal.js`, so `summary(0.1, 0.2)` is `0.3`, not `0.30000000000000004`
@@ -47,6 +49,8 @@ const { formatCurrency } = require("@fatdevcon/utilities");
 ```
 
 ## API
+
+The tables below are a quick reference; the [documentation site](https://phanhoangquoctu.github.io/fatdevcon-utilities/) has full signatures and more examples.
 
 - [Number formatting](#number-formatting)
 - [Currency metadata](#currency-metadata)
@@ -224,6 +228,10 @@ type KeySelector<T> = (item: T) => any;
 Option types are exported too: `CompactNumberOptions`, `PercentFormatOptions`, `CurrencyFormatOptions`, `UnitFormatOptions`, `BytesFormatOptions`, `TruncateTextOptions`, `ShortenStringOptions`, `MaskStringOptions`.
 
 ## Changelog
+
+### 0.2.4
+
+- Added the [documentation site](https://phanhoangquoctu.github.io/fatdevcon-utilities/) and linked it from the README and the npm homepage
 
 ### 0.2.3
 

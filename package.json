@@ -1,6 +1,6 @@
 {
   "name": "@fatdevcon/utilities",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "TypeScript utilities for math, Unicode text, locale-aware numbers, currencies, arrays and objects",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -116,7 +116,7 @@
   "bugs": {
     "url": "https://github.com/PhanHoangQuocTu/fatdevcon-utilities/issues"
   },
-  "homepage": "https://github.com/PhanHoangQuocTu/fatdevcon-utilities#readme",
+  "homepage": "https://phanhoangquoctu.github.io/fatdevcon-utilities/",
   "publishConfig": {
     "access": "public"
   },
