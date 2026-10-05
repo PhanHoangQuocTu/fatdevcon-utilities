@@ -183,12 +183,12 @@ maskString("user@example.com", { visibleStart: 2, visibleEnd: 4 }); // "us******
 
 ### Time zones
 
-Timezone helpers use the runtime's IANA data through `Intl` and operate on a moment in time. Offsets are in minutes east of UTC, so `Asia/Ho_Chi_Minh` is `420`; daylight-saving zones can return a different offset at different dates.
+Timezone helpers use the runtime's IANA data through `Intl` and operate on a moment in time. `getTimeZoneOffset` defaults to the familiar UTC convention: `Asia/Ho_Chi_Minh` is `+420` minutes, `+25,200` seconds or `+7` hours. Daylight-saving zones can return a different offset at different dates.
 
 | Function | Description | Example |
 | --- | --- | --- |
 | `isTimeZone(value)` | Test whether the runtime recognizes an IANA timezone | `isTimeZone("Asia/Ho_Chi_Minh")` → `true` |
-| `getTimeZoneOffset(date, timeZone)` | DST-aware UTC offset in minutes, positive east of UTC | `getTimeZoneOffset(date, "America/New_York")` → `-300` in winter |
+| `getTimeZoneOffset(date?, timeZone?, options?)` | DST-aware UTC offset in seconds, minutes or hours; `direction: "native"` matches `Date#getTimezoneOffset()` | `getTimeZoneOffset(date, "Asia/Ho_Chi_Minh", { unit: "hours" })` → `7` |
 | `getTimeZoneName(date, timeZone, locale?, style?)` | Localized name or GMT offset label | `getTimeZoneName(date, "Asia/Ho_Chi_Minh", "en-US", "shortOffset")` → `"GMT+7"` |
 | `formatInTimeZone(date, timeZone, locale?, options?)` | Format an instant in an IANA timezone with `Intl.DateTimeFormat` | `formatInTimeZone(date, "Asia/Ho_Chi_Minh")` |
 
@@ -196,7 +196,10 @@ Timezone helpers use the runtime's IANA data through `Intl` and operate on a mom
 const instant = new Date("2026-01-15T12:00:00Z");
 
 getTimeZoneOffset(instant, "Asia/Ho_Chi_Minh"); // 420
-getTimeZoneOffset(instant, "America/New_York"); // -300
+getTimeZoneOffset(instant, "Asia/Ho_Chi_Minh", { unit: "seconds" }); // 25200
+getTimeZoneOffset(instant, "Asia/Ho_Chi_Minh", { unit: "hours" }); // 7
+getTimeZoneOffset(instant, "Asia/Ho_Chi_Minh", { direction: "native" }); // -420, like Date#getTimezoneOffset()
+getTimeZoneOffset(instant, "America/New_York"); // -300 in winter
 formatInTimeZone(instant, "Asia/Ho_Chi_Minh", "en-GB", {
   dateStyle: "short",
   timeStyle: "short",
@@ -405,7 +408,7 @@ try {
 ### Types
 
 ```typescript
-import type { Comparator, KeySelector, NumericInput, DivideOptions, RoundingMode, NumericErrorCode, ErrorType, AbortErrorType, WithRetryParameters, DateInput, TimeZoneNameStyle } from "@fatdevcon/utilities";
+import type { Comparator, KeySelector, NumericInput, DivideOptions, RoundingMode, NumericErrorCode, ErrorType, AbortErrorType, WithRetryParameters, DateInput, TimeZoneNameStyle, TimeZoneOffsetOptions, TimeZoneOffsetUnit, TimeZoneOffsetDirection } from "@fatdevcon/utilities";
 
 type Comparator<T> = (a: T, b: T) => number; // negative, zero or positive, like Array.prototype.sort
 type KeySelector<T> = (item: T) => any;
@@ -417,11 +420,19 @@ type AbortErrorType = ErrorType<"AbortError">;
 interface WithRetryParameters { delay?: number | ({ count, error }) => number; retryCount?: number; shouldRetry?: ({ count, error }) => boolean | Promise<boolean>; signal?: AbortSignal }
 type DateInput = Date | string | number;
 type TimeZoneNameStyle = "short" | "long" | "shortOffset" | "longOffset" | "shortGeneric" | "longGeneric";
+type TimeZoneOffsetUnit = "seconds" | "minutes" | "hours";
+type TimeZoneOffsetDirection = "utc" | "native";
+interface TimeZoneOffsetOptions { unit?: TimeZoneOffsetUnit; direction?: TimeZoneOffsetDirection }
 ```
 
-The error classes `NumericTypeError` and `NumericRangeError` are exported as values. Option types are exported too: `CompactNumberOptions`, `PercentFormatOptions`, `CurrencyFormatOptions`, `UnitFormatOptions`, `BytesFormatOptions`, `TruncateTextOptions`, `ShortenStringOptions`, `MaskStringOptions`, `RelativeTimeOptions`, `DurationOptions`, `DebounceOptions`, `ThrottleOptions`, `MemoizeOptions`, `RetryOptions`, `WithRetryParameters`, `TimeZoneNameStyle`, `IsUrlOptions`.
+The error classes `NumericTypeError` and `NumericRangeError` are exported as values. Option types are exported too: `CompactNumberOptions`, `PercentFormatOptions`, `CurrencyFormatOptions`, `UnitFormatOptions`, `BytesFormatOptions`, `TruncateTextOptions`, `ShortenStringOptions`, `MaskStringOptions`, `RelativeTimeOptions`, `DurationOptions`, `DebounceOptions`, `ThrottleOptions`, `MemoizeOptions`, `RetryOptions`, `WithRetryParameters`, `TimeZoneNameStyle`, `TimeZoneOffsetOptions`, `IsUrlOptions`.
 
 ## Changelog
+
+### 0.3.3
+
+- `getTimeZoneOffset` now accepts no arguments for the current local offset and can return `seconds`, `minutes` or `hours` (`UTC+7` is `+7` with `{ unit: "hours" }`)
+- Added `direction: "native"` when the exact opposite sign used by `Date#getTimezoneOffset()` is required; the existing UTC-oriented minute default remains unchanged
 
 ### 0.3.2
 

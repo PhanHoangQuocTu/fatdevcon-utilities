@@ -472,18 +472,20 @@ isValidDate(new Date("nope")); // false` },
   /* ------------------------------------------------------------------ */
   {
     id: "time-zones", title: "Time zones",
-    note: "Timezone helpers use the runtime's Intl / IANA timezone data and always operate on an instant. Offsets are minutes east of UTC, so Asia/Ho_Chi_Minh is 420 and America/New_York is -300 in winter. Results follow daylight-saving transitions at the supplied date.",
+    note: "Timezone helpers use the runtime's Intl / IANA timezone data and always operate on an instant. getTimeZoneOffset defaults to the UTC convention (positive east of UTC), so Asia/Ho_Chi_Minh is +420 minutes / +7 hours and America/New_York is -300 in winter. It can also return seconds or match the opposite Date#getTimezoneOffset() sign. Results follow daylight-saving transitions at the supplied date.",
     fns: [
       { name: "isTimeZone", sig: "isTimeZone(value: unknown): value is string",
         desc: "True when value is an IANA timezone identifier recognized by the current runtime, including UTC. Never throws.",
         params: [p("value", "unknown", "Anything to test.")], returns: "boolean.",
         ex: `isTimeZone("Asia/Ho_Chi_Minh"); // true
 isTimeZone("Not/A_Timezone");   // false` },
-      { name: "getTimeZoneOffset", sig: "getTimeZoneOffset(date: DateInput, timeZone: string): number",
-        desc: "UTC offset in minutes at date. Positive is east of UTC; the answer changes automatically when the zone observes daylight saving time.",
-        params: [p("date", "DateInput", "The instant to inspect."), p("timeZone", "string", "IANA timezone identifier, such as Asia/Ho_Chi_Minh.")], returns: "number of minutes east of UTC.", throws: [e("TypeError", "", "date is the wrong type or timeZone is not a string"), e("RangeError", "", "date or timeZone is invalid")],
+      { name: "getTimeZoneOffset", sig: "getTimeZoneOffset(date?: DateInput, timeZone?: string, options?: TimeZoneOffsetOptions): number",
+        desc: "DST-aware offset at date. The default UTC convention is positive east of UTC. Choose seconds, minutes (default) or hours; direction: \"native\" uses the opposite sign returned by Date#getTimezoneOffset(). With no arguments it uses the local zone and current time.",
+        params: [p("date", "DateInput", "The instant to inspect.", "the current time"), p("timeZone", "string", "IANA timezone identifier, such as Asia/Ho_Chi_Minh.", "the runtime local timezone"), p("options.unit", '"seconds" | "minutes" | "hours"', "Return unit.", '"minutes"'), p("options.direction", '"utc" | "native"', '"utc" is positive east of UTC; "native" matches Date#getTimezoneOffset().', '"utc"')], returns: "number in the requested unit. Zero is always 0, never -0.", throws: [e("TypeError", "", "date is the wrong type or timeZone is not a string"), e("RangeError", "", "date, timeZone, unit or direction is invalid")],
         ex: `getTimeZoneOffset(new Date("2026-01-15T12:00:00Z"), "Asia/Ho_Chi_Minh"); // 420
-getTimeZoneOffset(new Date("2026-01-15T12:00:00Z"), "America/New_York"); // -300
+getTimeZoneOffset(new Date("2026-01-15T12:00:00Z"), "Asia/Ho_Chi_Minh", { unit: "seconds" }); // 25200
+getTimeZoneOffset(new Date("2026-01-15T12:00:00Z"), "Asia/Ho_Chi_Minh", { unit: "hours" }); // 7
+getTimeZoneOffset(new Date("2026-01-15T12:00:00Z"), "Asia/Ho_Chi_Minh", { direction: "native" }); // -420
 getTimeZoneOffset(new Date("2026-07-15T12:00:00Z"), "America/New_York"); // -240` },
       { name: "getTimeZoneName", run: false, sig: "getTimeZoneName(date: DateInput, timeZone: string, locale?: Intl.LocalesArgument, style?: TimeZoneNameStyle): string",
         desc: "Returns the localized zone label at date: a short or long name, a generic name, or a GMT offset label. The availability of abbreviations depends on the runtime locale data.",

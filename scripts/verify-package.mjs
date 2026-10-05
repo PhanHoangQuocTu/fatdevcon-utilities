@@ -6,7 +6,7 @@ const require = createRequire(import.meta.url);
 const esm = await import("@fatdevcon/utilities");
 const cjs = require("@fatdevcon/utilities");
 const metadata = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
-assert.equal(metadata.version, "0.3.2");
+assert.equal(metadata.version, "0.3.3");
 assert.equal(typeof Intl.Segmenter, "function");
 for (const api of [esm, cjs]) {
   assert.equal(api.formatCompactNumber(12500), "12.5K");
@@ -29,6 +29,7 @@ for (const api of [esm, cjs]) {
   assert.equal(typeof api.withRetry, "function");
   assert.equal(typeof api.wait, "function");
   assert.equal(api.getTimeZoneOffset(new Date("2026-01-15T12:00:00Z"), "Asia/Ho_Chi_Minh"), 420);
+  assert.equal(api.getTimeZoneOffset(new Date("2026-01-15T12:00:00Z"), "Asia/Ho_Chi_Minh", { unit: "hours" }), 7);
   assert.equal(typeof api.formatInTimeZone, "function");
   assert.equal(api.summary("100000000000000000000000000000", "1"), "100000000000000000000000000001");
   assert.equal(api.multiply(2n ** 64n, 2n ** 64n), 2n ** 128n);

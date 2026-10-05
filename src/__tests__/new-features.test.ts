@@ -68,11 +68,17 @@ describe("timezone utilities", () => {
     expect(isTimeZone(7)).toBe(false);
   });
 
-  test("gets offsets in minutes and observes daylight saving time", () => {
+  test("gets offsets in requested units and observes daylight saving time", () => {
     expect(getTimeZoneOffset(winter, "Asia/Ho_Chi_Minh")).toBe(420);
+    expect(getTimeZoneOffset(winter, "Asia/Ho_Chi_Minh", { unit: "seconds" })).toBe(25200);
+    expect(getTimeZoneOffset(winter, "Asia/Ho_Chi_Minh", { unit: "hours" })).toBe(7);
+    expect(getTimeZoneOffset(winter, "Asia/Ho_Chi_Minh", { direction: "native" })).toBe(-420);
     expect(getTimeZoneOffset(winter, "America/New_York")).toBe(-300);
     expect(getTimeZoneOffset(summer, "America/New_York")).toBe(-240);
     expect(getTimeZoneOffset(winter, "UTC")).toBe(0);
+
+    const now = new Date();
+    expect(getTimeZoneOffset(now)).toBe(-now.getTimezoneOffset());
   });
 
   test("formats and names zones through Intl", () => {
@@ -91,6 +97,8 @@ describe("timezone utilities", () => {
   test("rejects invalid dates and time zones", () => {
     expect(() => getTimeZoneOffset("nope", "UTC")).toThrow(RangeError);
     expect(() => getTimeZoneOffset(winter, "Not/A_Timezone")).toThrow(RangeError);
+    expect(() => getTimeZoneOffset(winter, "UTC", { unit: "days" as any })).toThrow(RangeError);
+    expect(() => getTimeZoneOffset(winter, "UTC", { direction: "other" as any })).toThrow(RangeError);
     expect(() => formatInTimeZone(winter, null as any)).toThrow(TypeError);
   });
 });

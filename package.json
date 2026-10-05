@@ -1,6 +1,6 @@
 {
   "name": "@fatdevcon/utilities",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "TypeScript utilities with exact big-number math, timezone/date formatting, collections, cancellable waits, retries and validators",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -59,6 +59,9 @@
     "time-zone",
     "iana-timezone",
     "utc-offset",
+    "timezone-offset",
+    "offset-seconds",
+    "offset-hours",
     "daylight-saving",
     "dst",
     "text",

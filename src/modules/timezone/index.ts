@@ -9,6 +9,16 @@ export type TimeZoneNameStyle =
   | "shortGeneric"
   | "longGeneric";
 
+export type TimeZoneOffsetUnit = "seconds" | "minutes" | "hours";
+export type TimeZoneOffsetDirection = "utc" | "native";
+
+export interface TimeZoneOffsetOptions {
+  /** Unit of the returned offset. Default: "minutes". */
+  unit?: TimeZoneOffsetUnit;
+  /** "utc" is positive east of UTC; "native" matches Date#getTimezoneOffset(). Default: "utc". */
+  direction?: TimeZoneOffsetDirection;
+}
+
 const offsetFormatters = new Map<string, Intl.DateTimeFormat>();
 
 const assertTimeZone: (timeZone: unknown) => asserts timeZone is string = (timeZone) => {
@@ -48,11 +58,7 @@ export function isTimeZone(value: unknown): value is string {
   }
 }
 
-/**
- * Offset from UTC in minutes at date, where positive values are east of UTC.
- * The result observes daylight-saving transitions for the supplied instant.
- */
-export function getTimeZoneOffset(date: DateInput, timeZone: string): number {
+const getOffsetSeconds = (date: DateInput, timeZone: string): number => {
   const instant = toValidDate(date);
   const parts = getOffsetFormatter(timeZone).formatToParts(instant);
   const values = Object.fromEntries(
@@ -68,7 +74,32 @@ export function getTimeZoneOffset(date: DateInput, timeZone: string): number {
     values.minute,
     values.second,
   );
-  const offset = Math.round((localAsUtc - instant.getTime()) / 60_000);
+  const instantAtSecond = Math.floor(instant.getTime() / 1000) * 1000;
+  const offset = (localAsUtc - instantAtSecond) / 1000;
+  return offset === 0 ? 0 : offset;
+};
+
+/**
+ * Offset at date in the requested unit. The default UTC convention is positive east
+ * of UTC (`Asia/Ho_Chi_Minh` is +420 minutes / +7 hours). Set direction to "native"
+ * for the opposite sign used by Date#getTimezoneOffset(). Defaults to the local zone.
+ */
+export function getTimeZoneOffset(
+  date: DateInput = new Date(),
+  timeZone: string = Intl.DateTimeFormat().resolvedOptions().timeZone,
+  options: TimeZoneOffsetOptions = {},
+): number {
+  const { unit = "minutes", direction = "utc" } = options;
+  if (unit !== "seconds" && unit !== "minutes" && unit !== "hours") {
+    throw new RangeError(`Unsupported time zone offset unit: ${String(unit)}`);
+  }
+  if (direction !== "utc" && direction !== "native") {
+    throw new RangeError(`Unsupported time zone offset direction: ${String(direction)}`);
+  }
+  const seconds = getOffsetSeconds(date, timeZone);
+  const signedSeconds = direction === "native" ? -seconds : seconds;
+  const divisor = unit === "seconds" ? 1 : unit === "minutes" ? 60 : 3600;
+  const offset = signedSeconds / divisor;
   return offset === 0 ? 0 : offset;
 }
 
