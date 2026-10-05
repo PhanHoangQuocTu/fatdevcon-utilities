@@ -1,34 +1,26 @@
-import { format, FormatOptions } from "date-fns";
+import { getNumberFormat, toIntlNumber } from "../../utils/intl";
+import type { NumericInput } from "../../utils/numeric";
 
 /* Formatting utilities */
+/**
+ * Plain `Intl.NumberFormat` wrapper. Accepts number, bigint and numeric strings.
+ * A `number` is passed through untouched, so `formatNumber(NaN)` is "NaN"; bigint and
+ * string inputs are validated.
+ */
 const formatNumber = (
-  value: number,
+  value: NumericInput,
   locale?: Intl.LocalesArgument,
   options?: Intl.NumberFormatOptions
 ): string => {
-  return new Intl.NumberFormat(locale, options).format(value);
+  const input = typeof value === "number" ? value : toIntlNumber(value, "value");
+  return getNumberFormat(locale, options ?? {}).format(input as number);
 };
 
-const formatDate = (
-  date: Date | string | number,
-  formatStr: string,
-  options?: FormatOptions
-): string => {
-  const dateObj =
-    typeof date === "string" || typeof date === "number"
-      ? new Date(date)
-      : date;
-
-  if (Number.isNaN(dateObj.getTime())) {
-    throw new RangeError(`Invalid date: ${String(date)}`);
-  }
-
-  return format(dateObj, formatStr, options);
-};
-
-export { formatNumber, formatDate };
+export { formatNumber };
 
 export { formatCompactNumber, formatPercent, formatCurrency, formatUnit, formatBytes } from "./number";
 export type { CompactNumberOptions, PercentFormatOptions, CurrencyFormatOptions, UnitFormatOptions, BytesFormatOptions } from "./number";
 export * from "./text";
 export * from "./currency";
+export * from "./date";
+export * from "./case";

@@ -1,44 +1,48 @@
-import { assertFiniteNumber } from "../../utils/validate";
+import Decimal from "decimal.js";
+import { ExactDecimal, outOfRange, toDecimal } from "../../utils/numeric";
+import { assertInteger } from "../../utils/validate";
+import type { NumericInput } from "../../utils/numeric";
+import { getNumberFormat, toIntlNumber } from "../../utils/intl";
+
 
 export type CompactNumberOptions = Omit<Intl.NumberFormatOptions, "notation">;
 export type CurrencyFormatOptions = Omit<Intl.NumberFormatOptions, "style" | "currency">;
 export type PercentFormatOptions = Omit<Intl.NumberFormatOptions, "style">;
 export type UnitFormatOptions = Omit<Intl.NumberFormatOptions, "style" | "unit">;
 
-/** Format abbreviated magnitudes, e.g. 1200 -> "1.2K" in en-US. */
+const formatWith = (
+  value: unknown,
+  locale: Intl.LocalesArgument,
+  options: Intl.NumberFormatOptions
+): string => getNumberFormat(locale, options).format(toIntlNumber(value, "value") as number);
+
+/** Format abbreviated magnitudes, e.g. 1200 -> "1.2K" in en-US. Accepts number, bigint and numeric strings. */
 export function formatCompactNumber(
-  value: number,
+  value: NumericInput,
   locale: Intl.LocalesArgument = "en-US",
   options: CompactNumberOptions = {}
 ): string {
-  assertFiniteNumber(value, "value");
-  return new Intl.NumberFormat(locale, {
-    maximumFractionDigits: 1, ...options, notation: "compact",
-  }).format(value);
+  return formatWith(value, locale, { maximumFractionDigits: 1, ...options, notation: "compact" });
 }
 
-/** Input is a ratio: 0.125 -> "12.5%". */
+/** Input is a ratio: 0.125 -> "12.5%". Accepts number, bigint and numeric strings. */
 export function formatPercent(
-  value: number,
+  value: NumericInput,
   locale: Intl.LocalesArgument = "en-US",
   options: PercentFormatOptions = {}
 ): string {
-  assertFiniteNumber(value, "value");
-  return new Intl.NumberFormat(locale, {
-    maximumFractionDigits: 2, ...options, style: "percent",
-  }).format(value);
+  return formatWith(value, locale, { maximumFractionDigits: 2, ...options, style: "percent" });
 }
 
+/** Format money for an ISO 4217 code. Accepts number, bigint and numeric strings, so amounts keep every digit. */
 export function formatCurrency(
-  value: number,
+  value: NumericInput,
   currency: string,
   locale: Intl.LocalesArgument = "en-US",
   options: CurrencyFormatOptions = {}
 ): string {
-  assertFiniteNumber(value, "value");
-  return new Intl.NumberFormat(locale, {
-    ...options, style: "currency", currency: normalizeCurrency(currency),
-  }).format(value);
+  const code = normalizeCurrency(currency);
+  return formatWith(value, locale, { ...options, style: "currency", currency: code });
 }
 
 /** Validates code syntax; Intl accepts well-formed unassigned codes too. */
@@ -49,13 +53,12 @@ export function normalizeCurrency(currency: string): string {
 }
 
 export function formatUnit(
-  value: number,
+  value: NumericInput,
   unit: string,
   locale: Intl.LocalesArgument = "en-US",
   options: UnitFormatOptions = {}
 ): string {
-  assertFiniteNumber(value, "value");
-  return new Intl.NumberFormat(locale, { ...options, style: "unit", unit }).format(value);
+  return formatWith(value, locale, { ...options, style: "unit", unit });
 }
 
 export interface BytesFormatOptions {
@@ -66,23 +69,58 @@ export interface BytesFormatOptions {
   locale?: Intl.LocalesArgument;
 }
 
-export function formatBytes(value: number, options: BytesFormatOptions = {}): string {
-  assertFiniteNumber(value, "value");
-  const { base = 1000, decimals = 2, locale = "en-US" } = options;
-  if (value < 0) throw new RangeError("value must be non-negative");
-  if (base !== 1000 && base !== 1024) throw new RangeError("base must be 1000 or 1024");
-  if (!Number.isInteger(decimals)) throw new TypeError("decimals must be an integer");
-  if (decimals < 0 || decimals > 20) throw new RangeError("decimals must be between 0 and 20");
-  const units = base === 1000
-    ? ["B", "kB", "MB", "GB", "TB", "PB", "EB"]
-    : ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB"];
-  let amount = value;
-  let index = 0;
-  while (amount >= base && index < units.length - 1) { amount /= base; index++; }
-  // Promote values that round to the next unit, e.g. 999999 -> "1 MB".
-  if (Number(amount.toFixed(decimals)) >= base && index < units.length - 1) {
-    amount /= base;
-    index++;
+const SI_UNITS = ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB", "RB", "QB"];
+const IEC_UNITS = ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"];
+
+// 1 / 1000^k = 10^-3k and 1 / 1024^k = 5^10k * 10^-10k: both are exact decimal factors.
+const unitThresholds = new Map<number, Decimal[]>();
+const unitFactors = new Map<number, Decimal[]>();
+const unitTable = (base: 1000 | 1024, count: number): { thresholds: Decimal[]; factors: Decimal[] } => {
+  let thresholds = unitThresholds.get(base);
+  let factors = unitFactors.get(base);
+  if (!thresholds || !factors) {
+    thresholds = [];
+    factors = [];
+    for (let k = 0; k < count; k++) {
+      thresholds.push(new ExactDecimal(base).pow(k));
+      factors.push(
+        base === 1000
+          ? new ExactDecimal(`1e-${3 * k}`)
+          : new ExactDecimal(5).pow(10 * k).mul(new ExactDecimal(`1e-${10 * k}`))
+      );
+    }
+    unitThresholds.set(base, thresholds);
+    unitFactors.set(base, factors);
   }
-  return new Intl.NumberFormat(locale, { maximumFractionDigits: decimals }).format(amount) + " " + units[index];
+  return { thresholds, factors };
+};
+
+/**
+ * Human-readable size from B up to QB (SI) or YiB (IEC). Accepts number, bigint and
+ * numeric strings and scales them exactly, so `formatBytes("1500000000000000000000000000000")`
+ * is "1.5 QB".
+ */
+export function formatBytes(value: NumericInput, options: BytesFormatOptions = {}): string {
+  const { base = 1000, decimals = 2, locale = "en-US" } = options;
+  const bytes = toDecimal(value, "value");
+  if (bytes.isNeg() && !bytes.isZero()) throw outOfRange("value must be non-negative");
+  if (base !== 1000 && base !== 1024) throw outOfRange("base must be 1000 or 1024");
+  assertInteger(decimals, "decimals");
+  if (decimals < 0 || decimals > 20) throw outOfRange("decimals must be between 0 and 20");
+
+  const units = base === 1000 ? SI_UNITS : IEC_UNITS;
+  const last = units.length - 1;
+  const { thresholds, factors } = unitTable(base, units.length);
+  let index = 0;
+  while (index < last && bytes.gte(thresholds[index + 1])) index++;
+  let rounded = bytes.mul(factors[index]).toDecimalPlaces(decimals, Decimal.ROUND_HALF_UP);
+  // Promote values that round up to the next unit, e.g. 999999 -> "1 MB".
+  if (index < last && rounded.gte(base)) {
+    index++;
+    rounded = bytes.mul(factors[index]).toDecimalPlaces(decimals, Decimal.ROUND_HALF_UP);
+  }
+  const text = getNumberFormat(locale, { maximumFractionDigits: decimals }).format(
+    toIntlNumber(rounded.toFixed(), "value") as number
+  );
+  return `${text} ${units[index]}`;
 }

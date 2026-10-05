@@ -1,28 +1,27 @@
 import { Comparator } from "@/types";
-import { assertArray } from "../../utils/validate";
-import { countingSortByDigit, heapify, merge } from "./helpers";
+import { assertArray, describeValue } from "../../utils/validate";
+import { invalidNumber, outOfRange } from "../../utils/numeric";
+import { defaultCompare } from "../../utils/compare";
+import { heapify, merge } from "./helpers";
 
-// Upper bound for counting sort's auxiliary array to avoid huge allocations
-const MAX_COUNTING_SORT_VALUE = 10_000_000;
+// Widest value range (max - min) counting sort will allocate counters for
+const MAX_COUNTING_SORT_RANGE = 10_000_000;
 
-const assertNonNegativeIntegers = (arr: number[]): number => {
+const assertSafeIntegers = (arr: unknown[]): void => {
   assertArray(arr, "arr");
-  let max = 0;
-  for (const num of arr) {
-    if (!Number.isSafeInteger(num) || num < 0) {
-      throw new RangeError(
-        `Only non-negative integers are supported, received ${String(num)}`
-      );
+  for (let i = 0; i < arr.length; i++) {
+    const num = arr[i];
+    if (typeof num !== "number" || !Number.isFinite(num)) throw invalidNumber(`arr[${i}]`, num);
+    if (!Number.isSafeInteger(num)) {
+      throw outOfRange(`Only safe integers are supported, received ${describeValue(num)} at index ${i}`);
     }
-    if (num > max) max = num;
   }
-  return max;
 };
 
 // O(n log n) average, O(n²) worst case - Quick sort
 const quickSort = <T>(
   arr: T[],
-  compareFn: Comparator<T> = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
+  compareFn: Comparator<T> = defaultCompare
 ): T[] => {
   assertArray(arr, "arr");
   if (arr.length <= 1) return [...arr];
@@ -51,7 +50,7 @@ const quickSort = <T>(
 // O(n log n) - Merge sort
 const mergeSort = <T>(
   arr: T[],
-  compareFn: Comparator<T> = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
+  compareFn: Comparator<T> = defaultCompare
 ): T[] => {
   assertArray(arr, "arr");
   if (arr.length <= 1) return [...arr];
@@ -67,7 +66,7 @@ const mergeSort = <T>(
 // Best case O(n) when array is nearly sorted
 export const insertionSort = <T>(
   arr: T[],
-  compareFn: Comparator<T> = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
+  compareFn: Comparator<T> = defaultCompare
 ): T[] => {
   assertArray(arr, "arr");
   const result = [...arr];
@@ -87,7 +86,7 @@ export const insertionSort = <T>(
 // Always performs O(n²) comparisons (no early exit)
 export const selectionSort = <T>(
   arr: T[],
-  compareFn: Comparator<T> = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
+  compareFn: Comparator<T> = defaultCompare
 ): T[] => {
   assertArray(arr, "arr");
   const result = [...arr];
@@ -109,7 +108,7 @@ export const selectionSort = <T>(
 // Best case O(n) when array is already sorted
 export const bubbleSort = <T>(
   arr: T[],
-  compareFn: Comparator<T> = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
+  compareFn: Comparator<T> = defaultCompare
 ): T[] => {
   assertArray(arr, "arr");
   const result = [...arr];
@@ -132,7 +131,7 @@ export const bubbleSort = <T>(
 // O(n log n) - Heap sort (in-place, not stable)
 export const heapSort = <T>(
   arr: T[],
-  compareFn: Comparator<T> = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
+  compareFn: Comparator<T> = defaultCompare
 ): T[] => {
   assertArray(arr, "arr");
   const result = [...arr];
@@ -152,53 +151,97 @@ export const heapSort = <T>(
   return result;
 };
 
-// O(n + k) - Counting sort for non-negative integers
-// where k is the range of input
+// O(n + k) - Counting sort for integers (negatives included),
+// where k is the range max - min
 export const countingSort = (arr: number[]): number[] => {
-  const max = assertNonNegativeIntegers(arr);
+  assertSafeIntegers(arr);
   if (arr.length <= 1) return [...arr];
-  if (max > MAX_COUNTING_SORT_VALUE) {
-    throw new RangeError(
-      `Max value ${max} exceeds counting sort limit of ${MAX_COUNTING_SORT_VALUE}; use radixSort or mergeSort`
+
+  let min = arr[0];
+  let max = arr[0];
+  for (const num of arr) {
+    if (num < min) min = num;
+    if (num > max) max = num;
+  }
+  const range = max - min;
+  if (range > MAX_COUNTING_SORT_RANGE) {
+    throw outOfRange(
+      `Value range ${range} exceeds counting sort limit of ${MAX_COUNTING_SORT_RANGE}; use radixSort or mergeSort`
     );
   }
 
-  const count = new Array(max + 1).fill(0);
-  const result = new Array(arr.length);
+  const count = new Uint32Array(range + 1);
+  for (const num of arr) count[num - min]++;
+  for (let i = 1; i <= range; i++) count[i] += count[i - 1];
 
-  // Count occurrences
-  for (const num of arr) {
-    count[num]++;
-  }
-
-  // Calculate cumulative count
-  for (let i = 1; i <= max; i++) {
-    count[i] += count[i - 1];
-  }
-
-  // Place elements in sorted order
+  // Walk backwards so equal values keep their relative order
+  const result = new Array<number>(arr.length);
   for (let i = arr.length - 1; i >= 0; i--) {
-    result[count[arr[i]] - 1] = arr[i];
-    count[arr[i]]--;
+    result[--count[arr[i] - min]] = arr[i];
   }
-
   return result;
 };
 
-// O(nk) - Radix sort for non-negative integers
-// where k is the number of digits in the maximum number
-export const radixSort = (arr: number[]): number[] => {
-  const max = assertNonNegativeIntegers(arr);
+// LSD radix sort on non-negative safe integers, one byte per pass
+const radixSortMagnitudes = (values: Float64Array): Float64Array => {
+  let max = 0;
+  for (const v of values) if (v > max) max = v;
+  let source: Float64Array = values;
+  let target: Float64Array = new Float64Array(values.length);
+  const count = new Uint32Array(256);
+  for (let divisor = 1; divisor <= max; divisor *= 256) {
+    count.fill(0);
+    for (let i = 0; i < source.length; i++) count[Math.floor(source[i] / divisor) % 256]++;
+    for (let i = 1; i < 256; i++) count[i] += count[i - 1];
+    for (let i = source.length - 1; i >= 0; i--) {
+      target[--count[Math.floor(source[i] / divisor) % 256]] = source[i];
+    }
+    [source, target] = [target, source];
+  }
+  return source;
+};
+
+// LSD radix sort on non-negative bigints, 16 bits per pass
+const radixSortBigMagnitudes = (values: bigint[]): bigint[] => {
+  let max = 0n;
+  for (const v of values) if (v > max) max = v;
+  let source = values;
+  let target = new Array<bigint>(values.length);
+  const count = new Uint32Array(65536);
+  for (let shift = 0n; max >> shift > 0n; shift += 16n) {
+    count.fill(0);
+    for (const v of source) count[Number((v >> shift) & 0xffffn)]++;
+    for (let i = 1; i < 65536; i++) count[i] += count[i - 1];
+    for (let i = source.length - 1; i >= 0; i--) {
+      target[--count[Number((source[i] >> shift) & 0xffffn)]] = source[i];
+    }
+    [source, target] = [target, source];
+  }
+  return source;
+};
+
+// O(d * n) - Radix sort for integers (negatives included), where d is the
+// number of digits of the largest magnitude. Accepts safe integers or bigints.
+export function radixSort(arr: number[]): number[];
+export function radixSort(arr: bigint[]): bigint[];
+export function radixSort(arr: (number | bigint)[]): (number | bigint)[] {
+  assertArray(arr, "arr");
+  if (arr.length > 0 && typeof arr[0] === "bigint") {
+    for (let i = 0; i < arr.length; i++) {
+      if (typeof arr[i] !== "bigint") throw invalidNumber(`arr[${i}]`, arr[i]);
+    }
+    const items = arr as bigint[];
+    const negatives = radixSortBigMagnitudes(items.filter((v) => v < 0n).map((v) => -v)).reverse().map((v) => -v);
+    return negatives.concat(radixSortBigMagnitudes(items.filter((v) => v >= 0n)));
+  }
+  assertSafeIntegers(arr);
   if (arr.length <= 1) return [...arr];
-
-  let result = [...arr];
-
-  // Do counting sort for every digit
-  for (let exp = 1; Math.floor(max / exp) > 0; exp *= 10) {
-    result = countingSortByDigit(result, exp);
-  }
-
-  return result;
-};
+  const numbers = arr as number[];
+  const negatives: number[] = [];
+  const positives: number[] = [];
+  for (const v of numbers) (v < 0 ? negatives : positives).push(v < 0 ? -v : v);
+  const sortedNegatives = Array.from(radixSortMagnitudes(Float64Array.from(negatives)), (v) => -v).reverse();
+  return sortedNegatives.concat(Array.from(radixSortMagnitudes(Float64Array.from(positives))));
+}
 
 export { quickSort, mergeSort };

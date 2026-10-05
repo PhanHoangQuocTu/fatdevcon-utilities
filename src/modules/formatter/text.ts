@@ -58,15 +58,30 @@ export function normalizeWhitespace(text: string): string {
   return text.trim().replace(/\s+/gu, " ");
 }
 
-/** Removes combining marks and explicitly transliterates Vietnamese d-stroke. */
+// Combining marks used by Latin, Greek and Cyrillic diacritics. Marks from
+// other scripts (Devanagari, Thai, Arabic...) are vowel signs, not accents.
+const LATIN_MARKS = /[\u0300-\u036f\u1ab0-\u1aff\u1dc0-\u1dff\u20d0-\u20ff\ufe20-\ufe2f]/g;
+// Letters with strokes or ligatures that do not decompose under NFD.
+const TRANSLITERATIONS: Record<string, string> = {
+  "đ": "d", "Đ": "D", "ð": "d", "Ð": "D", "ø": "o", "Ø": "O", "ł": "l", "Ł": "L",
+  "ħ": "h", "Ħ": "H", "ı": "i", "ß": "ss", "ẞ": "SS", "æ": "ae", "Æ": "AE",
+  "œ": "oe", "Œ": "OE", "þ": "th", "Þ": "Th",
+};
+const TRANSLITERATION_PATTERN = new RegExp(`[${Object.keys(TRANSLITERATIONS).join("")}]`, "g");
+
+/** Strips Latin-style accents and transliterates letters such as đ, ø, ł and ß. Other scripts are left intact. */
 export function removeDiacritics(text: string): string {
   assertText(text);
-  return text.normalize("NFD").replace(/\p{M}/gu, "").replace(/đ/g, "d").replace(/Đ/g, "D");
+  return text
+    .normalize("NFD")
+    .replace(LATIN_MARKS, "")
+    .normalize("NFC")
+    .replace(TRANSLITERATION_PATTERN, char => TRANSLITERATIONS[char]);
 }
 
-/** Unicode slug: retains letters/numbers from non-Latin scripts. */
+/** Unicode slug: retains letters, marks and numbers from non-Latin scripts. */
 export function slugify(text: string): string {
-  return removeDiacritics(text).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-+|-+$/g, "");
+  return removeDiacritics(text).toLowerCase().replace(/[^\p{L}\p{M}\p{N}]+/gu, "-").replace(/^-+|-+$/g, "");
 }
 
 /** Uppercase the first grapheme; leave the remaining text unchanged. */

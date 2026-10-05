@@ -35,7 +35,7 @@ describe("number formatting", () => {
     expect(() => formatCompactNumber(1, "invalid_locale")).toThrow(RangeError);
     expect(() => formatPercent(1, "en", { maximumFractionDigits: -1 })).toThrow(RangeError);
   });
-  test.each([NaN, Infinity, -Infinity, "123", null])("new numeric APIs reject %p", value => {
+  test.each([NaN, Infinity, -Infinity, "12abc", "", null, undefined, {}])("new numeric APIs reject %p", value => {
     for (const fn of [
       () => formatCompactNumber(value as number), () => formatPercent(value as number),
       () => formatCurrency(value as number, "USD"), () => formatUnit(value as number, "meter"),
@@ -54,7 +54,7 @@ describe("number formatting", () => {
     expect(formatBytes(999999)).toBe("1 MB");
     expect(formatBytes(1024 ** 2 - 1, { base: 1024 })).toBe("1 MiB");
     expect(formatBytes(1500, { locale: "de-DE" })).toBe("1,5 kB");
-    expect(formatBytes(Number.MAX_VALUE)).toContain(" EB");
+    expect(formatBytes(Number.MAX_VALUE)).toContain(" QB");
     expect(() => formatBytes(-1)).toThrow(RangeError);
     expect(() => formatBytes(1, { base: 2 as 1000 })).toThrow(RangeError);
     expect(() => formatBytes(1, { decimals: 1.5 })).toThrow(TypeError);

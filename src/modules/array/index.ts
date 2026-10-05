@@ -1,23 +1,13 @@
 import { Comparator } from "@/types";
-import { divide, summary } from "../math";
 import { assertArray } from "../../utils/validate";
+import { defaultCompare } from "../../utils/compare";
 
-/* Array utilities */
-const sumValueInArray = (arr: number[]): number => {
-  assertArray(arr, "arr");
-  return arr.reduce((a, b) => summary(a, b), 0);
-};
-
-const averageValueInArray = (arr: number[]): number => {
-  assertArray(arr, "arr");
-  if (arr.length === 0) return 0;
-  return divide(sumValueInArray(arr), arr.length);
-};
+export { sumValueInArray, averageValueInArray } from "../math/aggregate";
 
 // O(n) - Find minimum value in array
 const findMin = <T>(
   arr: T[],
-  compareFn: Comparator<T> = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
+  compareFn: Comparator<T> = defaultCompare
 ): T | undefined => {
   assertArray(arr, "arr");
   if (arr.length === 0) return undefined;
@@ -30,7 +20,7 @@ const findMin = <T>(
 // O(n) - Find maximum value in array
 const findMax = <T>(
   arr: T[],
-  compareFn: Comparator<T> = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
+  compareFn: Comparator<T> = defaultCompare
 ): T | undefined => {
   assertArray(arr, "arr");
   if (arr.length === 0) return undefined;
@@ -40,4 +30,4 @@ const findMax = <T>(
   );
 };
 
-export { sumValueInArray, averageValueInArray, findMin, findMax };
+export { findMin, findMax };

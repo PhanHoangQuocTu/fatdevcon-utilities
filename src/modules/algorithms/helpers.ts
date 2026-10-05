@@ -26,7 +26,7 @@ const countingSortByDigit = (arr: number[], exp: number): number[] => {
 
   // Count occurrences of each digit
   for (const num of arr) {
-    const digit = Math.floor(num / exp) % 10;
+    const digit = ((num - (num % exp)) / exp) % 10; // exact: no float division rounding
     count[digit]++;
   }
 
@@ -37,7 +37,7 @@ const countingSortByDigit = (arr: number[], exp: number): number[] => {
 
   // Build the result array
   for (let i = arr.length - 1; i >= 0; i--) {
-    const digit = Math.floor(arr[i] / exp) % 10;
+    const digit = ((arr[i] - (arr[i] % exp)) / exp) % 10;
     result[count[digit] - 1] = arr[i];
     count[digit]--;
   }

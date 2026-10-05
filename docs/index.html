@@ -4,16 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>@fatdevcon/utilities – Documentation</title>
-<meta name="description" content="API documentation for @fatdevcon/utilities: locale-aware number, currency and date formatting, Unicode-safe text helpers, precise decimal math, array and object helpers, sort and search algorithms.">
+<meta name="description" content="API documentation for @fatdevcon/utilities: exact decimal math on bigint and numeric strings, big factorial, fibonacci and primes, locale-aware number, currency and date formatting, Unicode text, arrays, objects, debounce, retry and validators.">
 <style>
   :root {
     --bg: #ffffff; --panel: #f6f7f9; --border: #e3e6ea; --text: #1b1f24; --muted: #5d6673;
     --accent: #0b6bcb; --code-bg: #f1f3f6; --tag-bg: #e7f0fb; --tag-text: #0a4f96;
+    --warn-bg: #fdf0e6; --warn-text: #8a4600; --err-bg: #fbe9ea; --err-text: #9b1c24;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #0f1216; --panel: #161a20; --border: #272d36; --text: #e6e9ee; --muted: #98a2b0;
       --accent: #6cb2ff; --code-bg: #1b2028; --tag-bg: #1a2c42; --tag-text: #9ccbff;
+      --warn-bg: #2d2113; --warn-text: #f0b46c; --err-bg: #331a1d; --err-text: #f0959b;
     }
   }
   * { box-sizing: border-box; }
@@ -49,16 +51,27 @@
   h1 { font-size: 30px; margin: 0 0 8px; }
   .lead { color: var(--muted); margin: 0 0 20px; max-width: 62ch; }
   main > section > h2 { font-size: 22px; margin: 44px 0 4px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  main h3.sub { font-size: 16px; margin: 24px 0 4px; }
   .section-note { color: var(--muted); margin: 8px 0 0; }
   .fn { border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin-top: 16px; }
   .fn h3 { margin: 0; font-size: 17px; font-family: ui-monospace, Menlo, Consolas, monospace; }
-  .fn .sig { display: block; margin-top: 6px; color: var(--muted); background: none; padding: 0; overflow-wrap: anywhere; }
+  .fn .sig { display: block; margin-top: 8px; color: var(--muted); background: none; padding: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
   .fn p { margin: 10px 0 0; }
+  .fn h4 { margin: 14px 0 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .fn .returns { margin: 4px 0 0; }
   .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
   .tag { background: var(--tag-bg); color: var(--tag-text); font-size: 12.5px; padding: 2px 8px; border-radius: 999px; }
-  table { border-collapse: collapse; width: 100%; margin-top: 12px; font-size: 15px; }
-  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
-  th { color: var(--muted); font-weight: 600; font-size: 13px; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 14.5px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 12.5px; white-space: nowrap; }
+  td.type, td.name { white-space: nowrap; }
+  td.type code, td.name code { white-space: pre; }
+  .throws { list-style: none; margin: 6px 0 0; padding: 0; }
+  .throws li { margin: 4px 0; font-size: 14.5px; }
+  .code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; padding: 1px 7px; border-radius: 4px; margin-right: 6px; background: var(--err-bg); color: var(--err-text); white-space: nowrap; }
+  .code.plain { background: var(--code-bg); color: var(--muted); }
+  .callout { background: var(--warn-bg); color: var(--warn-text); border-radius: 8px; padding: 10px 14px; margin-top: 14px; font-size: 15px; }
   .empty { color: var(--muted); margin-top: 24px; }
   footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; }
 
@@ -80,45 +93,117 @@
 
   <main id="top">
     <h1>@fatdevcon/utilities</h1>
-    <p class="lead">Typed utilities for everyday JavaScript and TypeScript: locale-aware number, currency and date formatting, Unicode-safe text helpers, precise decimal math, array and object helpers, and classic sort and search algorithms.</p>
+    <p class="lead">Typed utilities for everyday JavaScript and TypeScript: exact decimal math that works on numbers, bigints and numeric strings of any practical size, locale-aware formatting, Unicode-safe text, arrays, objects, timing helpers and validators.</p>
 
     <pre><code>npm install @fatdevcon/utilities</code></pre>
-    <pre><code>import { formatCurrency, truncateText, summary } from "@fatdevcon/utilities";
+    <pre><code>import { summary, factorial, isPrime, formatCurrency, formatBytes } from "@fatdevcon/utilities";
 
-formatCurrency(1234.5, "USD");  // "$1,234.50"
-truncateText("Hello world", 8); // "Hello..."
-summary(0.1, 0.2);              // 0.3</code></pre>
-    <p class="section-note">Ships ESM and CommonJS builds with type definitions. Requires Node.js 18+ or Bun 1.1.34+. Functions never mutate the arrays or objects you pass in.</p>
+summary(0.1, 0.2);                                // 0.3
+summary("100000000000000000000000000000", "1");   // "100000000000000000000000000001"
+factorial(25n);                                   // 15511210043330985984000000n
+isPrime(2n ** 127n - 1n);                         // true
+formatCurrency("12345678901234567890.129", "USD"); // "$12,345,678,901,234,567,890.13"
+formatBytes("1500000000000000000000000000000");   // "1.5 QB"</code></pre>
+    <p class="section-note">Ships ESM and CommonJS builds with type definitions. Requires Node.js 18+ or Bun 1.1.34+ (Node 20+ to format bigint and string values with every digit). Functions never mutate the arrays or objects you pass in.</p>
+
+    <section id="big-numbers">
+      <h2>Big numbers</h2>
+      <p class="section-note">A JavaScript <code>number</code> is a 64-bit double: it carries about 16 significant digits, tops out near 1.8 × 10<sup>308</sup> and cannot store 0.1 exactly. The numeric functions keep working past those limits when you give them a <code>bigint</code> or a numeric string, and they refuse, with a clear error, to hand back a wrong answer.</p>
+
+      <h3 class="sub">What you can pass</h3>
+      <div class="scroll"><table>
+        <tr><th>Kind</th><th>Accepted</th><th>Rejected with <code>ERR_INVALID_NUMBER</code></th></tr>
+        <tr><td><code>number</code></td><td>Any finite number</td><td><code>NaN</code>, <code>Infinity</code>, <code>-Infinity</code></td></tr>
+        <tr><td><code>bigint</code></td><td>Up to about 10<sup>300,000</sup> in magnitude (about 996,000 bits)</td><td>Larger values (<code>ERR_OVERFLOW</code>)</td></tr>
+        <tr><td><code>string</code></td><td>Plain or exponent decimal notation: <code>"12.5"</code>, <code>"-.5"</code>, <code>"5."</code>, <code>"+7"</code>, <code>"1e-30"</code>, <code>"1E+5"</code></td><td>Empty or blank text, surrounding spaces, <code>"1,000"</code>, <code>"1_000"</code>, <code>"0x10"</code>, <code>"NaN"</code>, <code>"Infinity"</code>, <code>"1e"</code>, <code>"١٢٣"</code></td></tr>
+        <tr><td>anything else</td><td>–</td><td><code>null</code>, <code>undefined</code>, booleans, objects, arrays, symbols</td></tr>
+      </table></div>
+      <p class="section-note">Use <a href="#isNumeric"><code>isNumeric</code></a> to test a value first. In TypeScript the accepted union is exported as <code>NumericInput</code>.</p>
+
+      <h3 class="sub">What you get back</h3>
+      <p class="section-note">The return kind follows the input kind, so existing number code keeps returning numbers.</p>
+      <div class="scroll"><table>
+        <tr><th>Arguments</th><th>Result</th><th>Example</th></tr>
+        <tr><td>all <code>number</code></td><td><code>number</code></td><td><code>summary(0.1, 0.2)</code> → <code>0.3</code></td></tr>
+        <tr><td>all <code>bigint</code></td><td><code>bigint</code> when the result is always whole (<code>summary</code>, <code>subtract</code>, <code>multiply</code>, <code>modulo</code>, <code>power</code>, <code>gcd</code>, <code>lcm</code>, <code>factorial</code>, <code>fibonacci</code>, <code>clamp</code>, <code>abs</code>, <code>randomInt</code>)</td><td><code>multiply(2n ** 64n, 2n ** 64n)</code> → <code>2n ** 128n</code></td></tr>
+        <tr><td>all <code>bigint</code>, fractional result</td><td><code>string</code> (<code>divide</code>, <code>percentage</code>)</td><td><code>divide(10n, 4n)</code> → <code>"2.5"</code></td></tr>
+        <tr><td>any <code>string</code>, or a mix of kinds</td><td><code>string</code> in plain decimal notation, no exponent</td><td><code>summary("0.1", 2n)</code> → <code>"2.1"</code></td></tr>
+        <tr><td>arrays of numbers</td><td><code>number</code> (<code>sumValueInArray</code>, <code>averageValueInArray</code>, <code>median</code>)</td><td><code>sumValueInArray([0.1, 0.2, 0.3])</code> → <code>0.6</code></td></tr>
+        <tr><td>arrays of any numeric kind</td><td><code>string</code> via <code>sumBig</code>, <code>averageBig</code>, <code>medianBig</code></td><td><code>sumBig(["0.1", 10n ** 30n])</code> → <code>"1000000000000000000000000000000.1"</code></td></tr>
+      </table></div>
+      <div class="callout">Strings are the safe way to carry big or decimal values between systems: JSON has no bigint, and a 20-digit id or amount parsed by <code>JSON.parse</code> is already rounded. Keep it as text and pass it straight in.</div>
+
+      <h3 class="sub">Precision and rounding</h3>
+      <p class="section-note">All arithmetic runs on <a href="https://github.com/MikeMcl/decimal.js">decimal.js</a>, never on binary floating point. The package uses private decimal.js instances, so it never touches the global decimal.js configuration of an application that also uses the library, and that configuration never affects it. Addition, subtraction, multiplication, modulo and integer powers are exact. Division is exact when the quotient terminates and otherwise keeps <code>precision</code> significant digits (1 to 10000, default 40), rounding half up. Converting an exact result back to a <code>number</code> rounds once, to the nearest double. Decimal inputs are read the way they are written (<code>0.1</code> is one tenth, not 0.1000000000000000055…), which is why <code>round(1.005, 2)</code> is <code>1.01</code>.</p>
+
+      <h3 class="sub">Limits</h3>
+      <div class="scroll"><table>
+        <tr><th>What</th><th>Limit</th><th>Beyond it</th></tr>
+        <tr><td>Magnitude of any input or result</td><td>about 10<sup>300,000</sup>, down to 10<sup>-300,000</sup></td><td><code>ERR_OVERFLOW</code> / <code>ERR_UNDERFLOW</code></td></tr>
+        <tr><td>Result of a <code>number</code> operation</td><td>1.797 × 10<sup>308</sup> down to 5 × 10<sup>-324</sup></td><td><code>ERR_OVERFLOW</code> / <code>ERR_UNDERFLOW</code>, never <code>Infinity</code> or a silent <code>0</code></td></tr>
+        <tr><td><code>precision</code> (division, power, percentage, averages)</td><td>1 to 10,000 significant digits</td><td><code>ERR_OUT_OF_RANGE</code></td></tr>
+        <tr><td><code>round</code> decimals</td><td>0 to 300,000</td><td><code>ERR_OUT_OF_RANGE</code></td></tr>
+        <tr><td><code>factorial</code></td><td>170 as a number; 65,000 as bigint or string</td><td><code>ERR_OUT_OF_RANGE</code></td></tr>
+        <tr><td><code>fibonacci</code></td><td>1476 as a number; 1,000,000 as bigint or string</td><td><code>ERR_OUT_OF_RANGE</code></td></tr>
+        <tr><td><code>isPrime</code> size</td><td>2048 bits</td><td><code>ERR_OUT_OF_RANGE</code></td></tr>
+        <tr><td><code>gcd</code> / <code>lcm</code> decimals</td><td>1000 decimal places</td><td><code>ERR_OUT_OF_RANGE</code></td></tr>
+        <tr><td><code>range</code> length</td><td>10,000,000 items, bounds within ±(2<sup>53</sup> − 1)</td><td><code>ERR_OUT_OF_RANGE</code></td></tr>
+        <tr><td><code>countingSort</code> spread</td><td>max − min ≤ 10,000,000</td><td><code>ERR_OUT_OF_RANGE</code>; use <code>radixSort</code></td></tr>
+        <tr><td><code>randomInt</code> with numbers</td><td>span of at most 2<sup>53</sup> values</td><td><code>ERR_OUT_OF_RANGE</code>; pass bigint bounds</td></tr>
+      </table></div>
+
+      <h3 class="sub">Speed</h3>
+      <p class="section-note">Whole numbers take a native fast path: calls on safe integers never build a decimal object, and <code>sumValueInArray</code> adds a million integers in about 40 ms (a million fractions take about 0.4 s). <code>factorial(65000n)</code> and <code>fibonacci(1000000n)</code> finish well under 0.2 s on Node and Bun, and a 521-bit <code>isPrime</code> takes about 10 ms. <code>Intl.NumberFormat</code> instances are cached per locale and option set. The limits above are identical on every runtime: JavaScriptCore (Bun, Safari) caps a <code>BigInt</code> near 2<sup>20</sup> bits, so the package stays inside that on purpose.</p>
+    </section>
 
     <div id="api"></div>
     <p class="empty" id="empty" hidden>No function matches that search.</p>
 
     <section id="errors">
       <h2>Error handling</h2>
-      <p class="section-note">Invalid input throws a standard error instead of returning <code>NaN</code> or a wrong result.</p>
-      <table>
-        <tr><th>Error</th><th>When</th><th>Examples</th></tr>
-        <tr><td><code>TypeError</code></td><td>An argument has the wrong type: not a finite number, not an integer, not an array, or not a string.</td><td><code>factorial(Infinity)</code><br><code>sumValueInArray(null)</code><br><code>formatPercent(NaN)</code></td></tr>
-        <tr><td><code>RangeError</code></td><td>A value is outside the supported range or malformed.</td><td><code>divide(1, 0)</code><br><code>chunk([1], 0)</code><br><code>formatCurrency(1, "US")</code><br><code>formatDate("nope", "yyyy")</code></td></tr>
-      </table>
-      <pre><code>try {
-  divide(total, count);
+      <p class="section-note">Invalid input throws a standard error instead of returning <code>NaN</code> or a wrong result. Numeric errors are <code>NumericTypeError</code> (extends <code>TypeError</code>) or <code>NumericRangeError</code> (extends <code>RangeError</code>) and carry a stable <code>code</code>, so <code>instanceof TypeError</code> and <code>instanceof RangeError</code> keep working while you can branch on the exact reason. Messages name the argument and show the offending value, for example <code>a must be a finite number, bigint or numeric string, received "12abc"</code>.</p>
+      <div class="scroll"><table>
+        <tr><th>code</th><th>Class</th><th>Meaning</th><th>Example</th></tr>
+        <tr><td><code>ERR_INVALID_NUMBER</code></td><td>TypeError</td><td>Not a finite number, bigint or numeric string; also <code>NaN</code> met by the default comparison</td><td><code>summary(NaN, 1)</code>, <code>divide("12abc", 2)</code>, <code>findMin([1, NaN])</code></td></tr>
+        <tr><td><code>ERR_NOT_INTEGER</code></td><td>TypeError</td><td>A whole number is required</td><td><code>factorial(1.5)</code>, <code>round(1, 1.5)</code>, <code>power(2, 0.5)</code></td></tr>
+        <tr><td><code>ERR_DIVISION_BY_ZERO</code></td><td>RangeError</td><td>Divisor or modulus is 0, or 0 raised to a negative power</td><td><code>divide(1, 0)</code>, <code>modulo(1, 0)</code>, <code>power(0, -1)</code></td></tr>
+        <tr><td><code>ERR_OVERFLOW</code></td><td>RangeError</td><td>An input or result is too large for the kind it must be returned as</td><td><code>multiply(1e200, 1e200)</code>, <code>summary("1e1000001", 1)</code></td></tr>
+        <tr><td><code>ERR_UNDERFLOW</code></td><td>RangeError</td><td>A non-zero result is too small to represent</td><td><code>multiply(1e-200, 1e-200)</code>, <code>divide(1e-300, 1e300)</code></td></tr>
+        <tr><td><code>ERR_OUT_OF_RANGE</code></td><td>RangeError</td><td>An argument is outside its supported range</td><td><code>factorial(171)</code>, <code>clamp(1, 5, 0)</code>, <code>round(1, -1)</code>, <code>formatBytes(-1)</code></td></tr>
+        <tr><td><code>ERR_PRECISION_LOSS</code></td><td>RangeError</td><td>The runtime cannot format a bigint-sized string exactly (needs Node 20+)</td><td><code>formatNumber("12345678901234567890.5")</code> on Node 18</td></tr>
+      </table></div>
+      <p class="section-note">Non-numeric argument mistakes (a non-array, a non-function callback, a non-string text) throw a plain <code>TypeError</code> or <code>RangeError</code> without a <code>code</code>.</p>
+      <pre><code>import { divide, NumericRangeError } from "@fatdevcon/utilities";
+
+try {
+  const share = divide(total, count);
 } catch (error) {
-  if (error instanceof RangeError) {
+  if (error instanceof NumericRangeError &amp;&amp; error.code === "ERR_DIVISION_BY_ZERO") {
     // count was 0
+  } else {
+    throw error;
   }
 }</code></pre>
     </section>
 
     <section id="types">
       <h2>Types</h2>
-      <pre><code>import type { Comparator, KeySelector } from "@fatdevcon/utilities";
+      <pre><code>import type {
+  NumericInput, DivideOptions, RoundingMode, NumericErrorCode,
+  Comparator, KeySelector,
+} from "@fatdevcon/utilities";
+
+type NumericInput = number | bigint | string;
+type RoundingMode = "half-up" | "half-down" | "half-even" | "up" | "down" | "ceil" | "floor";
+interface DivideOptions { precision?: number } // significant digits, 1 to 10000, default 40
+type NumericErrorCode =
+  | "ERR_INVALID_NUMBER" | "ERR_NOT_INTEGER" | "ERR_DIVISION_BY_ZERO"
+  | "ERR_OVERFLOW" | "ERR_UNDERFLOW" | "ERR_OUT_OF_RANGE" | "ERR_PRECISION_LOSS";
 
 // Negative, zero or positive, like Array.prototype.sort
 type Comparator&lt;T&gt; = (a: T, b: T) =&gt; number;
-
 type KeySelector&lt;T&gt; = (item: T) =&gt; any;</code></pre>
-      <p class="section-note">Option types are exported too: <code>CompactNumberOptions</code>, <code>PercentFormatOptions</code>, <code>CurrencyFormatOptions</code>, <code>UnitFormatOptions</code>, <code>BytesFormatOptions</code>, <code>TruncateTextOptions</code>, <code>ShortenStringOptions</code>, <code>MaskStringOptions</code>.</p>
+      <p class="section-note">The error classes <code>NumericTypeError</code> and <code>NumericRangeError</code> are exported as values. Option types are exported too: <code>CompactNumberOptions</code>, <code>PercentFormatOptions</code>, <code>CurrencyFormatOptions</code>, <code>UnitFormatOptions</code>, <code>BytesFormatOptions</code>, <code>TruncateTextOptions</code>, <code>ShortenStringOptions</code>, <code>MaskStringOptions</code>, <code>RelativeTimeOptions</code>, <code>DurationOptions</code>, <code>DebounceOptions</code>, <code>ThrottleOptions</code>, <code>MemoizeOptions</code>, <code>RetryOptions</code>, <code>IsUrlOptions</code>.</p>
     </section>
 
     <footer>
@@ -127,230 +212,59 @@ type KeySelector&lt;T&gt; = (item: T) =&gt; any;</code></pre>
   </main>
 </div>
 
+<script src="api-data.js"></script>
 <script>
-const USERS = `const users = [
-  { id: 1, name: "An", role: "dev" },
-  { id: 2, name: "Binh", role: "qa" },
-  { id: 3, name: "Chi", role: "dev" },
-];
-`;
+const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-const GROUPS = [
-  {
-    id: "number-formatting", title: "Number formatting",
-    note: 'locale defaults to "en-US", except in formatNumber, which uses the runtime default. Output comes from the runtime\'s Intl data, so spacing, symbols and abbreviations can differ slightly between runtimes.',
-    fns: [
-      { name: "formatNumber", sig: "formatNumber(value: number, locale?: Intl.LocalesArgument, options?: Intl.NumberFormatOptions): string",
-        desc: "Plain Intl.NumberFormat wrapper. Unlike the other formatters it does not validate its input: formatNumber(NaN) returns \"NaN\".",
-        ex: 'formatNumber(1234567.891, "en-US"); // "1,234,567.891"\nformatNumber(1234567.89, "vi-VN");  // "1.234.567,89"' },
-      { name: "formatCompactNumber", sig: "formatCompactNumber(value: number, locale?: Intl.LocalesArgument, options?: CompactNumberOptions): string",
-        desc: "Compact notation with at most 1 decimal by default. Accepts every Intl.NumberFormat option except notation.",
-        tags: ["TypeError for NaN / Infinity"],
-        ex: 'formatCompactNumber(12500); // "12.5K"\nformatCompactNumber(1200000, "en-US", { compactDisplay: "long" }); // "1.2 million"' },
-      { name: "formatPercent", sig: "formatPercent(value: number, locale?: Intl.LocalesArgument, options?: PercentFormatOptions): string",
-        desc: "Formats a ratio as a percentage, with at most 2 decimals by default. To compute a percentage from two numbers, use percentage.",
-        tags: ["input is a ratio: 0.5 means 50%"], ex: 'formatPercent(0.125); // "12.5%"' },
-      { name: "formatCurrency", sig: "formatCurrency(value: number, currency: string, locale?: Intl.LocalesArgument, options?: CurrencyFormatOptions): string",
-        desc: "Formats money for a three-letter ISO 4217 code (case-insensitive), using the currency's standard number of decimals.",
-        tags: ["RangeError for a malformed currency code"],
-        ex: 'formatCurrency(1234.5, "USD");          // "$1,234.50"\nformatCurrency(1500, "JPY");            // "¥1,500"\nformatCurrency(-12, "USD", "en-US", { currencySign: "accounting" }); // "($12.00)"' },
-      { name: "formatUnit", sig: "formatUnit(value: number, unit: string, locale?: Intl.LocalesArgument, options?: UnitFormatOptions): string",
-        desc: "Formats a number with an Intl unit identifier.",
-        ex: 'formatUnit(12, "kilometer-per-hour"); // "12 km/h"\nformatUnit(25, "celsius");            // "25°C"' },
-      { name: "formatBytes", sig: "formatBytes(value: number, options?: BytesFormatOptions): string",
-        desc: "Human-readable byte size, from B up to EB / EiB. Options: base (1000 by default, or 1024 for KiB / MiB), decimals (0 to 20, default 2, trailing zeroes dropped) and locale.",
-        tags: ["value must be non-negative"],
-        ex: 'formatBytes(1500);                 // "1.5 kB"\nformatBytes(1536, { base: 1024 }); // "1.5 KiB"\nformatBytes(999999);               // "1 MB"' },
-    ],
-  },
-  {
-    id: "currency-metadata", title: "Currency metadata",
-    note: "Country data is a bundled snapshot of Unicode CLDR 48.2.0; names and symbols come from the runtime's Intl data. This package does not fetch exchange rates or convert between currencies.",
-    fns: [
-      { name: "getCountryCurrencies", sig: "getCountryCurrencies(countryCode: string): string[]",
-        desc: "Active legal-tender currency codes for a two-letter region code (case-insensitive). Returns [] for an unknown region. When there are several currencies, the order does not imply a preferred one.",
-        tags: ["RangeError for a malformed code"],
-        ex: 'getCountryCurrencies("VN"); // ["VND"]\ngetCountryCurrencies("PA"); // ["PAB", "USD"]' },
-      { name: "getCurrencySymbol", sig: 'getCurrencySymbol(currency: string, locale?: Intl.LocalesArgument, display?: "symbol" | "narrowSymbol"): string',
-        desc: "Localized currency symbol. Symbols are not unique, so use the currency code to identify a currency.",
-        ex: 'getCurrencySymbol("VND");                          // "₫"\ngetCurrencySymbol("USD", "en-CA");                 // "US$"\ngetCurrencySymbol("USD", "en-CA", "narrowSymbol"); // "$"' },
-      { name: "getCurrencyName", sig: "getCurrencyName(currency: string, locale?: Intl.LocalesArgument): string",
-        desc: "Localized currency name.",
-        ex: 'getCurrencyName("USD");       // "US Dollar"\ngetCurrencyName("VND", "vi"); // "Đồng Việt Nam"' },
-    ],
-  },
-  {
-    id: "text", title: "Text",
-    note: "Lengths count Unicode grapheme clusters (user-perceived characters), so emoji, flags and combining accents stay intact. Inputs must be strings; lengths must be non-negative integers.",
-    fns: [
-      { name: "truncateText", sig: "truncateText(text: string, maxLength: number, options?: TruncateTextOptions): string",
-        desc: 'Cuts text to maxLength, which includes the ellipsis. Options: ellipsis ("..." by default) and preserveWords (false by default), which avoids cutting in the middle of a word.',
-        ex: 'truncateText("Hello world", 8);                  // "Hello..."\ntruncateText("Hello world", 8, { ellipsis: "…" }); // "Hello w…"\ntruncateText("Hello beautiful world", 12, { preserveWords: true }); // "Hello..."' },
-      { name: "shortenString", sig: "shortenString(text: string, options?: ShortenStringOptions): string",
-        desc: 'Keeps both ends of a long identifier. Options: startLength (4), endLength (4) and separator ("..."). Text that is already short enough is returned unchanged.',
-        ex: 'shortenString("abcdefghijklxyzc"); // "abcd...xyzc"\nshortenString("0x71C7656EC7ab88b098defB751B7401B5f6d8976F", { startLength: 6 }); // "0x71C7...976F"' },
-      { name: "maskString", sig: "maskString(text: string, options?: MaskStringOptions): string",
-        desc: 'Hides characters for display. Options: visibleStart (0), visibleEnd (4) and mask ("*", exactly one character). This is not encryption or secure redaction.',
-        ex: 'maskString("1234567890"); // "******7890"\nmaskString("user@example.com", { visibleStart: 2, visibleEnd: 4 }); // "us**********.com"\nmaskString("4111111111111111", { mask: "•" }); // "••••••••••••1111"' },
-      { name: "normalizeWhitespace", sig: "normalizeWhitespace(text: string): string",
-        desc: "Trims the text and collapses every run of whitespace into a single space.",
-        ex: 'normalizeWhitespace("  hello   world \\n"); // "hello world"' },
-      { name: "removeDiacritics", sig: "removeDiacritics(text: string): string",
-        desc: "Strips accents and other combining marks, and maps Vietnamese đ / Đ to d / D. It is not a general transliteration engine.",
-        ex: 'removeDiacritics("Đặng Thị Tứ");  // "Dang Thi Tu"\nremoveDiacritics("Crème brûlée"); // "Creme brulee"' },
-      { name: "slugify", sig: "slugify(text: string): string",
-        desc: "Lowercase slug without accents, joined by hyphens. Letters and numbers from non-Latin scripts are kept. Does not guarantee uniqueness.",
-        ex: 'slugify("Đặng Thị Tứ");      // "dang-thi-tu"\nslugify("  Hello, World! "); // "hello-world"' },
-      { name: "capitalize", sig: "capitalize(text: string, locale?: Intl.LocalesArgument): string",
-        desc: "Uppercases the first character and leaves the rest unchanged. Uses the runtime locale unless one is given.",
-        ex: 'capitalize("hello world");    // "Hello world"\ncapitalize("istanbul", "tr"); // "İstanbul"' },
-    ],
-  },
-  {
-    id: "dates", title: "Dates",
-    fns: [
-      { name: "formatDate", sig: "formatDate(date: Date | string | number, formatStr: string, options?: FormatOptions): string",
-        desc: 'Formats a Date, a millisecond timestamp or a date string using <a href="https://date-fns.org/docs/format">date-fns format tokens</a>, in the local timezone. Pass a date-fns locale through options.',
-        html: true, tags: ["RangeError for an invalid date"],
-        ex: 'formatDate(new Date(2026, 0, 15, 9, 30), "dd/MM/yyyy HH:mm"); // "15/01/2026 09:30"\nformatDate("2026-01-15", "MMM d, yyyy");                      // "Jan 15, 2026"' },
-    ],
-  },
-  {
-    id: "math", title: "Math",
-    note: "Arithmetic runs on decimal.js, so results are free of binary floating-point drift. Arguments must be finite numbers.",
-    fns: [
-      { name: "summary", sig: "summary(a: number, b: number): number", desc: "Adds two numbers.",
-        ex: "summary(0.1, 0.2); // 0.3" },
-      { name: "subtract", sig: "subtract(a: number, b: number): number", desc: "Subtracts b from a.",
-        ex: "subtract(0.3, 0.1); // 0.2" },
-      { name: "multiply", sig: "multiply(a: number, b: number): number", desc: "Multiplies two numbers.",
-        ex: "multiply(0.1, 3); // 0.3" },
-      { name: "divide", sig: "divide(a: number, b: number): number", desc: "Divides a by b.",
-        tags: ["RangeError when b is 0"], ex: "divide(10, 4); // 2.5" },
-      { name: "percentage", sig: "percentage(value: number, total: number): number",
-        desc: "Returns value as a percentage of total. Returns 0 when total is 0.",
-        ex: "percentage(25, 200); // 12.5\npercentage(1, 0);    // 0" },
-      { name: "round", sig: "round(value: number, decimals?: number): number",
-        desc: "Rounds half up to the given number of decimal places. decimals defaults to 2.",
-        tags: ["decimals must be a non-negative integer"],
-        ex: "round(3.14159);    // 3.14\nround(3.14159, 3); // 3.142\nround(2.5, 0);     // 3" },
-      { name: "factorial", sig: "factorial(n: number): number", desc: "Factorial of a non-negative integer.",
-        tags: ["0 ≤ n ≤ 170"], ex: "factorial(5); // 120" },
-      { name: "fibonacci", sig: "fibonacci(n: number): number", desc: "The n-th Fibonacci number, starting from fibonacci(0) = 0.",
-        tags: ["0 ≤ n ≤ 1476"], ex: "fibonacci(10); // 55" },
-      { name: "gcd", sig: "gcd(a: number, b: number): number", desc: "Greatest common divisor. The sign of the arguments is ignored.",
-        ex: "gcd(12, 18); // 6" },
-      { name: "lcm", sig: "lcm(a: number, b: number): number", desc: "Least common multiple. Returns 0 when either argument is 0.",
-        ex: "lcm(4, 6); // 12" },
-      { name: "isPrime", sig: "isPrime(n: number): boolean",
-        desc: "Checks whether n is a prime number. Returns false for non-integers, NaN and anything below 2. Never throws.",
-        ex: "isPrime(17);  // true\nisPrime(1);   // false\nisPrime(7.5); // false" },
-    ],
-  },
-  {
-    id: "arrays", title: "Arrays",
-    note: "Every function returns a new value and throws a TypeError when the first argument is not an array.",
-    fns: [
-      { name: "unique", sig: "unique<T>(arr: T[], keySelector?: KeySelector<T>): T[]",
-        desc: "Removes duplicates. With a keySelector, items are compared by key and the first one of each key is kept.",
-        ex: USERS + "\nunique([1, 2, 2, 3]);          // [1, 2, 3]\nunique(users, (u) => u.role); // [An, Binh]" },
-      { name: "filterBy", sig: "filterBy<T>(arr: T[], predicate: (item: T, index: number, array: T[]) => boolean): T[]",
-        desc: "Keeps the items for which the predicate returns true.",
-        ex: "filterBy([1, 2, 3, 4], (x) => x > 2); // [3, 4]" },
-      { name: "sortBy", sig: 'sortBy<T>(arr: T[], keySelector: KeySelector<T>, order?: "asc" | "desc"): T[]',
-        desc: 'Sorts by the selected key. order defaults to "asc".',
-        ex: USERS + '\nsortBy(users, (u) => u.name, "desc"); // [Chi, Binh, An]' },
-      { name: "groupBy", sig: "groupBy<T>(arr: T[], keySelector: KeySelector<T>): Record<string, T[]>",
-        desc: "Groups items into an object keyed by the selected value. Keys are converted to strings.",
-        ex: USERS + "\ngroupBy(users, (u) => u.role);\n// { dev: [An, Chi], qa: [Binh] }" },
-      { name: "chunk", sig: "chunk<T>(arr: T[], size: number): T[][]", desc: "Splits an array into chunks of at most size items.",
-        tags: ["size must be a positive integer"], ex: "chunk([1, 2, 3, 4, 5], 2); // [[1, 2], [3, 4], [5]]" },
-      { name: "flatten", sig: "flatten<T>(arr: T[][]): T[]", desc: "Flattens an array of arrays by one level.",
-        ex: "flatten([[1, 2], [3]]); // [1, 2, 3]" },
-      { name: "findIndexes", sig: "findIndexes<T>(arr: T[], predicate: (item: T, index: number, array: T[]) => boolean): number[]",
-        desc: "Returns the index of every item that matches the predicate.",
-        ex: "findIndexes([1, 2, 2, 3], (x) => x === 2); // [1, 2]" },
-      { name: "sumValueInArray", sig: "sumValueInArray(arr: number[]): number", desc: "Sums the numbers with decimal precision. Returns 0 for an empty array.",
-        ex: "sumValueInArray([0.1, 0.2, 0.3]); // 0.6" },
-      { name: "averageValueInArray", sig: "averageValueInArray(arr: number[]): number", desc: "Averages the numbers. Returns 0 for an empty array.",
-        ex: "averageValueInArray([1, 2, 3, 4]); // 2.5" },
-      { name: "findMin", sig: "findMin<T>(arr: T[], compareFn?: Comparator<T>): T | undefined",
-        desc: "Returns the smallest item, or undefined for an empty array. Pass a compareFn to compare objects.",
-        ex: "findMin([3, 1, 2]); // 1" },
-      { name: "findMax", sig: "findMax<T>(arr: T[], compareFn?: Comparator<T>): T | undefined",
-        desc: "Returns the largest item, or undefined for an empty array. Pass a compareFn to compare objects.",
-        ex: USERS + "\nfindMax([3, 1, 2]);                     // 3\nfindMax(users, (a, b) => a.id - b.id); // Chi" },
-    ],
-  },
-  {
-    id: "sorting", title: "Sorting",
-    note: "Every sort returns a new array and leaves the input untouched. Comparison sorts take an optional compareFn and default to ascending order.",
-    fns: [
-      { name: "quickSort", sig: "quickSort<T>(arr: T[], compareFn?: Comparator<T>): T[]",
-        desc: "Quick sort with a middle pivot and three-way partition, so it stays fast on sorted or duplicate-heavy input.",
-        tags: ["O(n log n) average"], ex: "quickSort([5, 2, 9, 1]);                  // [1, 2, 5, 9]\nquickSort([5, 2, 9, 1], (a, b) => b - a); // [9, 5, 2, 1]" },
-      { name: "mergeSort", sig: "mergeSort<T>(arr: T[], compareFn?: Comparator<T>): T[]", desc: "Merge sort. Keeps equal items in their original order.",
-        tags: ["O(n log n)", "stable"], ex: "mergeSort([5, 2, 9, 1]); // [1, 2, 5, 9]" },
-      { name: "heapSort", sig: "heapSort<T>(arr: T[], compareFn?: Comparator<T>): T[]", desc: "Heap sort.",
-        tags: ["O(n log n)"], ex: "heapSort([5, 2, 9, 1]); // [1, 2, 5, 9]" },
-      { name: "insertionSort", sig: "insertionSort<T>(arr: T[], compareFn?: Comparator<T>): T[]", desc: "Insertion sort. A good fit for small or nearly sorted arrays.",
-        tags: ["O(n²)"], ex: "insertionSort([5, 2, 9, 1]); // [1, 2, 5, 9]" },
-      { name: "selectionSort", sig: "selectionSort<T>(arr: T[], compareFn?: Comparator<T>): T[]", desc: "Selection sort.",
-        tags: ["O(n²)"], ex: "selectionSort([5, 2, 9, 1]); // [1, 2, 5, 9]" },
-      { name: "bubbleSort", sig: "bubbleSort<T>(arr: T[], compareFn?: Comparator<T>): T[]", desc: "Bubble sort.",
-        tags: ["O(n²)"], ex: "bubbleSort([5, 2, 9, 1]); // [1, 2, 5, 9]" },
-      { name: "countingSort", sig: "countingSort(arr: number[]): number[]", desc: "Counting sort for non-negative integers.",
-        tags: ["O(n + k)", "non-negative integers only", "max value 10,000,000"], ex: "countingSort([5, 2, 9, 1]); // [1, 2, 5, 9]" },
-      { name: "radixSort", sig: "radixSort(arr: number[]): number[]", desc: "Radix sort for non-negative integers.",
-        tags: ["O(d · n)", "non-negative integers only"], ex: "radixSort([170, 45, 75, 2]); // [2, 45, 75, 170]" },
-    ],
-  },
-  {
-    id: "searching", title: "Searching",
-    note: "Both functions return the index of the match, or -1 when the target is not found.",
-    fns: [
-      { name: "binarySearch", sig: "binarySearch<T>(arr: T[], target: T, compareFn?: Comparator<T>): number",
-        desc: "Binary search. The array must already be sorted in the order compareFn describes.",
-        tags: ["O(log n)", "sorted input"], ex: "binarySearch([1, 3, 5, 7], 5); // 2\nbinarySearch([1, 3, 5, 7], 4); // -1" },
-      { name: "linearSearch", sig: "linearSearch<T>(arr: T[], target: T, compareFn?: Comparator<T>): number",
-        desc: "Linear search. Returns the first matching index and works on unsorted arrays.",
-        tags: ["O(n)"], ex: 'linearSearch(["a", "b"], "b"); // 1' },
-    ],
-  },
-  {
-    id: "objects", title: "Objects",
-    fns: [
-      { name: "deepClone", sig: "deepClone<T>(obj: T): T",
-        desc: "Deep copy built on structuredClone. Preserves Date, Map, Set and circular references. Throws a DataCloneError for values that cannot be cloned, such as functions.",
-        ex: "const original = { when: new Date(), nested: { list: [1] } };\nconst copy = deepClone(original);\n\ncopy.nested !== original.nested; // true\ncopy.when instanceof Date;       // true" },
-      { name: "mergeObjects", sig: "mergeObjects<T, U>(target: T, source: U): T & U",
-        desc: "Shallow merge into a new object. Properties from source win on conflicts; nested objects are not merged.",
-        ex: "mergeObjects({ a: 1, b: 1 }, { b: 2, c: 3 }); // { a: 1, b: 2, c: 3 }" },
-    ],
-  },
-];
+const paramsTable = (params) => `
+  <h4>Parameters</h4>
+  <div class="scroll"><table>
+    <tr><th>Name</th><th>Type</th><th>Default</th><th>Description</th></tr>
+    ${params.map((q) => `<tr>
+      <td class="name"><code>${esc(q.name)}</code></td>
+      <td class="type"><code>${esc(q.type)}</code></td>
+      <td>${q.def === undefined ? "<em>required</em>" : `<code>${esc(q.def)}</code>`}</td>
+      <td>${esc(q.desc)}</td></tr>`).join("")}
+  </table></div>`;
 
-const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const throwsList = (list) => `
+  <h4>Throws</h4>
+  <ul class="throws">${list.map((t) => `<li>
+    ${t.code ? `<span class="code">${esc(t.code)}</span>` : `<span class="code plain">${esc(t.kind)}</span>`}
+    <span><strong>${esc(t.kind)}</strong> when ${esc(t.when)}</span></li>`).join("")}</ul>`;
+
+const extraTable = (t) => `
+  <div class="scroll"><table>
+    <tr>${t.head.map((h) => `<th>${esc(h)}</th>`).join("")}</tr>
+    ${t.rows.map((row) => `<tr>${row.map((c, i) => `<td>${i === 0 ? `<code>${esc(c)}</code>` : esc(c)}</td>`).join("")}</tr>`).join("")}
+  </table></div>`;
 
 const api = document.getElementById("api");
 const nav = document.getElementById("nav-groups");
 
 api.innerHTML = GROUPS.map((g) => `
   <section id="${g.id}">
-    <h2>${g.title}</h2>
+    <h2>${esc(g.title)}</h2>
     ${g.note ? `<p class="section-note">${esc(g.note)}</p>` : ""}
     ${g.fns.map((f) => `
       <article class="fn" id="${f.name}" data-name="${f.name.toLowerCase()}">
         <h3><a href="#${f.name}">${f.name}</a></h3>
         <code class="sig">${esc(f.sig)}</code>
-        <p>${f.html ? f.desc : esc(f.desc)}</p>
+        <p>${esc(f.desc)}</p>
         ${f.tags ? `<div class="tags">${f.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join("")}</div>` : ""}
+        ${f.params && f.params.length ? paramsTable(f.params) : ""}
+        ${f.table ? extraTable(f.table) : ""}
+        ${f.returns ? `<h4>Returns</h4><p class="returns">${esc(f.returns)}</p>` : ""}
+        ${f.throws && f.throws.length ? throwsList(f.throws) : ""}
+        <h4>Example</h4>
         <pre><code>${esc(f.ex)}</code></pre>
       </article>`).join("")}
   </section>`).join("");
 
-nav.innerHTML = GROUPS.map((g) => `
-  <h2><a href="#${g.id}">${g.title}</a></h2>
+nav.innerHTML =
+  `<h2><a href="#big-numbers">Big numbers</a></h2>` +
+  GROUPS.map((g) => `
+  <h2><a href="#${g.id}">${esc(g.title)}</a></h2>
   <ul>${g.fns.map((f) => `<li data-name="${f.name.toLowerCase()}"><a href="#${f.name}">${f.name}</a></li>`).join("")}</ul>`).join("") +
   `<h2><a href="#errors">Error handling</a></h2><h2><a href="#types">Types</a></h2>`;
 

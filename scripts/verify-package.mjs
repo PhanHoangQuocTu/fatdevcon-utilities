@@ -6,7 +6,7 @@ const require = createRequire(import.meta.url);
 const esm = await import("@fatdevcon/utilities");
 const cjs = require("@fatdevcon/utilities");
 const metadata = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
-assert.equal(metadata.version, "0.2.4");
+assert.equal(metadata.version, "0.3.0");
 assert.equal(typeof Intl.Segmenter, "function");
 for (const api of [esm, cjs]) {
   assert.equal(api.formatCompactNumber(12500), "12.5K");
@@ -19,6 +19,20 @@ for (const api of [esm, cjs]) {
   assert.equal(api.slugify("Đặng Thị Tú"), "dang-thi-tu");
   assert.equal(api.summary(0.1, 0.2), 0.3);
   assert.equal(api.formatDate(new Date(2026, 9, 3), "yyyy-MM-dd"), "2026-10-03");
+  assert.equal(api.formatDate("2026-10-03", "yyyy-MM-dd"), "2026-10-03");
+  assert.equal(api.kebabCase("helloWorld"), "hello-world");
+  assert.equal(api.formatDuration(3723000), "1h 2m 3s");
+  assert.deepEqual(api.difference([1, 2, 3], [2]), [1, 3]);
+  assert.deepEqual(api.deepMerge({ a: { b: 1 } }, { a: { c: 2 } }), { a: { b: 1, c: 2 } });
+  assert.equal(api.isEmail("user@example.com"), true);
+  assert.equal(typeof api.debounce, "function");
+  assert.equal(api.summary("100000000000000000000000000000", "1"), "100000000000000000000000000001");
+  assert.equal(api.multiply(2n ** 64n, 2n ** 64n), 2n ** 128n);
+  assert.equal(api.factorial(25n), 15511210043330985984000000n);
+  assert.equal(api.isPrime(2n ** 127n - 1n), true);
+  assert.equal(api.formatBytes("1500000000000000000000000000000"), "1.5 QB");
+  assert.throws(() => api.multiply(1e200, 1e200), (error) => error instanceof RangeError && error.code === "ERR_OVERFLOW");
+  assert.throws(() => api.summary(NaN, 1), (error) => error instanceof TypeError && error.code === "ERR_INVALID_NUMBER");
 }
 assert.deepEqual(Object.keys(esm).filter(key => key !== "default").sort(), Object.keys(cjs).sort());
 console.log(`Package exports verified (ESM + CommonJS) on ${globalThis.Bun ? "Bun " + Bun.version : "Node " + process.version}.`);

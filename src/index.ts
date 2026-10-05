@@ -6,5 +6,8 @@ export * from "./modules/algorithms/search";
 export * from "./modules/algorithms/sort";
 export * from "./modules/object";
 export * from "./modules/array/manipulation";
+export * from "./modules/array/collection";
+export * from "./modules/function";
+export * from "./modules/validator";
 
 export type { Comparator, KeySelector } from "./types";

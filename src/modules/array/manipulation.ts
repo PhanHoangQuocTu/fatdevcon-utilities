@@ -1,5 +1,5 @@
 import { Comparator, KeySelector } from "@/types";
-import { assertArray, assertInteger } from "../../utils/validate";
+import { assertArray, assertFunction, assertInteger } from "../../utils/validate";
 
 // O(n) - Get unique values in array
 const unique = <T>(arr: T[], keySelector?: KeySelector<T>): T[] => {
@@ -7,6 +7,7 @@ const unique = <T>(arr: T[], keySelector?: KeySelector<T>): T[] => {
   if (!keySelector) {
     return [...new Set(arr)];
   }
+  assertFunction(keySelector, "keySelector");
 
   const seen = new Set();
   return arr.filter((item) => {
@@ -23,6 +24,7 @@ const filterBy = <T>(
   predicate: (item: T, index: number, array: T[]) => boolean
 ): T[] => {
   assertArray(arr, "arr");
+  assertFunction(predicate, "predicate");
   return arr.filter(predicate);
 };
 
@@ -33,6 +35,10 @@ const sortBy = <T>(
   order: "asc" | "desc" = "asc"
 ): T[] => {
   assertArray(arr, "arr");
+  assertFunction(keySelector, "keySelector");
+  if (order !== "asc" && order !== "desc") {
+    throw new RangeError('order must be "asc" or "desc"');
+  }
   const compareFn: Comparator<T> = (a, b) => {
     const valA = keySelector(a);
     const valB = keySelector(b);
@@ -69,6 +75,7 @@ const findIndexes = <T>(
   predicate: (item: T, index: number, array: T[]) => boolean
 ): number[] => {
   assertArray(arr, "arr");
+  assertFunction(predicate, "predicate");
   return arr.reduce((indexes, item, index) => {
     if (predicate(item, index, arr)) {
       indexes.push(index);
@@ -83,6 +90,7 @@ const groupBy = <T>(
   keySelector: KeySelector<T>
 ): Record<string, T[]> => {
   assertArray(arr, "arr");
+  assertFunction(keySelector, "keySelector");
   // Null-prototype object so keys like "__proto__" are treated as plain keys
   return arr.reduce((result, item) => {
     const key = String(keySelector(item));

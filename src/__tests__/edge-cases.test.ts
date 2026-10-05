@@ -84,10 +84,10 @@ describe("Edge cases and error handling", () => {
   });
 
   test("countingSort / radixSort validate input", () => {
-    expect(() => countingSort([3, -1, 2])).toThrow(RangeError);
+    expect(countingSort([3, -1, 2])).toEqual([-1, 2, 3]);
+    expect(radixSort([3, -1, 2])).toEqual([-1, 2, 3]);
     expect(() => countingSort([1, 1.5])).toThrow(RangeError);
     expect(() => countingSort([1, 1e10])).toThrow(RangeError);
-    expect(() => radixSort([3, -1, 2])).toThrow(RangeError);
     expect(() => radixSort([1.5, 2])).toThrow(RangeError);
     expect(countingSort([3, 1, 2])).toEqual([1, 2, 3]);
     expect(radixSort([170, 45, 75, 2])).toEqual([2, 45, 75, 170]);
