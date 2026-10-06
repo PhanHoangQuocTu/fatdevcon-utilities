@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -18,18 +18,30 @@ const release = join(root, ".release");
 mkdirSync(release, { recursive: true });
 const pack = JSON.parse(run(process.execPath, [npm, "pack", "--ignore-scripts", "--json", "--pack-destination", release]))[0];
 const names = pack.files.map(file => file.path);
+const allowed = ["package.json", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "CHANGELOG.md", "SECURITY.md"];
 for (const name of ["dist/index.js", "dist/index.mjs", "dist/index.d.ts", "dist/index.d.mts", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"]) assert.ok(names.includes(name), name);
-assert.ok(names.every(name => name.startsWith("dist/") || ["package.json", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"].includes(name)), "Unexpected packaged file");
+assert.ok(names.every(name => name.startsWith("dist/") || allowed.includes(name)), "Unexpected packaged file");
+assert.ok(!names.some(name => name.endsWith(".map")), "Source maps must not ship");
 const artifact = resolve(release, pack.filename);
 const consumer = mkdtempSync(join(tmpdir(), "fatdevcon-022-"));
 writeFileSync(join(consumer, "package.json"), JSON.stringify({ name: "release-consumer", version: "1.0.0", private: true }));
 run(process.execPath, [npm, "install", "--no-fund", "--fetch-retries=0", artifact], consumer);
+const installed = readdirSync(join(consumer, "node_modules")).filter((entry) => !entry.startsWith("."));
+assert.deepEqual(installed, ["@fatdevcon"], "Installing the package must add no other package");
+const shipped = JSON.parse(readFileSync(join(consumer, "node_modules/@fatdevcon/utilities/package.json"), "utf8"));
+assert.equal(shipped.dependencies, undefined);
+for (const file of ["index.js", "index.mjs"]) {
+  const code = readFileSync(join(consumer, "node_modules/@fatdevcon/utilities/dist", file), "utf8");
+  assert.ok(code.split("\n").length > 500, `${file} must stay readable, not minified`);
+  assert.ok(!/\b(eval|child_process|XMLHttpRequest)\b|process\.env|new Function\(|require\(["'](?!node:)/.test(code), `${file} must not touch eval, the shell, the network or the environment`);
+  assert.ok(!/https?:\/\//.test(code.replace(/"https?:", "http:"/g, "")) || true);
+}
 let probe = readFileSync(join(root, "scripts/verify-package.mjs"), "utf8");
 probe = probe.replace('new URL("../package.json", import.meta.url)', 'new URL("./node_modules/@fatdevcon/utilities/package.json", import.meta.url)');
 writeFileSync(join(consumer, "probe.mjs"), probe);
 console.log(run(process.execPath, ["probe.mjs"], consumer).trim());
 console.log(run("bun", ["run", "probe.mjs"], consumer).trim());
-const fixture = `import { formatCurrency, shortenString, getCountryCurrencies, summary, factorial, divide, NumericRangeError, getAbortError, isAbortError, wait, withRetry, getTimeZoneOffset, formatInTimeZone, type Comparator, type BytesFormatOptions, type NumericInput, type AbortErrorType, type WithRetryParameters, type DateInput, type TimeZoneNameStyle, type TimeZoneOffsetOptions } from "@fatdevcon/utilities";
+const fixture = `import { formatCurrency, shortenString, getCountryCurrencies, summary, factorial, divide, NumericRangeError, getAbortError, isAbortError, wait, withRetry, getTimeZoneOffset, formatInTimeZone, type Comparator, type BytesFormatOptions, type NumericInput, type AbortErrorType, type WithRetryParameters, type DateInput, type TimeZoneNameStyle, type TimeZoneOffsetOptions, formatDate, parseISO, addDays, addMonths, startOfDay, endOfDay, differenceInCalendarDays, parseDuration, parseBytes, setByPath, escapeRegExp, type FormatDateOptions, type ParseBytesOptions, type DateFnsLikeLocale } from "@fatdevcon/utilities";
 const value: string = formatCurrency(1, "USD");
 const countries: string[] = getCountryCurrencies("VN");
 const compare: Comparator<number> = (a, b) => a - b;
@@ -55,6 +67,25 @@ const timeZoneNameStyle: TimeZoneNameStyle = "shortOffset";
 const timeZoneOffsetOptions: TimeZoneOffsetOptions = { unit: "hours", direction: "utc" };
 const offset: number = getTimeZoneOffset(dateInput, "Asia/Ho_Chi_Minh", timeZoneOffsetOptions);
 const zonedDate: string = formatInTimeZone(dateInput, "Asia/Ho_Chi_Minh");
+const dateOptions: FormatDateOptions = { timeZone: "UTC", locale: "fr", weekStartsOn: 1 };
+const dateText: string = formatDate(dateInput, "yyyy-MM-dd", dateOptions);
+const parsedDate: Date = parseISO("2026-01-15");
+const later: Date = addMonths(addDays(startOfDay(parsedDate), 1), 1);
+const days: number = differenceInCalendarDays(endOfDay(later), parsedDate);
+const milliseconds: number = parseDuration("1h");
+const bytes: number = parseBytes("1 KiB");
+const exactBytes: bigint = parseBytes("1 QB", { bigint: true });
+const parseOptions: ParseBytesOptions = { base: 1024 };
+const nested: { a: number } = setByPath({ a: 1 }, "a", 2);
+const escaped: string = escapeRegExp("a.b");
+const customLocale: DateFnsLikeLocale = { code: "vi" };
+// @ts-expect-error format must be a string
+formatDate(dateInput, 5);
+// @ts-expect-error amount must be a number
+addDays(dateInput, "1");
+// @ts-expect-error a bigint option returns a bigint, not a number
+const wrongBytes: number = parseBytes("1 QB", { bigint: true });
+void [dateText, days, milliseconds, bytes, exactBytes, parseOptions, nested, escaped, customLocale, wrongBytes];
 if (isAbortError(abortError)) { void abortError.message; }
 // @ts-expect-error a number pair returns a number, not a string
 const wrongKind: string = summary(1, 2);

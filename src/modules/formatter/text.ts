@@ -107,3 +107,8 @@ export function maskString(text: string, options: MaskStringOptions = {}): strin
     index < visibleStart || index >= chars.length - visibleEnd ? char : mask
   ).join("");
 }
+/** Escape every character with a special meaning in a regular expression, so `text` matches literally: `new RegExp(escapeRegExp("a.b*"))`. Safe inside character classes and with the `u` flag. */
+export function escapeRegExp(text: string): string {
+  assertText(text);
+  return text.replace(/[\\^$.*+?()[\]{}|/]/g, "\\$&").replace(/-/g, "\\x2d");
+}

@@ -1,5 +1,6 @@
 import { toValidDate } from "../../utils/date";
 import type { DateInput } from "../../utils/date";
+import { getOffsetFormatter, getOffsetSeconds } from "../../utils/zone";
 
 export type TimeZoneNameStyle =
   | "short"
@@ -19,34 +20,6 @@ export interface TimeZoneOffsetOptions {
   direction?: TimeZoneOffsetDirection;
 }
 
-const offsetFormatters = new Map<string, Intl.DateTimeFormat>();
-
-const assertTimeZone: (timeZone: unknown) => asserts timeZone is string = (timeZone) => {
-  if (typeof timeZone !== "string") throw new TypeError("timeZone must be a string");
-};
-
-const getOffsetFormatter = (timeZone: string): Intl.DateTimeFormat => {
-  assertTimeZone(timeZone);
-  const cached = offsetFormatters.get(timeZone);
-  if (cached) return cached;
-  try {
-    const formatter = new Intl.DateTimeFormat("en-US-u-ca-iso8601-nu-latn", {
-      timeZone,
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hourCycle: "h23",
-    });
-    offsetFormatters.set(timeZone, formatter);
-    return formatter;
-  } catch {
-    throw new RangeError(`Invalid time zone: ${timeZone}`);
-  }
-};
-
 /** True when value is a time zone recognized by the runtime's Intl data. */
 export function isTimeZone(value: unknown): value is string {
   if (typeof value !== "string") return false;
@@ -57,27 +30,6 @@ export function isTimeZone(value: unknown): value is string {
     return false;
   }
 }
-
-const getOffsetSeconds = (date: DateInput, timeZone: string): number => {
-  const instant = toValidDate(date);
-  const parts = getOffsetFormatter(timeZone).formatToParts(instant);
-  const values = Object.fromEntries(
-    parts
-      .filter(({ type }) => type !== "literal")
-      .map(({ type, value }) => [type, Number(value)]),
-  ) as Record<string, number>;
-  const localAsUtc = Date.UTC(
-    values.year,
-    values.month - 1,
-    values.day,
-    values.hour,
-    values.minute,
-    values.second,
-  );
-  const instantAtSecond = Math.floor(instant.getTime() / 1000) * 1000;
-  const offset = (localAsUtc - instantAtSecond) / 1000;
-  return offset === 0 ? 0 : offset;
-};
 
 /**
  * Offset at date in the requested unit. The default UTC convention is positive east

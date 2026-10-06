@@ -1,69 +1,319 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#101827"><meta name="robots" content="index,follow">
-<title>TypeScript Utility Library for Exact Decimal Math | @fatdevcon/utilities</title>
-<meta name="description" content="A TypeScript utility library for exact decimal math, bigint and numeric-string calculations, Intl formatting, time zones, Unicode text, collections, async helpers and algorithms.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0e1a2e">
+<meta name="robots" content="index,follow">
+<title>Exact decimal math and utilities for TypeScript | @fatdevcon/utilities</title>
+<meta name="description" content="Zero-dependency TypeScript utilities: exact decimal and bigint math, Intl and time zone formatting, date helpers, Unicode text, collections, retry and async helpers.">
+<meta name="keywords" content="typescript utilities, decimal math javascript, bigint, floating point precision, format currency, time zone, date formatting, lodash alternative, npm">
 <link rel="canonical" href="https://phanhoangquoctu.github.io/fatdevcon-utilities/">
-<meta property="og:type" content="website"><meta property="og:site_name" content="@fatdevcon/utilities"><meta property="og:title" content="TypeScript utility library for exact decimal math and everyday helpers"><meta property="og:description" content="Exact decimal math, formatting, time zones, Unicode text, collections and async helpers for JavaScript and TypeScript."><meta property="og:url" content="https://phanhoangquoctu.github.io/fatdevcon-utilities/"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="@fatdevcon/utilities"><meta name="twitter:description" content="A TypeScript utility library for exact decimal math, formatting, time zones and everyday helpers.">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"@fatdevcon/utilities","applicationCategory":"DeveloperApplication","operatingSystem":"Node.js, Bun, browsers","programmingLanguage":["JavaScript","TypeScript"],"license":"https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/LICENSE","codeRepository":"https://github.com/PhanHoangQuocTu/fatdevcon-utilities","url":"https://phanhoangquoctu.github.io/fatdevcon-utilities/","downloadUrl":"https://www.npmjs.com/package/@fatdevcon/utilities"}</script>
-<style>
-:root{--bg:#fbfcfe;--surface:#fff;--soft:#f3f6fa;--border:#dce3ec;--text:#142033;--muted:#58677a;--accent:#1769d2;--accent-soft:#e8f1ff;--code:#101827;--code-text:#e8edf5;--shadow:0 8px 28px #14203314;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}@media(prefers-color-scheme:dark){:root{--bg:#0c111b;--surface:#121a27;--soft:#182231;--border:#2a3748;--text:#e7edf7;--muted:#a8b5c5;--accent:#82b8ff;--accent-soft:#172d4a;--code:#080d16;--shadow:none}}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:80px}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}code,pre{font-family:var(--mono)}:not(pre)>code{padding:.08em .32em;border:1px solid var(--border);border-radius:4px;background:var(--soft);font-size:.9em}.skip{position:absolute;top:-50px;left:12px;z-index:9;padding:8px 12px;border-radius:6px;background:var(--accent);color:#fff}.skip:focus{top:12px}.head{position:sticky;top:0;z-index:4;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px)}.head-in{display:flex;gap:20px;align-items:center;min-height:62px;max-width:1240px;margin:auto;padding:0 24px}.brand{color:var(--text);font:700 15px/1 var(--mono);white-space:nowrap}.brand:hover{color:var(--text);text-decoration:none}.topnav{display:flex;gap:15px;margin-left:auto;overflow-x:auto}.topnav a,.head-links{color:var(--muted);font-size:14px;white-space:nowrap}.topnav a[aria-current="true"]{color:var(--accent);font-weight:700}.head-links{display:flex;gap:12px}.page{max-width:1240px;margin:auto;padding:0 24px 72px}.hero{display:grid;grid-template-columns:1.2fr .8fr;gap:48px;align-items:center;padding:72px 0 60px;border-bottom:1px solid var(--border)}.eyebrow{margin:0 0 10px;color:var(--accent);font:700 12px/1.5 var(--mono);letter-spacing:.04em;text-transform:uppercase}h1,h2,h3,h4{line-height:1.16}h1{max-width:14ch;margin:0;font-size:clamp(2.3rem,5vw,4.2rem);letter-spacing:-.045em}.lead{max-width:60ch;margin:20px 0 0;color:var(--muted);font-size:1.12rem}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}.button{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:8px 14px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--text);font-size:14px;font-weight:700}.button:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}.button.primary{border-color:var(--accent);background:var(--accent);color:#fff}.panel,.card,.api-category,details{border:1px solid var(--border);border-radius:10px;background:var(--surface);box-shadow:var(--shadow)}.panel{padding:20px}.label{margin:0 0 8px;color:var(--muted);font:700 12px/1.4 var(--mono);letter-spacing:.05em;text-transform:uppercase}.command{display:flex;gap:8px;align-items:center;padding:12px;border-radius:8px;background:var(--code);color:var(--code-text)}.command code{min-width:0;overflow:auto;white-space:nowrap}.copy{flex:0 0 auto;padding:4px 8px;border:1px solid #40506a;border-radius:5px;background:transparent;color:var(--code-text);font:12px system-ui;cursor:pointer}.badges{display:flex;flex-wrap:wrap;gap:7px;margin:15px 0 0;padding:0;list-style:none}.badges li,.tag{padding:3px 8px;border:1px solid var(--border);border-radius:99px;background:var(--soft);color:var(--muted);font-size:12px}section{padding:62px 0;border-bottom:1px solid var(--border)}.section-heading{max-width:760px}.section-heading h2{margin:0;font-size:clamp(1.65rem,3vw,2.45rem);letter-spacing:-.025em}.section-heading p{margin:10px 0 0;color:var(--muted)}.install,.grid2,.features,.api-cats{display:grid;gap:14px;margin-top:26px}.install,.grid2,.api-cats{grid-template-columns:repeat(2,minmax(0,1fr))}.install .card{padding:14px}.install p{margin:0 0 8px;color:var(--muted);font-size:13px;font-weight:700}.card{overflow:hidden}.card h3{margin:0;padding:14px 16px;border-bottom:1px solid var(--border);font-size:15px}pre{margin:0;padding:16px;overflow:auto;background:var(--code);color:var(--code-text);font-size:.82rem;line-height:1.6}.features{grid-template-columns:repeat(3,minmax(0,1fr))}.feature{padding:18px}.feature h3,.api-category h3{margin:0;font-size:16px}.feature p,.api-category p{margin:8px 0 0;color:var(--muted);font-size:14px}.tag{display:inline-block;margin-top:12px;border:0;background:var(--accent-soft);color:var(--accent);font-family:var(--mono)}.api-layout{display:grid;grid-template-columns:235px minmax(0,1fr);gap:28px;margin-top:28px}.api-side{position:sticky;top:80px;align-self:start;max-height:calc(100vh - 95px);overflow:auto;padding:14px;border:1px solid var(--border);border-radius:9px;background:var(--surface)}.api-side label{display:block;margin-bottom:7px;color:var(--muted);font-size:12px;font-weight:700}.api-side input{width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font:14px var(--mono)}.api-nav h3{margin:18px 0 5px;color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase}.api-nav ul{margin:0;padding:0;list-style:none}.api-nav a{display:block;padding:3px 6px;border-radius:4px;color:var(--text);font:12px/1.45 var(--mono)}.api-nav a:hover{background:var(--soft);text-decoration:none}.api-category{padding:16px}.api-category ul{margin:10px 0 0;padding-left:18px;color:var(--muted);font:12px/1.65 var(--mono)}.api-reference>section>h3{margin:42px 0 4px;padding-bottom:8px;border-bottom:1px solid var(--border);font-size:22px}.section-note{margin:8px 0 0;color:var(--muted)}.fn{margin-top:16px;padding:17px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}.fn h4{margin:0;font:700 16px/1.3 var(--mono)}.fn h4 a{color:var(--text)}.sig{display:block;margin-top:9px;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}.fn p{margin:10px 0 0}.fn h5{margin:14px 0 0;color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase}.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.scroll{overflow:auto}table{width:100%;margin-top:8px;border-collapse:collapse;font-size:13px}th,td{padding:8px 9px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}th{color:var(--muted);font-size:11px;letter-spacing:.03em;text-transform:uppercase}td.type,td.name{white-space:nowrap}.throws{margin:6px 0 0;padding:0;list-style:none}.throws li{margin:5px 0;font-size:13px}.err{display:inline-block;margin-right:5px;padding:1px 5px;border-radius:4px;background:#fff0f1;color:#a51d2d;font:11px var(--mono)}.err.plain{background:var(--soft);color:var(--muted)}.callout{margin-top:16px;padding:14px;border-left:3px solid var(--accent);border-radius:0 8px 8px 0;background:var(--accent-soft)}.empty{margin-top:22px;color:var(--muted)}.faq{display:grid;gap:10px;margin-top:24px}details{padding:0 16px}summary{padding:15px 0;cursor:pointer;font-weight:700}details p{margin:0 0 15px;color:var(--muted)}footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;padding:30px 0 0;color:var(--muted);font-size:14px}@media(max-width:980px){.hero{grid-template-columns:1fr;gap:28px}.features{grid-template-columns:repeat(2,minmax(0,1fr))}.api-layout{grid-template-columns:1fr}.api-side{position:static;max-height:none}}@media(max-width:720px){.head-in,.page{padding-left:16px;padding-right:16px}.topnav{display:none}.head-links{margin-left:auto}.hero{padding:48px 0}section{padding:46px 0}.install,.grid2,.features,.api-cats{grid-template-columns:1fr}}
-</style>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="@fatdevcon/utilities">
+<meta property="og:title" content="Exact decimal math and utilities for TypeScript">
+<meta property="og:description" content="Zero dependencies. Exact decimals and bigints, locale and time zone formatting, dates, text, collections and async helpers.">
+<meta property="og:url" content="https://phanhoangquoctu.github.io/fatdevcon-utilities/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="@fatdevcon/utilities">
+<meta name="twitter:description" content="Exact decimal math and everyday helpers for TypeScript, with zero dependencies.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e1a2e'/%3E%3Cpath d='M9 12h14M9 20h14' stroke='%235ee0a6' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareSourceCode","name":"@fatdevcon/utilities","description":"Zero-dependency TypeScript utilities for exact decimal and bigint math, time zone and Intl formatting, dates, text, collections and async helpers.","applicationCategory":"DeveloperApplication","operatingSystem":"Node.js, Bun, browsers","programmingLanguage":["TypeScript","JavaScript"],"softwareVersion":"0.3.5","license":"https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/LICENSE","codeRepository":"https://github.com/PhanHoangQuocTu/fatdevcon-utilities","url":"https://phanhoangquoctu.github.io/fatdevcon-utilities/","downloadUrl":"https://www.npmjs.com/package/@fatdevcon/utilities"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do I avoid floating-point errors like 0.1 + 0.2 in JavaScript?","acceptedAnswer":{"@type":"Answer","text":"Use summary, subtract, multiply, divide and round from @fatdevcon/utilities. They calculate in exact decimal arithmetic, so summary(0.1, 0.2) is 0.3 and round(1.005, 2) is 1.01. Pass bigint or numeric strings when values exceed 2^53."}},{"@type":"Question","name":"Does @fatdevcon/utilities have dependencies?","acceptedAnswer":{"@type":"Answer","text":"No. Since version 0.3.5 the package has zero runtime dependencies, which keeps installs small and the supply chain short."}},{"@type":"Question","name":"Does it work with TypeScript, ESM and CommonJS?","acceptedAnswer":{"@type":"Answer","text":"Yes. It ships ESM, CommonJS and type declarations, and every public option and result type is exported."}},{"@type":"Question","name":"Which runtimes are supported?","acceptedAnswer":{"@type":"Answer","text":"Node.js 18 and newer, Bun, and modern browsers. Formatting and time zone helpers use the standard Intl APIs of the runtime."}},{"@type":"Question","name":"Can I format dates in a specific time zone?","acceptedAnswer":{"@type":"Answer","text":"Yes. Pass options.timeZone to formatDate, or use formatInTimeZone and getTimeZoneOffset with any IANA zone such as Asia/Ho_Chi_Minh."}}]}</script>
 </head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
-<header class="head"><div class="head-in"><a class="brand" href="#overview">@fatdevcon/utilities</a><nav class="topnav" aria-label="Primary navigation"><a href="#overview">Overview</a><a href="#install">Install</a><a href="#quick-start">Quick start</a><a href="#features">Features</a><a href="#api">API</a><a href="#examples">Examples</a><a href="#faq">FAQ</a></nav><div class="head-links"><a href="https://www.npmjs.com/package/@fatdevcon/utilities">npm</a><a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities">GitHub</a></div></div></header>
-<main class="page" id="content">
-<section class="hero" id="overview"><div><p class="eyebrow">TypeScript utility library</p><h1>Exact decimal math and everyday JavaScript helpers.</h1><p class="lead">Use one typed package for bigint-safe and numeric-string calculations, locale-aware formatting, IANA time zones, Unicode text, collections, async control flow and classic algorithms.</p><div class="actions"><a class="button primary" href="#quick-start">Get started</a><a class="button" href="https://www.npmjs.com/package/@fatdevcon/utilities">View on npm</a><a class="button" href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities">View on GitHub</a></div></div><aside class="panel"><p class="label">Install</p><div class="command"><code id="hero-install">npm install @fatdevcon/utilities</code><button class="copy" type="button" data-copy="hero-install">Copy</button></div><ul class="badges"><li>Node.js 18+</li><li>Bun 1.1.34+</li><li>ESM + CommonJS</li><li>Type definitions</li></ul><p class="section-note">Runtime dependencies: <code>decimal.js</code> and <code>date-fns</code>.</p></aside></section>
-<section id="install"><div class="section-heading"><p class="eyebrow">Installation</p><h2>Install with the package manager you already use.</h2><p>The package is prebuilt, so installation needs no compiler or project setup.</p></div><div class="install"><div class="card"><p>npm</p><div class="command"><code id="npm-install">npm install @fatdevcon/utilities</code><button class="copy" type="button" data-copy="npm-install">Copy</button></div></div><div class="card"><p>pnpm</p><div class="command"><code id="pnpm-install">pnpm add @fatdevcon/utilities</code><button class="copy" type="button" data-copy="pnpm-install">Copy</button></div></div><div class="card"><p>Yarn</p><div class="command"><code id="yarn-install">yarn add @fatdevcon/utilities</code><button class="copy" type="button" data-copy="yarn-install">Copy</button></div></div><div class="card"><p>Bun</p><div class="command"><code id="bun-install">bun add @fatdevcon/utilities</code><button class="copy" type="button" data-copy="bun-install">Copy</button></div></div></div></section>
-<section id="quick-start"><div class="section-heading"><p class="eyebrow">Quick start</p><h2>Start with exact math, then import only the helpers you need.</h2><p>Every public utility is a named export, so applications can make focused imports.</p></div><div class="grid2"><article class="card"><h3>Exact decimal math in TypeScript</h3><pre><code>import { divide, summary } from "@fatdevcon/utilities";
 
-summary(0.1, 0.2); // 0.3
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="brand" href="#top" aria-label="@fatdevcon/utilities home"><span>@fatdevcon/</span>utilities</a>
+    <nav class="nav" aria-label="Primary">
+      <a href="#install">Install</a>
+      <a href="#playground">Playground</a>
+      <a href="#api">API</a>
+      <a href="#examples">Examples</a>
+      <a href="#releases">Releases</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="bar-tools">
+      <a class="icon-link" href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg><span>GitHub</span></a>
+      <a class="icon-link" href="https://www.npmjs.com/package/@fatdevcon/utilities" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18v10h-9v2H8v-2H3zM8 10v4m4-4v4m4-4v4"/></svg><span>npm</span></a>
+      <button class="icon-btn" id="theme" type="button" aria-label="Switch theme"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<main id="content">
+  <section class="hero" id="top">
+    <div class="wrap hero-grid">
+      <div>
+        <h1>Exact math and everyday helpers for TypeScript</h1>
+        <p class="lead">One typed package with no dependencies. Calculate with decimals and bigints without floating-point drift, format for any locale and time zone, and reach for text, collection and async helpers when you need them.</p>
+        <div class="install" id="install">
+          <div class="install-tabs" role="tablist" aria-label="Package manager">
+            <button type="button" role="tab" data-pm="npm" aria-selected="true">npm</button>
+            <button type="button" role="tab" data-pm="pnpm" aria-selected="false">pnpm</button>
+            <button type="button" role="tab" data-pm="yarn" aria-selected="false">yarn</button>
+            <button type="button" role="tab" data-pm="bun" aria-selected="false">bun</button>
+          </div>
+          <div class="install-cmd">
+            <code id="install-cmd">npm install @fatdevcon/utilities</code>
+            <button class="copy" id="install-copy" type="button" data-copy="install-cmd" data-copy-text="npm install @fatdevcon/utilities">Copy</button>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <a class="btn primary" href="#api">Read the API</a>
+          <a class="btn" href="#playground">Try it in your browser</a>
+        </div>
+      </div>
+
+      <section class="gauge" aria-labelledby="gauge-title">
+        <div class="gauge-head">
+          <h2 id="gauge-title">One calculation, two answers</h2>
+          <p>Both lines run live in your browser.</p>
+        </div>
+        <div class="gauge-tabs" role="group" aria-label="Pick a calculation" data-needs-lib>
+          <button type="button" data-preset="add" aria-selected="true">0.1 + 0.2</button>
+          <button type="button" data-preset="round" aria-selected="false">round 1.005</button>
+          <button type="button" data-preset="sum" aria-selected="false">sum of prices</button>
+          <button type="button" data-preset="big" aria-selected="false">past 2^53</button>
+          <button type="button" data-preset="custom" aria-selected="false">your numbers</button>
+        </div>
+        <div class="read is-native" aria-live="polite">
+          <div class="read-label"><span>JavaScript</span><code id="native-expr">0.1 + 0.2</code></div>
+          <div class="read-value" id="native-value">0.3<span class="drift">0000000000004</span></div>
+          <p class="read-note" id="native-note">The highlighted digits are floating-point error.</p>
+        </div>
+        <div class="read is-exact" aria-live="polite">
+          <div class="read-label"><span>@fatdevcon/utilities</span><code id="exact-expr">summary(0.1, 0.2)</code></div>
+          <div class="read-value" id="exact-value">0.3</div>
+          <p class="read-note" id="exact-note">Exact: no digits are lost.</p>
+        </div>
+        <div class="gauge-custom" hidden>
+          <label>a <input id="gauge-a" value="0.1" inputmode="decimal" autocomplete="off" spellcheck="false"></label>
+          <div class="ops" role="group" aria-label="Operation">
+            <button type="button" aria-pressed="true">+</button><button type="button" aria-pressed="false">−</button><button type="button" aria-pressed="false">×</button><button type="button" aria-pressed="false">÷</button>
+          </div>
+          <label>b <input id="gauge-b" value="0.2" inputmode="decimal" autocomplete="off" spellcheck="false"></label>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <section class="block" id="overview" aria-label="At a glance">
+    <div class="wrap">
+      <dl class="facts">
+        <div><dt>0</dt><dd>runtime dependencies. Nothing else to audit or keep patched.</dd></div>
+        <div><dt>21 kB</dt><dd>minified and gzipped for the whole package, and tree-shakeable.</dd></div>
+        <div><dt>ESM + CJS</dt><dd>with bundled type declarations and an exact, typed error model.</dd></div>
+        <div><dt>Node 18+</dt><dd>Bun and modern browsers, using the runtime's own Intl data.</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="block" id="size">
+    <div class="wrap size">
+      <div class="head" style="margin:0">
+        <h2>Smaller by owning the hard parts</h2>
+        <p>Version 0.3.5 replaces decimal.js and date-fns with a BigInt decimal engine and an ISO 8601 parser and formatter written for this package. The replacements were compared against the originals on hundreds of thousands of randomized inputs, so results stay identical.</p>
+      </div>
+      <div>
+        <div class="bars" role="img" aria-label="Bundle size: version 0.3.4 was 90.9 kilobytes minified and 32.3 gzipped; version 0.3.5 is 59.1 minified and 21.4 gzipped.">
+          <div class="bar-row"><div class="bar-meta"><span>0.3.4, with two dependencies</span><b>32.3 kB gzip</b></div><div class="track"><div class="fill min" style="width:100%"></div><div class="fill" style="width:35.5%"></div></div></div>
+          <div class="bar-row"><div class="bar-meta"><span>0.3.5, no dependencies</span><b>21.4 kB gzip</b></div><div class="track"><div class="fill now min" style="width:65%"></div><div class="fill now" style="width:23.5%"></div></div></div>
+        </div>
+        <p class="bar-note">Light bar: minified (90.9 kB to 59.1 kB). Solid bar: minified and gzipped.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="features">
+    <div class="wrap">
+      <div class="head">
+        <h2>What is inside</h2>
+        <p>About 120 exported functions in plain, named exports. Import what you need and leave the rest to your bundler.</p>
+      </div>
+      <div class="inventory">
+        <div class="inv-row"><div><h3>Exact decimal and big-number math</h3></div><div><p>Add, subtract, multiply, divide, round and compare numbers, bigints and numeric strings without drift. Magnitudes reach about 1e300000, and failures use typed errors with stable codes.</p><div class="chips"><a class="chip" href="#summary">summary</a><a class="chip" href="#divide">divide</a><a class="chip" href="#round">round</a><a class="chip" href="#factorial">factorial</a><a class="chip" href="#isPrime">isPrime</a><a class="chip" href="#sumBig">sumBig</a></div></div></div>
+        <div class="inv-row"><div><h3>Formatting and currencies</h3></div><div><p>Numbers, currencies, percentages, units, compact values and byte sizes through the runtime's Intl data, with ISO 4217 country and currency metadata. Parse sizes and durations back to exact values.</p><div class="chips"><a class="chip" href="#formatCurrency">formatCurrency</a><a class="chip" href="#formatBytes">formatBytes</a><a class="chip" href="#parseBytes">parseBytes</a><a class="chip" href="#getCountryCurrencies">getCountryCurrencies</a></div></div></div>
+        <div class="inv-row"><div><h3>Dates and time zones</h3></div><div><p>Token-based formatting in any IANA zone, ISO 8601 parsing, calendar arithmetic that respects daylight saving, relative time, and DST-aware offsets in seconds, minutes or hours.</p><div class="chips"><a class="chip" href="#formatDate">formatDate</a><a class="chip" href="#parseISO">parseISO</a><a class="chip" href="#addMonths">addMonths</a><a class="chip" href="#formatInTimeZone">formatInTimeZone</a><a class="chip" href="#getTimeZoneOffset">getTimeZoneOffset</a></div></div></div>
+        <div class="inv-row"><div><h3>Unicode-safe text</h3></div><div><p>Truncate, mask, slugify and change case without splitting emoji, flags or combining accents. Vietnamese and other diacritics are handled.</p><div class="chips"><a class="chip" href="#truncateText">truncateText</a><a class="chip" href="#slugify">slugify</a><a class="chip" href="#maskString">maskString</a><a class="chip" href="#escapeRegExp">escapeRegExp</a></div></div></div>
+        <div class="inv-row"><div><h3>Collections and objects</h3></div><div><p>Group, chunk, partition and range arrays; deep clone, merge and compare objects; read and write nested paths safely, with prototype-pollution guards.</p><div class="chips"><a class="chip" href="#groupBy">groupBy</a><a class="chip" href="#deepMerge">deepMerge</a><a class="chip" href="#getByPath">getByPath</a><a class="chip" href="#setByPath">setByPath</a></div></div></div>
+        <div class="inv-row"><div><h3>Async control and algorithms</h3></div><div><p>Debounce, throttle, memoize, retry with backoff, abort-aware waits and timeouts, plus classic sorting and searching with documented limits.</p><div class="chips"><a class="chip" href="#withRetry">withRetry</a><a class="chip" href="#debounce">debounce</a><a class="chip" href="#withTimeout">withTimeout</a><a class="chip" href="#quickSort">quickSort</a></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="quick-start">
+    <div class="wrap">
+      <div class="head">
+        <h2>Quick start</h2>
+        <p>Every utility is a named export, so imports stay focused. Results below are what the code returns.</p>
+      </div>
+      <div class="two">
+        <article class="recipe"><h3>Exact decimal math</h3><div class="code"><pre class="hl"><code>import { divide, summary, round } from "@fatdevcon/utilities";
+
+summary(0.1, 0.2);                 // 0.3
+round(1.005, 2);                   // 1.01
 divide("1", "3", { precision: 5 }); // "0.33333"
 summary("100000000000000000000000", "1");
-// "100000000000000000000001"</code></pre></article><article class="card"><h3>Format values for a real user</h3><pre><code>import { formatCurrency, formatInTimeZone } from "@fatdevcon/utilities";
+// "100000000000000000000001"</code></pre></div></article>
+        <article class="recipe"><h3>Format for a real user</h3><div class="code"><pre class="hl"><code>import { formatCurrency, formatBytes } from "@fatdevcon/utilities";
 
 formatCurrency("12345678901234567890.129", "USD");
 // "$12,345,678,901,234,567,890.13"
+formatCurrency(1234.5, "VND", "vi-VN"); // "1.235 ₫"
+formatBytes(1536, { base: 1024 });      // "1.5 KiB"</code></pre></div></article>
+        <article class="recipe"><h3>Dates in any time zone</h3><div class="code"><pre class="hl"><code>import { formatDate, addMonths } from "@fatdevcon/utilities";
 
-formatInTimeZone(new Date("2026-01-15T12:00:00Z"), "Asia/Ho_Chi_Minh");</code></pre></article></div></section>
-<section id="features"><div class="section-heading"><p class="eyebrow">What it provides</p><h2>Concrete utilities for common JavaScript and TypeScript work.</h2><p>Each category is backed by exported APIs documented below; no feature claims depend on a service or hidden runtime.</p></div><div class="features"><article class="feature card"><h3>Exact decimal &amp; big-number math</h3><p>Calculate with numbers, bigints and numeric strings while preserving practical-size decimal values. Invalid input and overflow use explicit error types.</p><span class="tag">summary · divide · factorial</span></article><article class="feature card"><h3>Intl formatting &amp; currencies</h3><p>Format numbers, currencies, percentages, units, bytes and dates with runtime locale data and ISO 4217 metadata.</p><span class="tag">formatCurrency · formatBytes</span></article><article class="feature card"><h3>Time zones</h3><p>Validate IANA zones, format instants and calculate DST-aware offsets in seconds, minutes or hours.</p><span class="tag">formatInTimeZone · getTimeZoneOffset</span></article><article class="feature card"><h3>Unicode-safe text</h3><p>Truncate, mask, slugify and transform text without splitting user-perceived characters such as emoji and combining accents.</p><span class="tag">truncateText · slugify</span></article><article class="feature card"><h3>Collections &amp; objects</h3><p>Work with arrays and objects using grouping, chunking, deep merge, structural equality and safe deep-property reads.</p><span class="tag">groupBy · deepMerge · getByPath</span></article><article class="feature card"><h3>Async &amp; algorithms</h3><p>Control timing and retries, or choose familiar sorting and searching helpers with documented behavior and limits.</p><span class="tag">withRetry · quickSort · binarySearch</span></article></div></section>
-<section id="api"><div class="section-heading"><p class="eyebrow">API reference</p><h2>Discover utilities by problem, then inspect the full signature.</h2><p>This static overview is crawlable without JavaScript. With JavaScript enabled, the complete reference includes every exported function, parameters, return values, errors and verified examples.</p></div><div class="api-layout"><aside class="api-side"><label for="search">Filter functions</label><input id="search" type="search" placeholder="e.g. format, retry, array"><nav class="api-nav" id="nav-groups" aria-label="API groups"></nav></aside><div><div class="api-cats"><article class="api-category"><h3>Exact math</h3><p>Arithmetic, rounding, comparison, integer math and aggregates.</p><ul><li>summary, divide, round</li><li>factorial, fibonacci, isPrime</li><li>sumBig, averageBig, medianBig</li></ul></article><article class="api-category"><h3>Formatting &amp; time</h3><p>Locale, currency, text, dates and IANA timezone utilities.</p><ul><li>formatCurrency, formatBytes</li><li>formatDate, formatRelativeTime</li><li>formatInTimeZone, getTimeZoneName</li></ul></article><article class="api-category"><h3>Data helpers</h3><p>Arrays, objects, sorting, searching and common transformations.</p><ul><li>groupBy, chunk, range</li><li>deepMerge, deepEqual, getByPath</li><li>quickSort, binarySearch</li></ul></article><article class="api-category"><h3>Function utilities</h3><p>Rate limiting, memoization, cancellation, retries and validation.</p><ul><li>debounce, throttle, memoize</li><li>wait, withRetry, withTimeout</li><li>isEmail, isUrl, isUuid</li></ul></article></div><div class="api-reference" id="api-reference"><noscript><p class="callout">The complete API cards are enhanced with JavaScript. This overview and the <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities#api">README API index</a> remain available without it.</p></noscript></div><p class="empty" id="empty" hidden>No function matches that filter.</p></div></div></section>
-<section id="examples"><div class="section-heading"><p class="eyebrow">Examples</p><h2>Common developer tasks with real package APIs.</h2><p>These examples answer useful JavaScript and TypeScript utility problems without introducing unexported abstractions.</p></div><div class="grid2"><article class="card"><h3>How to group data in JavaScript</h3><pre><code>import { groupBy } from "@fatdevcon/utilities";
+formatDate(new Date("2026-01-15T17:30:00Z"), "yyyy-MM-dd HH:mm xxx", {
+  timeZone: "Asia/Ho_Chi_Minh",
+}); // "2026-01-16 00:30 +07:00"
+formatDate(addMonths("2026-01-31", 1), "yyyy-MM-dd"); // "2026-02-28"</code></pre></div></article>
+        <article class="recipe"><h3>Retry flaky work</h3><div class="code"><pre class="hl"><code>import { withRetry } from "@fatdevcon/utilities";
+
+const config = await withRetry(() => fetch("/config.json").then((r) => r.json()), {
+  retryCount: 3,
+  delay: ({ count }) => 200 * 2 ** count,
+});</code></pre></div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="playground" data-needs-lib>
+    <div class="wrap">
+      <div class="head">
+        <h2>Playground</h2>
+        <p>Edit the expressions on the left. Each line is evaluated against the real package, and every export is already in scope.</p>
+      </div>
+      <div class="play-bar" role="tablist" aria-label="Samples">
+        <div class="tabs" style="margin:0">
+          <button type="button" role="tab" data-sample="Money" aria-selected="true">Money</button>
+          <button type="button" role="tab" data-sample="Big numbers" aria-selected="false">Big numbers</button>
+          <button type="button" role="tab" data-sample="Dates" aria-selected="false">Dates</button>
+          <button type="button" role="tab" data-sample="Text" aria-selected="false">Text</button>
+        </div>
+        <span class="hint">Runs only in your browser.</span>
+      </div>
+      <div class="play">
+        <textarea id="play-input" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Expressions to evaluate"></textarea>
+        <div class="play-out" id="play-output" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="api">
+    <div class="wrap">
+      <div class="head">
+        <h2>API reference</h2>
+        <p><span id="api-count">120</span> functions with parameters, return values, errors and examples. Every example is executed against the built package before each release.</p>
+      </div>
+      <div class="api-layout">
+        <aside class="api-side">
+          <div class="search"><input id="search" type="search" placeholder="Filter functions" aria-label="Filter functions" autocomplete="off" spellcheck="false"><kbd aria-hidden="true">/</kbd></div>
+          <button class="btn api-nav-toggle" id="api-nav-toggle" type="button" aria-expanded="false" aria-controls="nav-groups-wrap">Browse by group</button>
+          <div class="api-nav-wrap" id="nav-groups-wrap"><nav class="api-nav" id="nav-groups" aria-label="API groups"></nav></div>
+        </aside>
+        <div>
+          <div id="api-reference"><div class="noscript"><p>The full reference needs JavaScript. The same content is in the <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities#api-index">README API index</a>, and the type declarations ship with the package.</p></div></div>
+          <p class="section-empty" id="empty" hidden>No function matches that filter. Try a shorter word such as <code>format</code> or <code>array</code>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="examples">
+    <div class="wrap">
+      <div class="head">
+        <h2>Common tasks</h2>
+        <p>Short answers to questions developers search for, using only exported APIs.</p>
+      </div>
+      <div class="two">
+        <article class="recipe"><h3>How to group data in JavaScript</h3><div class="code"><pre class="hl"><code>import { groupBy } from "@fatdevcon/utilities";
 
 const byRole = groupBy([
   { name: "An", role: "dev" }, { name: "Binh", role: "qa" },
-], (user) =&gt; user.role);
-// { dev: [{ name: "An", ... }], qa: [{ name: "Binh", ... }] }</code></pre></article><article class="card"><h3>How to retry an async operation</h3><pre><code>import { withRetry } from "@fatdevcon/utilities";
+], (user) => user.role);
+// { dev: [{ name: "An", ... }], qa: [{ name: "Binh", ... }] }</code></pre></div></article>
+        <article class="recipe"><h3>How to avoid floating-point errors when adding money</h3><div class="code"><pre class="hl"><code>import { sumValueInArray, multiply } from "@fatdevcon/utilities";
 
-const loadConfig = () =&gt; fetch("/config.json").then((response) =&gt; response.json());
-const value = await withRetry(loadConfig, {
-  retryCount: 3,
-  delay: ({ count }) =&gt; 200 * 2 ** count,
-  shouldRetry: ({ error }) =&gt; error.name !== "AuthError",
-});</code></pre></article><article class="card"><h3>How to format a timezone-aware date</h3><pre><code>import { getTimeZoneOffset, formatInTimeZone } from "@fatdevcon/utilities";
+sumValueInArray([19.99, 5.01, 0.1]); // 25.1
+multiply("19.99", 3);                // "59.97"</code></pre></div></article>
+        <article class="recipe"><h3>How to format a time zone-aware date</h3><div class="code"><pre class="hl"><code>import { getTimeZoneOffset, formatInTimeZone } from "@fatdevcon/utilities";
 
 const instant = new Date("2026-01-15T12:00:00Z");
 getTimeZoneOffset(instant, "Asia/Ho_Chi_Minh", { unit: "hours" }); // 7
 formatInTimeZone(instant, "Asia/Ho_Chi_Minh", "en-GB", {
   dateStyle: "short", timeStyle: "short", hourCycle: "h23",
-}); // "15/01/2026, 19:00"</code></pre></article><article class="card"><h3>How to format large currency values</h3><pre><code>import { formatCurrency } from "@fatdevcon/utilities";
+}); // "15/01/2026, 19:00"</code></pre></div></article>
+        <article class="recipe"><h3>How to parse a file size or duration string</h3><div class="code"><pre class="hl"><code>import { parseBytes, parseDuration } from "@fatdevcon/utilities";
+
+parseBytes("1.5 GB");        // 1500000000
+parseBytes("512 KiB");       // 524288
+parseDuration("1h 2m 3s");   // 3723000
+parseDuration("2 days, 4 hours"); // 187200000</code></pre></div></article>
+        <article class="recipe"><h3>How to update nested state without mutating it</h3><div class="code"><pre class="hl"><code>import { setByPath } from "@fatdevcon/utilities";
+
+const state = { user: { name: "An", tags: ["a"] } };
+const next = setByPath(state, "user.tags[1]", "b");
+// next.user.tags is ["a", "b"]; state is unchanged</code></pre></div></article>
+        <article class="recipe"><h3>How to format very large currency values</h3><div class="code"><pre class="hl"><code>import { formatCurrency } from "@fatdevcon/utilities";
 
 formatCurrency("12345678901234567890.129", "USD");
-// "$12,345,678,901,234,567,890.13"</code></pre></article></div></section>
-<section id="faq"><div class="section-heading"><p class="eyebrow">FAQ</p><h2>Before you add another utility dependency.</h2></div><div class="faq"><details><summary>Does this package support TypeScript?</summary><p>Yes. It ships ESM and CommonJS type definitions, and public option and utility types are exported alongside functions.</p></details><details><summary>Can it handle bigint and very large numeric strings?</summary><p>Yes. Exact numeric utilities accept <code>number</code>, <code>bigint</code> and decimal strings. Return kinds follow the documented input rules.</p></details><details><summary>Does it work in Node.js, Bun and browsers?</summary><p>It supports Node.js 18+ and Bun 1.1.34+. Formatting and timezone helpers use standard <code>Intl</code> capabilities, so output follows the runtime locale data.</p></details><details><summary>Is this a replacement for every utility library?</summary><p>No. It is a focused collection of typed helpers for exact decimal arithmetic, formatting, text, collections, async flow and algorithms. Import the functions that fit your application.</p></details></div></section>
-<footer><span>MIT licensed · <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/LICENSE">License</a></span><span><a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/issues">Issues</a> · <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/releases">Releases</a> · <a href="https://www.npmjs.com/package/@fatdevcon/utilities">npm</a></span></footer>
+// "$12,345,678,901,234,567,890.13"</code></pre></div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="releases">
+    <div class="wrap">
+      <div class="head">
+        <h2>Release 0.3.5</h2>
+        <p>The package no longer depends on anything. The full history is in the <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/CHANGELOG.md">changelog</a>.</p>
+      </div>
+      <div class="notes">
+        <div><h3>No runtime dependencies</h3><p>decimal.js and date-fns are replaced by in-package engines. Install size, bundle size and supply-chain surface all shrink, and results are unchanged: the old engines are kept as test oracles.</p></div>
+        <div><h3>Readable build output</h3><p>The published files are no longer minified, so stack traces and audits read like source. Bundlers minify them as usual.</p></div>
+        <div><h3>New helpers</h3><p><code>parseISO</code>, <code>addDays</code>, <code>addMonths</code>, <code>startOfDay</code>, <code>endOfDay</code>, <code>differenceInCalendarDays</code>, <code>parseDuration</code>, <code>parseBytes</code>, <code>setByPath</code> and <code>escapeRegExp</code>.</p></div>
+        <div><h3>formatDate options</h3><p>New <code>timeZone</code> and <code>locale</code> options (Intl tags or date-fns locale objects), and an empty pattern now returns an empty string instead of throwing.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="faq">
+    <div class="wrap">
+      <div class="head"><h2>Frequently asked questions</h2></div>
+      <div class="faq">
+        <details><summary>How do I avoid floating-point errors like 0.1 + 0.2 in JavaScript?</summary><p>Use <code>summary</code>, <code>subtract</code>, <code>multiply</code>, <code>divide</code> and <code>round</code>. They calculate in exact decimal arithmetic, so <code>summary(0.1, 0.2)</code> is <code>0.3</code> and <code>round(1.005, 2)</code> is <code>1.01</code>. Pass bigints or numeric strings when values exceed 2^53.</p></details>
+        <details><summary>Does it have dependencies?</summary><p>No. Since 0.3.5 the package has zero runtime dependencies. decimal.js and date-fns are development-only test oracles.</p></details>
+        <details><summary>Does it support TypeScript, ESM and CommonJS?</summary><p>Yes. It ships ESM, CommonJS and type declarations, and public option and result types are exported alongside the functions.</p></details>
+        <details><summary>Which runtimes are supported?</summary><p>Node.js 18 and newer, Bun, and modern browsers. Formatting and time zone helpers use the standard <code>Intl</code> APIs, so output follows the runtime's locale data.</p></details>
+        <details><summary>Can it replace decimal.js, big.js, date-fns or lodash?</summary><p>For many everyday cases, yes: exact arithmetic with rounding modes, ISO parsing, token formatting and common collection helpers are covered. It is a focused toolkit, not a full replacement. Libraries with broader scope, such as complex date arithmetic or arbitrary-base numbers, still fit those jobs better.</p></details>
+        <details><summary>Does formatDate use the same tokens as date-fns?</summary><p>Yes. Patterns such as <code>yyyy-MM-dd HH:mm:ss</code>, <code>EEEE</code>, <code>do</code>, <code>xxx</code> and <code>PPpp</code> produce the same output, and a date-fns locale object can be passed as <code>options.locale</code>.</p></details>
+        <details><summary>Is it tree-shakeable?</summary><p>Yes. The package is side-effect free and every utility is a named export, so bundlers drop what you do not import.</p></details>
+      </div>
+    </div>
+  </section>
 </main>
-<script src="api-data.js"></script><script>
-const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-const params=p=>`<h5>Parameters</h5><div class="scroll"><table><tr><th>Name</th><th>Type</th><th>Default</th><th>Description</th></tr>${p.map(q=>`<tr><td class="name"><code>${esc(q.name)}</code></td><td class="type"><code>${esc(q.type)}</code></td><td>${q.def===undefined?"<em>required</em>":`<code>${esc(q.def)}</code>`}</td><td>${esc(q.desc)}</td></tr>`).join("")}</table></div>`;
-const throws=l=>`<h5>Throws</h5><ul class="throws">${l.map(t=>`<li>${t.code?`<span class="err">${esc(t.code)}</span>`:`<span class="err plain">${esc(t.kind)}</span>`}<strong>${esc(t.kind)}</strong> when ${esc(t.when)}</li>`).join("")}</ul>`;
-const extra=t=>`<div class="scroll"><table><tr>${t.head.map(h=>`<th>${esc(h)}</th>`).join("")}</tr>${t.rows.map(r=>`<tr>${r.map((c,i)=>`<td>${i===0?`<code>${esc(c)}</code>`:esc(c)}</td>`).join("")}</tr>`).join("")}</table></div>`;
-const api=document.getElementById("api-reference"),nav=document.getElementById("nav-groups");
-api.innerHTML=GROUPS.map(g=>`<section id="${g.id}"><h3>${esc(g.title)}</h3>${g.note?`<p class="section-note">${esc(g.note)}</p>`:""}${g.fns.map(f=>`<article class="fn" id="${f.name}" data-name="${f.name.toLowerCase()}"><h4><a href="#${f.name}">${f.name}</a></h4><code class="sig">${esc(f.sig)}</code><p>${esc(f.desc)}</p>${f.tags?`<div class="tags">${f.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div>`:""}${f.params?.length?params(f.params):""}${f.table?extra(f.table):""}${f.returns?`<h5>Returns</h5><p>${esc(f.returns)}</p>`:""}${f.throws?.length?throws(f.throws):""}<h5>Example</h5><pre><code>${esc(f.ex)}</code></pre></article>`).join("")}</section>`).join("");
-nav.innerHTML=GROUPS.map(g=>`<h3><a href="#${g.id}">${esc(g.title)}</a></h3><ul>${g.fns.map(f=>`<li data-name="${f.name.toLowerCase()}"><a href="#${f.name}">${f.name}</a></li>`).join("")}</ul>`).join("");
-document.getElementById("search").addEventListener("input",e=>{const q=e.target.value.trim().toLowerCase();let n=0;document.querySelectorAll("[data-name]").forEach(el=>{const ok=el.dataset.name.includes(q);el.hidden=!ok;if(ok&&el.classList.contains("fn"))n++});api.querySelectorAll("section").forEach(s=>s.hidden=!s.querySelector(".fn:not([hidden])"));document.getElementById("empty").hidden=n>0});
-document.querySelectorAll("[data-copy]").forEach(b=>b.addEventListener("click",async()=>{const s=document.getElementById(b.dataset.copy);if(!s)return;try{await navigator.clipboard.writeText(s.textContent);b.textContent="Copied";setTimeout(()=>b.textContent="Copy",1400)}catch{b.textContent="Select text"}}));
-const links=[...document.querySelectorAll(".topnav a")],observer=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)links.forEach(a=>a.setAttribute("aria-current",String(a.getAttribute("href")===`#${e.target.id}`)))}),{rootMargin:"-35% 0px -60%"});document.querySelectorAll("main>section[id]").forEach(s=>observer.observe(s));
-</script></body></html>
+
+<footer>
+  <div class="wrap foot">
+    <span>MIT licensed. Version 0.3.5.</span>
+    <nav aria-label="Project links">
+      <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/LICENSE">License</a>
+      <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/issues">Issues</a>
+      <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/releases">Releases</a>
+      <a href="https://www.npmjs.com/package/@fatdevcon/utilities">npm</a>
+      <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities">GitHub</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="api-data.js"></script>
+<script type="module" src="assets/app.js"></script>
+</body>
+</html>

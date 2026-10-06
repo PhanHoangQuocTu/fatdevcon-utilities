@@ -113,6 +113,30 @@ const getByPath = (
 };
 
 /**
+ * Immutable deep write: returns a copy of `obj` with `value` at `path`, sharing everything it did not touch.
+ * Missing or primitive intermediates become arrays when the next key is an index, otherwise objects.
+ * Throws for `__proto__`, `constructor` and `prototype` keys, and when the path crosses a Map, Date or class instance.
+ */
+const setByPath = <T extends object>(obj: T, path: string | (string | number)[], value: unknown): T => {
+  if (typeof obj !== "object" || obj === null) throw new TypeError("obj must be an object or an array");
+  const keys = parsePath(path);
+  if (keys.length === 0) throw new RangeError("path must contain at least one key");
+  const unsafe = keys.find((key) => UNSAFE_KEYS.has(key));
+  if (unsafe !== undefined) throw new TypeError(`path must not contain the unsafe key "${unsafe}"`);
+  const write = (node: unknown, depth: number): unknown => {
+    const key = keys[depth];
+    let copy: Record<string, unknown>;
+    if (Array.isArray(node)) copy = [...node] as unknown as Record<string, unknown>;
+    else if (isPlainObject(node)) copy = { ...node };
+    else if (node === null || typeof node !== "object") copy = (/^(?:0|[1-9]\d*)$/.test(key) ? [] : {}) as Record<string, unknown>;
+    else throw new TypeError(`path crosses a non-plain object at "${keys.slice(0, depth).join(".") || "(root)"}"`);
+    copy[key] = depth === keys.length - 1 ? value : write(hasOwn(copy, key) ? copy[key] : undefined, depth + 1);
+    return copy;
+  };
+  return write(obj, 0) as T;
+};
+
+/**
  * Structural equality using SameValueZero for primitives (NaN equals NaN).
  * Handles arrays, plain objects, Date, RegExp, Map, Set and circular references.
  */
@@ -163,4 +187,5 @@ export {
   omit,
   mapValues,
   getByPath,
+  setByPath,
 };

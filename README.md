@@ -1,21 +1,46 @@
+<div align="center">
+
 # @fatdevcon/utilities
+
+**Exact math and everyday helpers for TypeScript. Zero dependencies.**
 
 [![npm version](https://img.shields.io/npm/v/@fatdevcon/utilities.svg?style=flat-square)](https://www.npmjs.com/package/@fatdevcon/utilities)
 [![npm downloads](https://img.shields.io/npm/dm/@fatdevcon/utilities.svg?style=flat-square)](https://www.npmjs.com/package/@fatdevcon/utilities)
+[![minzipped size](https://img.shields.io/bundlephobia/minzip/@fatdevcon/utilities?style=flat-square)](https://bundlephobia.com/package/@fatdevcon/utilities)
+![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen?style=flat-square)
 [![types](https://img.shields.io/npm/types/@fatdevcon/utilities.svg?style=flat-square)](https://www.npmjs.com/package/@fatdevcon/utilities)
+[![CI](https://img.shields.io/github/actions/workflow/status/PhanHoangQuocTu/fatdevcon-utilities/ci.yml?branch=master&style=flat-square&label=CI)](https://github.com/PhanHoangQuocTu/fatdevcon-utilities/actions/workflows/ci.yml)
+[![Socket](https://socket.dev/api/badge/npm/package/@fatdevcon/utilities)](https://socket.dev/npm/package/@fatdevcon/utilities)
 [![license](https://img.shields.io/npm/l/@fatdevcon/utilities.svg?style=flat-square)](LICENSE)
 
-Typed utilities for everyday JavaScript and TypeScript: exact decimal math that also works on `bigint` and numeric strings of any practical size, locale-aware number, currency, date and timezone formatting, Unicode-safe text and case helpers, array and object helpers, debounce / throttle / cancellable retry, validators, and classic sort / search algorithms.
+[Documentation](https://phanhoangquoctu.github.io/fatdevcon-utilities/) ·
+[Live playground](https://phanhoangquoctu.github.io/fatdevcon-utilities/#playground) ·
+[API reference](https://phanhoangquoctu.github.io/fatdevcon-utilities/#api) ·
+[Changelog](CHANGELOG.md)
 
-**[Documentation](https://phanhoangquoctu.github.io/fatdevcon-utilities/)** – every function with its signature, options and examples.
+</div>
 
-- **Locale-aware formatting** – compact numbers, percentages, currencies, units and byte sizes, built on `Intl`
-- **Unicode-safe text** – truncating, masking and shortening count user-perceived characters, so emoji and accents are never cut in half
-- **Timezone-aware** – validate IANA zones, format an instant anywhere, get localized names and DST-aware UTC offsets through `Intl`
-- **Precise, big-number math** – `summary(0.1, 0.2)` is `0.3`, and `bigint` or numeric-string inputs keep every digit: `multiply("1e-400", "1e-400")`, `factorial(1000n)`, `isPrime(2n ** 127n - 1n)`
-- **No silent wrong answers** – overflow, underflow and bad input throw `NumericTypeError` / `NumericRangeError` with a stable `code`, never `Infinity`, `NaN` or a quiet `0`
-- **Everyday helpers** – `camelCase`, `deepMerge`, `pick` / `omit`, `debounce`, `throttle`, abort-aware `wait` / `withRetry`, `formatRelativeTime`, `isEmail` and more, with no lodash required
-- **Typed, ESM and CommonJS** – type definitions included, tree-shakeable, inputs validated, nothing mutates what you pass in
+```typescript
+import { summary, round, formatCurrency, formatDate } from "@fatdevcon/utilities";
+
+0.1 + 0.2;                       // 0.30000000000000004
+summary(0.1, 0.2);               // 0.3
+round(1.005, 2);                 // 1.01 (Math.round gives 1)
+formatCurrency("12345678901234567890.129", "USD"); // "$12,345,678,901,234,567,890.13"
+formatDate(new Date("2026-01-15T17:30:00Z"), "yyyy-MM-dd HH:mm xxx", { timeZone: "Asia/Ho_Chi_Minh" }); // "2026-01-16 00:30 +07:00"
+```
+
+## Why @fatdevcon/utilities
+
+JavaScript numbers are binary doubles: `0.1 + 0.2` is not `0.3`, integers above 2^53 lose digits, and `Math.round(1.005 * 100) / 100` is `1`. This package gives you drop-in helpers that calculate exactly, then covers the formatting, date, text, collection and async work that surrounds real applications, in one small typed package.
+
+- **Exact decimal and big-number math** – numbers, `bigint` and numeric strings of any practical size, with no float drift and no silent wrong answers: overflow, underflow and bad input throw typed errors with a stable `code`.
+- **Zero runtime dependencies** – about 21 kB minified and gzipped for the whole package, tree-shakeable, and `npm install` adds exactly one package to `node_modules`.
+- **Locale, currency and time zone aware** – compact numbers, percentages, currencies, byte sizes and dates through `Intl`, with ISO 4217 country metadata and DST-aware UTC offsets for any IANA zone.
+- **Dates without a date library** – ISO 8601 parsing, token formatting compatible with date-fns, calendar arithmetic and time zone formatting.
+- **Unicode-safe text** – truncating, masking and shortening count user-perceived characters, so emoji, flags and accents are never cut in half.
+- **Everyday helpers** – `groupBy`, `deepMerge`, `setByPath`, `debounce`, `throttle`, abort-aware `wait` / `withRetry`, validators and classic sort and search algorithms, with no lodash required.
+- **Typed, ESM and CommonJS** – declarations included, inputs validated, nothing mutates what you pass in. Runs on Node.js 18+, Bun and modern browsers.
 
 ## Installation
 
@@ -23,7 +48,7 @@ Typed utilities for everyday JavaScript and TypeScript: exact decimal math that 
 npm install @fatdevcon/utilities
 ```
 
-Also works with `yarn add`, `pnpm add` and `bun add`. Requires Node.js 18+ or Bun 1.1.34+. The package ships prebuilt, so installing it needs no compiler or build step. Runtime dependencies: `date-fns` and `decimal.js`.
+Also works with `yarn add`, `pnpm add` and `bun add`. Requires Node.js 18+ or Bun 1.1.34+ (and any modern browser through a bundler). The package ships prebuilt and has no runtime dependencies, so installing it needs no compiler or build step.
 
 ## Quick start
 
@@ -64,6 +89,43 @@ CommonJS:
 const { formatCurrency } = require("@fatdevcon/utilities");
 ```
 
+## Common tasks
+
+<details>
+<summary>How do I fix floating-point errors like 0.1 + 0.2 in JavaScript?</summary>
+
+Use `summary`, `subtract`, `multiply`, `divide` and `round`; they calculate in exact decimal arithmetic. For lists use `sumValueInArray`, `averageValueInArray` and `median`, and pass `bigint` or numeric strings when values exceed 2^53.
+
+</details>
+
+<details>
+<summary>How do I format currency, bytes or compact numbers for a locale?</summary>
+
+`formatCurrency(1234.5, "VND", "vi-VN")`, `formatBytes(1536, { base: 1024 })` and `formatCompactNumber(12500)` use the runtime's `Intl` data and keep every digit of big values. Go the other way with `parseBytes("1.5 GB")` and `parseDuration("1h 2m")`.
+
+</details>
+
+<details>
+<summary>How do I format a date in a specific time zone?</summary>
+
+`formatDate(date, "yyyy-MM-dd HH:mm xxx", { timeZone: "Asia/Ho_Chi_Minh" })`, or `formatInTimeZone(date, zone, locale, options)` for `Intl` styles, and `getTimeZoneOffset(date, zone)` for DST-aware offsets.
+
+</details>
+
+<details>
+<summary>How do I update nested state without mutating it?</summary>
+
+`setByPath(state, "user.tags[1]", "b")` returns a copy that shares every untouched branch and refuses `__proto__`, `constructor` and `prototype` keys.
+
+</details>
+
+<details>
+<summary>Can it replace decimal.js, date-fns or lodash?</summary>
+
+For everyday cases, yes: exact arithmetic with seven rounding modes, ISO parsing, date-fns-compatible formatting and the common collection helpers are covered. It is a focused toolkit rather than a full replacement; keep a dedicated library when you need its broader scope.
+
+</details>
+
 ## Big numbers
 
 A JavaScript `number` is a 64-bit double: about 16 significant digits, a ceiling near 1.8e308, and no exact 0.1. Every numeric function here accepts a `NumericInput` (`number | bigint | string`) and the **return kind follows the input kind**, so existing number code keeps returning numbers.
@@ -77,14 +139,14 @@ A JavaScript `number` is a 64-bit double: about 16 significant digits, a ceiling
 
 Strings use decimal notation (`"12.5"`, `"-.5"`, `"1e-30"`). Blank text, surrounding spaces, separators (`"1,000"`), `"0x10"`, `"NaN"` and `"Infinity"` are rejected with `ERR_INVALID_NUMBER`. Use `isNumeric(value)` to test first.
 
-- **Exact, on decimal.js** – all arithmetic runs on [decimal.js](https://github.com/MikeMcl/decimal.js) through private instances, so your own decimal.js configuration is never touched. Addition, subtraction, multiplication, modulo and integer powers never round. Division is exact when the quotient terminates, otherwise it keeps `precision` significant digits (1 to 10000, default 40).
+- **Exact, on native `bigint`** – the package ships its own decimal engine, so there is no dependency to install and no global configuration to collide with. Addition, subtraction, multiplication, modulo and integer powers never round. Division is exact when the quotient terminates, otherwise it keeps `precision` significant digits (1 to 10000, default 40).
 - **Range** – magnitudes from about 1e-300,000 to 1e300,000 (the same on Node, Bun and browsers). Beyond that: `ERR_OVERFLOW` / `ERR_UNDERFLOW`.
-- **Fast** – safe integers take a native path, `factorial(65000n)` and `fibonacci(1000000n)` take well under 0.2 s, and a million-element `sumValueInArray` about 40 ms (integers) or 0.4 s (fractions).
+- **Fast** – safe integers take a native path, `factorial(65000n)` and `fibonacci(1000000n)` take well under 0.2 s, and a million-element `sumValueInArray` about 10 ms (integers) or 0.4 s (fractions).
 - **Formatters keep every digit** – `formatNumber`, `formatCurrency`, `formatPercent`, `formatCompactNumber`, `formatUnit`, `formatBytes` and `formatDuration` accept bigint and numeric strings. This needs `Intl.NumberFormat` v3 (Node 20+, current browsers); older runtimes accept a string only when it survives conversion to a double unchanged.
 
 The [documentation site](https://phanhoangquoctu.github.io/fatdevcon-utilities/#big-numbers) lists every limit, parameter and error code.
 
-## API
+## API index
 
 The tables below are a quick reference; the [documentation site](https://phanhoangquoctu.github.io/fatdevcon-utilities/) has full signatures and more examples.
 
@@ -118,6 +180,7 @@ The tables below are a quick reference; the [documentation site](https://phanhoa
 | `formatCurrency(value, currency, locale?, options?)` | Formats money for an ISO 4217 code (case-insensitive) | `formatCurrency(1500, "JPY")` → `"¥1,500"` |
 | `formatUnit(value, unit, locale?, options?)` | Formats with an `Intl` unit such as `"celsius"` or `"liter"` | `formatUnit(12, "kilometer-per-hour")` → `"12 km/h"` |
 | `formatBytes(value, options?)` | Human-readable byte size, from B up to QB / YiB | `formatBytes(1500)` → `"1.5 kB"` |
+| `parseBytes(text, options?)` | Inverse of `formatBytes`: `"1.5 GB"`, `"512 KiB"`, `"2tb"` to exact bytes. Options: `base` (`1000`), `bigint` (`false`) | `parseBytes("1.5 GB")` → `1500000000` |
 
 `formatBytes` options: `base` (`1000` by default, or `1024` for KiB / MiB), `decimals` (0–20, default `2`, trailing zeroes dropped) and `locale`. SI units run B kB MB GB TB PB EB ZB YB RB QB; IEC units run to YiB.
 
@@ -127,6 +190,8 @@ formatCurrency(-12, "USD", "en-US", { currencySign: "accounting" }); // "($12.00
 formatBytes(1536, { base: 1024 }); // "1.5 KiB"
 formatBytes("1500000000000000000000000000000"); // "1.5 QB"
 formatNumber(10n ** 30n); // "1,000,000,000,000,000,000,000,000,000,000"
+parseBytes("512 KiB"); // 524288
+parseBytes("1.5 QB", { bigint: true }); // 1500000000000000000000000000000n
 ```
 
 Output comes from the runtime's `Intl` data, so spacing, symbols and abbreviations can differ slightly between runtimes.
@@ -162,6 +227,7 @@ Lengths count Unicode grapheme clusters (user-perceived characters), so emoji, f
 | `escapeHtml(text)` | Escape `& < > " '` for HTML | `escapeHtml("<b>Tom & Jerry</b>")` → `"&lt;b&gt;Tom &amp; Jerry&lt;/b&gt;"` |
 | `unescapeHtml(text)` | Reverse `escapeHtml` in a single pass | `unescapeHtml("&lt;b&gt;")` → `"<b>"` |
 | `countWords(text)` | Count words by Unicode word boundaries | `countWords("Hello, world!")` → `2` |
+| `escapeRegExp(text)` | Escape every regular-expression special character so the text matches literally | `escapeRegExp("a.b*")` → `"a\\.b\\*"` |
 | `reverseText(text)` | Reverse by user-perceived character | `reverseText("a👨‍👩‍👧‍👦b")` → `"b👨‍👩‍👧‍👦a"` |
 
 ```typescript
@@ -174,12 +240,29 @@ maskString("user@example.com", { visibleStart: 2, visibleEnd: 4 }); // "us******
 
 ### Dates
 
+Dates are plain `Date` objects in the runtime's local time zone unless a function says otherwise. Input may be a `Date`, a millisecond timestamp or a string; date-only ISO strings such as `"2026-10-03"` are read as **local** dates, so the day never shifts with the time zone. No dependency is involved: parsing and formatting are built into the package.
+
 | Function | Description | Example |
 | --- | --- | --- |
-| `formatDate(date, formatStr, options?)` | Format a `Date`, millisecond timestamp or date string with [date-fns tokens](https://date-fns.org/docs/format), in the local timezone; date-only strings are read as local dates | `formatDate("2026-10-03", "dd/MM/yyyy")` → `"03/10/2026"` |
+| `formatDate(date, format, options?)` | Format with Unicode date tokens (`yyyy-MM-dd HH:mm:ss`, `EEEE`, `MMM do`, `xxx`, `PPpp`…). Options: `timeZone`, `locale`, `weekStartsOn`, `firstWeekContainsDate` | `formatDate("2026-10-03", "dd/MM/yyyy")` → `"03/10/2026"` |
+| `parseISO(text)` | Parse ISO 8601 (calendar, week and ordinal dates, offsets, fractions); an Invalid Date for malformed text, never throws | `parseISO("2026-10-03T10:30+07:00")` |
+| `addDays(date, amount)` | Calendar days later or earlier, keeping the wall-clock time across DST | `addDays("2026-03-01", -1)` → 28 Feb 2026 |
+| `addMonths(date, amount)` | Calendar months later or earlier, clamped to the last day of shorter months | `addMonths("2026-01-31", 1)` → 28 Feb 2026 |
+| `startOfDay(date)` / `endOfDay(date)` | `00:00:00.000` / `23:59:59.999` of the local day | `endOfDay(now)` |
+| `differenceInCalendarDays(later, earlier)` | Whole calendar days between two dates, ignoring time of day and DST | `differenceInCalendarDays("2026-01-01", "2025-01-01")` → `365` |
 | `formatRelativeTime(date, options?)` | "3 hours ago" / "in 2 days" via `Intl.RelativeTimeFormat`. Options: `locale`, `now`, `numeric` | `formatRelativeTime(yesterday)` → `"yesterday"` |
 | `formatDuration(milliseconds, options?)` | Compact duration; `maxUnits` keeps the largest N units | `formatDuration(3723000)` → `"1h 2m 3s"` |
+| `parseDuration(text)` | Inverse of `formatDuration`: `"1h 2m 3s"`, `"1.5h"`, `"2 days, 4 hours"` to milliseconds | `parseDuration("1h 2m 3s")` → `3723000` |
 | `isValidDate(value)` | `true` for a `Date` that holds a real moment | `isValidDate(new Date("nope"))` → `false` |
+
+```typescript
+formatDate(new Date(2026, 0, 15, 9, 30), "EEEE, do MMMM yyyy 'at' HH:mm"); // "Thursday, 15th January 2026 at 09:30"
+formatDate(new Date("2026-01-15T17:30:00Z"), "yyyy-MM-dd HH:mm xxx", { timeZone: "Asia/Ho_Chi_Minh" }); // "2026-01-16 00:30 +07:00"
+formatDate("2026-01-15", "EEEE", { locale: "fr" }); // "jeudi"
+formatDate("2026-01-15", "yyyy 'W'II"); // "2026 W03"
+```
+
+The most used tokens: `yyyy` year, `MM` / `MMM` / `MMMM` month, `dd` / `do` day, `EEE` / `EEEE` weekday, `HH` / `hh a` hours, `mm` minutes, `ss` seconds, `SSS` milliseconds, `xxx` offset (`+07:00`), `X` offset or `Z`, `Q` quarter, `w` / `I` week and ISO week, `P` / `p` localized date and time. The tokens match [date-fns](https://date-fns.org/docs/format), so existing patterns keep working. Wrap literal text in single quotes. English names are built in; any other `locale` string uses the runtime's `Intl` data, and a date-fns `Locale` object (`import { vi } from "date-fns/locale"`) is used as given. `YY`, `YYYY`, `D` and `DD` throw unless enabled with `useAdditionalWeekYearTokens` / `useAdditionalDayOfYearTokens`, because they are usually typos for `yy`, `yyyy`, `d` and `dd`.
 
 ### Time zones
 
@@ -331,6 +414,7 @@ Both return the index of the match, or `-1` when it is not found.
 | `omit(obj, keys)` | Copy without the listed keys | `omit(user, ["password"])` |
 | `mapValues(obj, fn)` | Same keys, transformed values | `mapValues({ a: 1 }, (v) => v * 2)` → `{ a: 2 }` |
 | `getByPath(obj, path, default?)` | Safe deep read with dot / bracket paths | `getByPath(data, "a.b[0].c", "n/a")` |
+| `setByPath(obj, path, value)` | Immutable deep write that shares untouched branches; creates missing arrays and objects; refuses `__proto__` / `constructor` / `prototype` | `setByPath({}, "a.b[0]", 1)` → `{ a: { b: [1] } }` |
 | `isPlainObject(value)` | `true` for object literals and `Object.create(null)` | `isPlainObject([])` → `false` |
 | `isEmpty(value)` | `true` for `null`, `""`, `[]`, empty `Map` / `Set` / plain object | `isEmpty({})` → `true` |
 
@@ -388,6 +472,7 @@ Invalid input throws a standard error instead of returning `NaN` or a wrong resu
 | `ERR_UNDERFLOW` | `RangeError` | A non-zero result is too small to represent | `divide(1e-300, 1e300)` |
 | `ERR_OUT_OF_RANGE` | `RangeError` | An argument is outside its supported range | `factorial(171)`, `clamp(1, 5, 0)`, `formatBytes(-1)` |
 | `ERR_PRECISION_LOSS` | `RangeError` | The runtime cannot format a big string exactly (needs Node 20+) | `formatNumber("12345678901234567890.5")` on Node 18 |
+| `ERR_INVALID_FORMAT` | `TypeError` | Text cannot be read as a size or duration | `parseBytes("12 gigs")`, `parseDuration("soon")` |
 
 Other argument mistakes (a non-array, a non-function callback, non-string text) throw a plain `TypeError` or `RangeError` without a `code`.
 
@@ -408,7 +493,7 @@ try {
 ### Types
 
 ```typescript
-import type { Comparator, KeySelector, NumericInput, DivideOptions, RoundingMode, NumericErrorCode, ErrorType, AbortErrorType, WithRetryParameters, DateInput, TimeZoneNameStyle, TimeZoneOffsetOptions, TimeZoneOffsetUnit, TimeZoneOffsetDirection } from "@fatdevcon/utilities";
+import type { Comparator, KeySelector, NumericInput, DivideOptions, RoundingMode, NumericErrorCode, ErrorType, AbortErrorType, WithRetryParameters, DateInput, TimeZoneNameStyle, TimeZoneOffsetOptions, TimeZoneOffsetUnit, TimeZoneOffsetDirection, FormatDateOptions, ParseBytesOptions } from "@fatdevcon/utilities";
 
 type Comparator<T> = (a: T, b: T) => number; // negative, zero or positive, like Array.prototype.sort
 type KeySelector<T> = (item: T) => any;
@@ -423,101 +508,24 @@ type TimeZoneNameStyle = "short" | "long" | "shortOffset" | "longOffset" | "shor
 type TimeZoneOffsetUnit = "seconds" | "minutes" | "hours";
 type TimeZoneOffsetDirection = "utc" | "native";
 interface TimeZoneOffsetOptions { unit?: TimeZoneOffsetUnit; direction?: TimeZoneOffsetDirection }
+interface FormatDateOptions { timeZone?: string; locale?: string | Intl.Locale | DateFnsLikeLocale; weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6; firstWeekContainsDate?: 1 | 2 | 3 | 4 | 5 | 6 | 7; useAdditionalWeekYearTokens?: boolean; useAdditionalDayOfYearTokens?: boolean }
+interface ParseBytesOptions { base?: 1000 | 1024; bigint?: boolean }
 ```
 
-The error classes `NumericTypeError` and `NumericRangeError` are exported as values. Option types are exported too: `CompactNumberOptions`, `PercentFormatOptions`, `CurrencyFormatOptions`, `UnitFormatOptions`, `BytesFormatOptions`, `TruncateTextOptions`, `ShortenStringOptions`, `MaskStringOptions`, `RelativeTimeOptions`, `DurationOptions`, `DebounceOptions`, `ThrottleOptions`, `MemoizeOptions`, `RetryOptions`, `WithRetryParameters`, `TimeZoneNameStyle`, `TimeZoneOffsetOptions`, `IsUrlOptions`.
+The error classes `NumericTypeError` and `NumericRangeError` are exported as values. Option types are exported too: `CompactNumberOptions`, `PercentFormatOptions`, `CurrencyFormatOptions`, `UnitFormatOptions`, `BytesFormatOptions`, `TruncateTextOptions`, `ShortenStringOptions`, `MaskStringOptions`, `RelativeTimeOptions`, `DurationOptions`, `FormatDateOptions`, `ParseBytesOptions`, `DebounceOptions`, `ThrottleOptions`, `MemoizeOptions`, `RetryOptions`, `WithRetryParameters`, `TimeZoneNameStyle`, `TimeZoneOffsetOptions`, `IsUrlOptions`.
 
-## Changelog
+## Quality and security
 
-### 0.3.4
+- **Differential testing.** The internal decimal engine and the date engine are compared with `decimal.js` and `date-fns` (kept as development-only oracles) on hundreds of thousands of seeded random inputs covering every rounding mode, tie, exponent range and DST edge, in several time zones. A differential run over the public API against version 0.3.4 compared 720,000 calls with no differences.
+- **Mutation-checked tests.** Deliberately broken rounding and tie handling is caught by the oracle suites.
+- **Cross-runtime.** The suite and the packaged tarball are verified on Node.js and Bun, as ESM and CommonJS, with strict TypeScript consumers.
+- **Supply chain.** No runtime dependencies, no install scripts, readable unminified output, no use of `eval`, the network, the file system or environment variables, and releases published from CI with npm provenance. See [SECURITY.md](SECURITY.md).
 
-- Redesigned the documentation site as a developer-focused package landing page with a faster path from installation to verified examples and API discovery
-- Added technical SEO metadata, structured software data, canonical URL, crawlable API overview, robots.txt and sitemap.xml; links point to the published npm package, repository, issues, releases and MIT license
+## Documentation and support
 
-### 0.3.3
-
-- `getTimeZoneOffset` now accepts no arguments for the current local offset and can return `seconds`, `minutes` or `hours` (`UTC+7` is `+7` with `{ unit: "hours" }`)
-- Added `direction: "native"` when the exact opposite sign used by `Date#getTimezoneOffset()` is required; the existing UTC-oriented minute default remains unchanged
-
-### 0.3.2
-
-- Added a dedicated Time zones category: `isTimeZone`, `getTimeZoneOffset`, `getTimeZoneName` and `formatInTimeZone`
-- Timezone offsets are DST-aware and expressed as minutes east of UTC; formatting and localized labels use the runtime's `Intl` / IANA data without adding a dependency
-
-### 0.3.1
-
-- Added abort-aware async utilities: `getAbortError`, `isAbortError`, `wait` and `withRetry`, plus `ErrorType`, `AbortErrorType`, `WithRetryParameters` and `WithRetryErrorType` for typed cancellation and retry handling
-- `withRetry` supports a numeric or calculated delay, asynchronous retry decisions, configurable retry count and `AbortSignal` cancellation; it preserves `signal.reason` and never retries `AbortError`
-- Expanded npm search keywords and the README/API reference with cancellation and retry guidance
-
-### 0.3.0
-
-**Big numbers**
-
-- `summary`, `subtract`, `multiply`, `divide`, `percentage`, `round`, `clamp`, `factorial`, `fibonacci`, `gcd`, `lcm`, `isPrime`, `randomInt` and the formatters accept `bigint` and numeric strings and keep every digit. The return kind follows the input kind, so number code is unchanged
-- Added `modulo`, `power`, `abs`, `compareNumbers`, `isNumeric`, `toDecimalString`, `sumBig`, `averageBig` and `medianBig`; `round` takes a rounding mode, and `divide`, `percentage`, `power` and `averageValueInArray` take a `precision` option
-- Numeric failures throw `NumericTypeError` / `NumericRangeError` with a `code` (`ERR_INVALID_NUMBER`, `ERR_NOT_INTEGER`, `ERR_DIVISION_BY_ZERO`, `ERR_OVERFLOW`, `ERR_UNDERFLOW`, `ERR_OUT_OF_RANGE`, `ERR_PRECISION_LOSS`); both still extend `TypeError` / `RangeError`
-- A `number` result that overflows or falls below 5e-324 throws instead of returning `Infinity` or a silent `0`; `-0` is never returned; magnitudes are limited to about 1e300,000 on every runtime (Node, Bun, browsers)
-- Verified against an independent BigInt oracle on more than 100,000 random operand pairs per operation, plus every edge double (`MIN_VALUE`, `MAX_VALUE`, denormals, `-0`) and every rounding mode
-- Faster: safe-integer fast paths, product-tree `factorial`, fast-doubling `fibonacci`, Miller-Rabin `isPrime`, typed-array counting and radix sorts, cached `Intl.NumberFormat` instances
-
-**New helpers**
-
-- Text: `camelCase`, `pascalCase`, `kebabCase`, `snakeCase`, `titleCase`, `escapeHtml`, `unescapeHtml`, `countWords`, `reverseText`
-- Dates: `formatRelativeTime`, `formatDuration`, `isValidDate`
-- Math: `clamp`, `median`, `randomInt`
-- Arrays: `compact`, `difference`, `intersection`, `union`, `partition`, `countBy`, `keyBy`, `zip`, `range`, `shuffle`, `sample`, `flattenDeep`
-- Objects: `deepMerge`, `deepEqual`, `pick`, `omit`, `mapValues`, `getByPath`, `isPlainObject`, `isEmpty`
-- Functions: `debounce`, `throttle`, `memoize`, `once`, `sleep`, `retry`, `withTimeout`
-- Validators: `isEmail`, `isUrl`, `isUuid`
-
-**Fixes**
-
-- `formatDate` read date-only strings such as `"2026-10-03"` as UTC, which showed the previous day in timezones behind UTC; it now throws `TypeError` for values that are not a `Date`, string or number
-- `removeDiacritics` and `slugify` stripped vowel signs from Hindi, Thai and other non-Latin scripts; they now also transliterate `ß`, `ø`, `ł`, `æ`, `œ`, `þ` and similar letters
-- `formatRelativeTime` keeps the direction of a sub-second difference (`"0 seconds ago"`) and truncates with exact division
-- `percentage` lost precision (`percentage(1, 3)` is now `33.333333333333336`); `sumValueInArray` overflowed on intermediate totals; `formatBytes(-0)` printed `"-0 B"`
-- `range` with fractional steps drifted (`0.30000000000000004`) and returned one item too many in cases like `range(0.1, 0.4, 0.1)`
-- `sortBy` accepted any `order`; `filterBy`, `groupBy`, `unique`, `findIndexes`, `sortBy` and `mergeObjects` now validate their arguments with clear `TypeError` messages
-
-**Behavior changes**
-
-- `countingSort` and `radixSort` accept negative integers (`radixSort` also bigints)
-- The default comparison of `findMin`, `findMax`, the sorts and searches throws on `NaN` instead of returning an arbitrary order
-- Numeric strings such as `"123"` are accepted by the formatters; `formatBytes` continues to ZB, YB, RB and QB (IEC to ZiB, YiB)
-- `range` is limited to 10,000,000 items; `isPrime` rejects numeric text it cannot parse instead of returning `false`
-
-**Documentation**
-
-- Parameter tables with types and defaults, return values and error codes for every function, a Big numbers guide, and a test that runs every documented example
-
-### 0.2.4
-
-- Added the [documentation site](https://phanhoangquoctu.github.io/fatdevcon-utilities/) and linked it from the README and the npm homepage
-
-### 0.2.3
-
-- Rewrote the README as per-module tables with verified examples, and fixed garbled Unicode in the text examples
-- Expanded the npm keywords; no API changes
-
-### 0.2.2
-
-- Updated runtime dependencies and development tools; refreshed transitive dependencies to clear npm audit findings
-- The build now runs at pack time instead of on every install
-- Corrected repository links
-
-### 0.2.1
-
-- Added compact, percent, currency, unit and byte formatting
-- Added currency symbols and names, and country-to-currency lookup
-- Added grapheme-aware truncation, middle shortening, masking, whitespace normalization, diacritic removal, slugs and capitalization
-- Added Bun support and separate ESM / CommonJS type declarations
-
-### 0.2.0
-
-- Hardened input validation and edge cases in math, arrays, searching and sorting
-- Fixed large-array sorting and prototype-key grouping; switched `deepClone` to `structuredClone`
-- Added invalid-date errors and removed unused dependencies
+- [Documentation site](https://phanhoangquoctu.github.io/fatdevcon-utilities/) with a live playground and every function, parameter, error and example (all examples are executed before each release)
+- [Changelog](CHANGELOG.md) and [GitHub releases](https://github.com/PhanHoangQuocTu/fatdevcon-utilities/releases)
+- [Issues](https://github.com/PhanHoangQuocTu/fatdevcon-utilities/issues) for bugs and requests; security reports go through [SECURITY.md](SECURITY.md)
 
 ## License
 

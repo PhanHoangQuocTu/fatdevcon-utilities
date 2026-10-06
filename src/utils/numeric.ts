@@ -1,4 +1,4 @@
-import Decimal from "decimal.js";
+import { Decimal, MAX_EXPONENT as DECIMAL_MAX_EXPONENT } from "./decimal";
 import { NumericRangeError, NumericTypeError } from "./errors";
 import { describeValue } from "./validate";
 
@@ -10,7 +10,7 @@ export type NumericInput = number | bigint | string;
  * Chosen so every runtime copes: JavaScriptCore (Bun, Safari) caps a BigInt near 2^20 bits,
  * far below V8, and 10^300000 needs 996,578 bits.
  */
-export const MAX_EXPONENT = 300_000;
+export const MAX_EXPONENT = DECIMAL_MAX_EXPONENT;
 /** Most significant digits a division may be asked for. */
 export const MAX_PRECISION = 10_000;
 /** Significant digits used by division when `precision` is not given. */
@@ -18,32 +18,10 @@ export const DEFAULT_PRECISION = 40;
 /** Largest `decimals` accepted by rounding. */
 export const MAX_DECIMALS = MAX_EXPONENT;
 
-// Private Decimal constructors: they never touch the global decimal.js config of
-// applications that also use the library directly.
-const SHARED_CONFIG = {
-  rounding: Decimal.ROUND_HALF_UP,
-  modulo: Decimal.ROUND_DOWN,
-  maxE: MAX_EXPONENT,
-  minE: -MAX_EXPONENT,
-  toExpNeg: -9e15,
-  toExpPos: 9e15,
-} as const;
+/** Exact arithmetic type shared by the numeric helpers. */
+export const ExactDecimal = Decimal;
 
-/** Effectively unlimited precision: + - * and % are exact. Never divide with it. */
-export const ExactDecimal = Decimal.clone({ ...SHARED_CONFIG, precision: 1e9 });
-
-const precisionCache = new Map<number, typeof Decimal>();
-/** Decimal constructor whose division keeps `precision` significant digits. */
-export const decimalWithPrecision = (precision: number): typeof Decimal => {
-  let ctor = precisionCache.get(precision);
-  if (!ctor) {
-    ctor = Decimal.clone({ ...SHARED_CONFIG, precision });
-    precisionCache.set(precision, ctor);
-  }
-  return ctor;
-};
-
-export type { Decimal };
+export { Decimal };
 export type NumericKind = "number" | "bigint" | "string";
 
 const NUMERIC_STRING = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
@@ -103,14 +81,14 @@ export const toDecimal = (value: unknown, name: string): Decimal => {
   switch (typeof value) {
     case "number":
       if (!Number.isFinite(value)) throw invalidNumber(name, value);
-      return new ExactDecimal(value);
+      return new Decimal(value);
     case "bigint":
       checkBigInt(value, name);
-      return new ExactDecimal(value.toString());
+      return new Decimal(value);
     case "string": {
       if (!NUMERIC_STRING.test(value)) throw invalidNumber(name, value);
       if (value.length > MAX_STRING_LENGTH) throw overflowError(name);
-      const decimal = new ExactDecimal(value);
+      const decimal = guardBigInt(() => new Decimal(value), name);
       if (!decimal.isFinite()) throw overflowError(name);
       if (decimal.isZero() && /[1-9]/.test(value.split(/[eE]/, 1)[0])) throw underflowError(name);
       return decimal;
@@ -158,10 +136,10 @@ export const decimalToString = (value: Decimal): string => {
 /** The value must already be an integer. */
 export const decimalToBigInt = (value: Decimal): bigint => {
   if (!value.isFinite()) throw overflowError("Result");
-  return BigInt(value.toFixed());
+  return value.toBigInt();
 };
 
-export const bigIntToDecimal = (value: bigint): Decimal => new ExactDecimal(value.toString());
+export const bigIntToDecimal = (value: bigint): Decimal => new Decimal(value);
 
 /** Validate `precision` (significant digits) and apply the default. */
 export const resolvePrecision = (precision: number | undefined): number => {
@@ -177,14 +155,14 @@ export const resolvePrecision = (precision: number | undefined): number => {
 
 /** Approximate base-10 logarithm of |value|, for cheap size estimates. */
 export const log10Abs = (value: Decimal): number => {
-  const mantissa = value.abs().mul(new ExactDecimal(`1e${-value.e}`)).toNumber();
-  return value.e + Math.log10(mantissa);
+  const digits = value.digits();
+  return value.e + Math.log10(Number(`${digits[0]}.${digits.slice(1, 17)}`));
 };
 
 /** Quotient of two exact decimals at `precision` significant digits. */
 export const divideDecimals = (a: Decimal, b: Decimal, precision: number): Decimal => {
   if (b.isZero()) throw divisionByZero();
-  const result = new (decimalWithPrecision(precision))(a).div(b);
+  const result = a.div(b, precision);
   if (result.isZero() && !a.isZero()) throw underflowError("Result");
   return result;
 };

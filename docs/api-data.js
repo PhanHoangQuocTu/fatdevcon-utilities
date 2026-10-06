@@ -319,6 +319,17 @@ formatBytes(1536, { base: 1024 });              // "1.5 KiB"
 formatBytes(999999);                            // "1 MB"
 formatBytes("1500000000000000000000000000000"); // "1.5 QB"
 formatBytes(2n ** 80n, { base: 1024 });         // "1 YiB"` },
+      { name: "parseBytes", sig: "parseBytes(text: string, options?: ParseBytesOptions): number\nparseBytes(text: string, options: { bigint: true; base?: 1000 | 1024 }): bigint",
+        desc: "The inverse of formatBytes: turns \"1.5 GB\", \"512 KiB\" or \"2tb\" into a whole number of bytes. The value is computed exactly and rounded half-up to the nearest byte. Units are B, kB to QB (SI) and KiB to YiB (IEC), case-insensitive; a bare number is bytes.",
+        params: [p("text", "string", "Size text such as \"1.5 GB\"."), p("options.base", "1000 | 1024", "What a bare kB, MB or GB means. KiB, MiB and GiB are always 1024.", "1000"), p("options.bigint", "boolean", "Return a bigint, exact for any size up to QB or YiB. Without it the result must be a safe integer.", "false")],
+        returns: "number of bytes, or a bigint when options.bigint is true.",
+        throws: [e("TypeError", "ERR_INVALID_FORMAT", "text is not a string or cannot be read as a size"), e("RangeError", "ERR_OVERFLOW", "the result exceeds Number.MAX_SAFE_INTEGER and bigint is not set"), E.range("base is not 1000 or 1024")],
+        ex: `parseBytes("1.5 GB");                      // 1500000000
+parseBytes("512 KiB");                     // 524288
+parseBytes("1 KB", { base: 1024 });        // 1024
+parseBytes("1.5 QB", { bigint: true });    // 1500000000000000000000000000000n
+parseBytes(formatBytes(1536, { base: 1024 }), { base: 1024 }); // 1536
+parseBytes("12 gigs");                     // throws: ERR_INVALID_FORMAT` },
     ],
   },
   {
@@ -372,6 +383,12 @@ shortenString("0x71C7656EC7ab88b098defB751B7401B5f6d8976F", { startLength: 6 });
         ex: `maskString("1234567890");  // "******7890"
 maskString("user@example.com", { visibleStart: 2, visibleEnd: 4 }); // "us**********.com"
 maskString("4111111111111111", { mask: "•" }); // "••••••••••••1111"` },
+      { name: "escapeRegExp", sig: "escapeRegExp(text: string): string",
+        desc: "Escapes every character that has a special meaning in a regular expression, so the text matches literally. The result is safe inside a character class and with the u flag.",
+        params: [p("text", "string", "Text to match literally.")], returns: "string.", throws: [e("TypeError", "", "text is not a string")],
+        ex: `escapeRegExp("1+1=2 (really?)");                                // "1\\\\+1=2 \\\\(really\\\\?\\\\)"
+"1+1=2".replace(new RegExp(escapeRegExp("1+1"), "g"), "two");   // "two=2"
+new RegExp(escapeRegExp("a.b")).test("axb");                    // false` },
       { name: "normalizeWhitespace", sig: "normalizeWhitespace(text: string): string",
         desc: "Trims the text and collapses every run of whitespace, including tabs, newlines and non-breaking spaces, into a single space.",
         params: [p("text", "string", "The text.")], returns: "string.", throws: [e("TypeError", "", "text is not a string")],
@@ -440,12 +457,52 @@ countWords("  ");            // 0` },
   {
     id: "dates", title: "Dates",
     fns: [
-      { name: "formatDate", sig: "formatDate(date: Date | string | number, formatStr: string, options?: FormatOptions): string",
-        desc: 'Formats a date using date-fns format tokens, in the local timezone. Date-only strings such as "2026-01-15" are read as local dates, so the day never shifts with the timezone.',
-        params: [p("date", "Date | string | number", "A Date, a millisecond timestamp or a date string."), p("formatStr", "string", "date-fns format tokens, e.g. \"yyyy-MM-dd\"."), p("options", "FormatOptions", "date-fns options such as locale.", "undefined")],
-        returns: "string.", throws: [e("TypeError", "", "date is not a Date, string or number"), e("RangeError", "", "the date is invalid")],
+      { name: "formatDate", sig: "formatDate(date: Date | string | number, format: string, options?: FormatDateOptions): string",
+        desc: 'Formats a date with Unicode date tokens (yyyy-MM-dd HH:mm:ss, EEEE, MMM do, xxx). The fields are read in the local timezone, or in options.timeZone. Date-only strings such as "2026-01-15" are read as local dates, so the day never shifts with the timezone. Wrap literal text in single quotes. The tokens match date-fns, so existing format strings keep working, and no dependency is needed.',
+        params: [p("date", "Date | string | number", "A Date, a millisecond timestamp or a date string."), p("format", "string", "Token pattern, e.g. \"yyyy-MM-dd\". An unquoted letter that is not a token throws."), p("options.timeZone", "string", "IANA zone to read the fields in, e.g. \"Asia/Ho_Chi_Minh\".", "local zone"), p("options.locale", "string | Intl.Locale | date-fns Locale", "Language for month, weekday and AM/PM names. A date-fns locale object (date-fns/locale) is used as given.", "English"), p("options.weekStartsOn", "0 | 1 | … | 6", "First day of the week for w, e and c tokens (0 is Sunday).", "from the locale"), p("options.firstWeekContainsDate", "1 | 2 | … | 7", "Day of January that always belongs to week 1.", "from the locale"), p("options.useAdditionalWeekYearTokens", "boolean", "Allow YY and YYYY (week-numbering years), which are often a typo for yy and yyyy.", "false"), p("options.useAdditionalDayOfYearTokens", "boolean", "Allow D and DD (day of year), which are often a typo for d and dd.", "false")],
+        table: { head: ["Token", "Output", "Example"], rows: [["yyyy · yy", "Year", "2026 · 26"], ["MMMM · MMM · MM", "Month", "January · Jan · 01"], ["dd · do", "Day of month", "05 · 5th"], ["EEEE · EEE", "Weekday", "Monday · Mon"], ["HH · hh a", "Hours", "09 · 09 AM"], ["mm · ss · SSS", "Minutes, seconds, ms", "30 · 05 · 123"], ["xxx · XXX · O", "Offset", "+07:00 · Z · GMT+7"], ["Q · w · I", "Quarter, week, ISO week", "1 · 3 · 3"], ["P · PPpp", "Localized date and time", "01/15/2026 · Jan 15, 2026, 9:30:00 AM"]] },
+        returns: "string.", throws: [e("TypeError", "", "date is not a Date, string or number, or format is not a string"), e("RangeError", "", "the date is invalid, the time zone is unknown, or the pattern has an unquoted letter that is not a token")],
         ex: `formatDate(new Date(2026, 0, 15, 9, 30), "dd/MM/yyyy HH:mm"); // "15/01/2026 09:30"
-formatDate("2026-01-15", "MMM d, yyyy");                      // "Jan 15, 2026"` },
+formatDate("2026-01-15", "MMM d, yyyy");                      // "Jan 15, 2026"
+formatDate("2026-01-15", "EEEE, do MMMM yyyy");               // "Thursday, 15th January 2026"
+formatDate(new Date("2026-01-15T17:30:00Z"), "yyyy-MM-dd HH:mm xxx", { timeZone: "Asia/Ho_Chi_Minh" }); // "2026-01-16 00:30 +07:00"
+formatDate("2026-01-15", "'Q'Q yyyy");                        // "Q1 2026"
+formatDate("2026-01-15", "EEEE", { locale: "fr" });           // "jeudi"` },
+      { name: "parseISO", sig: "parseISO(value: string): Date",
+        desc: "Parses an ISO 8601 date or date-time. Unlike new Date(\"2026-10-03\"), a string without an offset is read as local time. Accepts calendar (2026-10-03, 20261003), week (2026-W40-6) and ordinal (2026-276) dates, fractional seconds, 24:00, Z, +07:00 and +0700. Never throws: malformed text gives an Invalid Date (check with isValidDate).",
+        params: [p("value", "string", "ISO 8601 text.")], returns: "Date, or an Invalid Date when the text is malformed.",
+        ex: `parseISO("2026-10-03T10:30:15.250+07:00").toISOString(); // "2026-10-03T03:30:15.250Z"
+parseISO("2026-W40-6T00:00Z").toISOString();             // "2026-10-03T00:00:00.000Z"
+parseISO("2026-276T00:00Z").toISOString();               // "2026-10-03T00:00:00.000Z"
+isValidDate(parseISO("2026-02-30"));                     // false` },
+      { name: "addDays", sig: "addDays(date: Date | string | number, amount: number): Date",
+        desc: "A new Date a whole number of calendar days later (earlier when negative) in the local timezone. The wall-clock time is kept across daylight-saving changes, so 09:30 stays 09:30. The input is never mutated.",
+        params: [p("date", "Date | string | number", "Starting moment."), p("amount", "number", "Integer number of days.")], returns: "Date.",
+        throws: [E.notInt("amount is not an integer"), e("RangeError", "", "the date is invalid or the result is outside the range of dates")],
+        ex: `formatDate(addDays(new Date(2026, 0, 31, 9, 30), 1), "yyyy-MM-dd HH:mm"); // "2026-02-01 09:30"
+formatDate(addDays("2026-03-01", -1), "yyyy-MM-dd");                       // "2026-02-28"` },
+      { name: "addMonths", sig: "addMonths(date: Date | string | number, amount: number): Date",
+        desc: "A new Date a whole number of calendar months later. When the target month is shorter the day is clamped to its last day, so one month after 31 January is 28 February (29 in a leap year).",
+        params: [p("date", "Date | string | number", "Starting moment."), p("amount", "number", "Integer number of months, negative for earlier.")], returns: "Date.",
+        throws: [E.notInt("amount is not an integer"), e("RangeError", "", "the date is invalid or the result is outside the range of dates")],
+        ex: `formatDate(addMonths("2026-01-31", 1), "yyyy-MM-dd");  // "2026-02-28"
+formatDate(addMonths("2024-01-31", 1), "yyyy-MM-dd");  // "2024-02-29"
+formatDate(addMonths("2026-03-31", -1), "yyyy-MM-dd"); // "2026-02-28"
+formatDate(addMonths("2026-06-15", 18), "yyyy-MM-dd"); // "2027-12-15"` },
+      { name: "startOfDay", sig: "startOfDay(date: Date | string | number): Date",
+        desc: "00:00:00.000 of the local calendar day containing the date.",
+        params: [p("date", "Date | string | number", "Any moment.")], returns: "Date.", throws: [e("RangeError", "", "the date is invalid")],
+        ex: `formatDate(startOfDay(new Date(2026, 9, 3, 12, 34, 56)), "yyyy-MM-dd HH:mm:ss"); // "2026-10-03 00:00:00"` },
+      { name: "endOfDay", sig: "endOfDay(date: Date | string | number): Date",
+        desc: "23:59:59.999 of the local calendar day containing the date.",
+        params: [p("date", "Date | string | number", "Any moment.")], returns: "Date.", throws: [e("RangeError", "", "the date is invalid")],
+        ex: `formatDate(endOfDay(new Date(2026, 9, 3, 12, 34)), "yyyy-MM-dd HH:mm:ss.SSS"); // "2026-10-03 23:59:59.999"` },
+      { name: "differenceInCalendarDays", sig: "differenceInCalendarDays(later: Date | string | number, earlier: Date | string | number): number",
+        desc: "Whole local calendar days from earlier to later. The time of day and daylight-saving shifts are ignored, so 23:59 on the 1st to 00:01 on the 2nd is 1. The result is negative when later is before earlier.",
+        params: [p("later", "Date | string | number", "The end moment."), p("earlier", "Date | string | number", "The start moment.")], returns: "number, a whole number of days.", throws: [e("RangeError", "", "either date is invalid")],
+        ex: `differenceInCalendarDays(new Date(2026, 9, 2, 0, 1), new Date(2026, 9, 1, 23, 59)); // 1
+differenceInCalendarDays("2026-01-01", "2025-01-01");                               // 365
+differenceInCalendarDays("2026-01-01", "2026-01-10");                               // -9` },
       { name: "formatRelativeTime", sig: "formatRelativeTime(date: Date | string | number, options?: RelativeTimeOptions): string",
         desc: 'Relative time such as "3 hours ago" or "in 2 days" through Intl.RelativeTimeFormat. Units are truncated, so 59.6 minutes reads as 59 minutes.',
         params: [p("date", "Date | string | number", "The moment to describe."), p("options.locale", LOCALE, "Language tag(s).", '"en-US"'), p("options.now", "Date | string | number", "Reference moment.", "the current time"), p("options.numeric", '"auto" | "always"', '"auto" gives "yesterday"; "always" gives "1 day ago".', '"auto"')],
@@ -462,6 +519,17 @@ formatRelativeTime(new Date(2026, 9, 4, 12, 0), { now }); // "yesterday"` },
 formatDuration(90061000, { maxUnits: 2 });  // "1d 1h"
 formatDuration(450);                        // "450ms"
 formatDuration(10n ** 20n);                 // "1157407407407d 9h 46m 40s"` },
+      { name: "parseDuration", sig: "parseDuration(text: string): number",
+        desc: "The inverse of formatDuration: turns text such as \"1h 2m 3s\", \"1.5h\" or \"2 days, 4 hours\" into whole milliseconds. Units are ms, s, m, h, d and w (and their long forms). A bare number is milliseconds. The sum is exact and a fraction of a millisecond is rounded half-up.",
+        params: [p("text", "string", "Duration text. Negative values are not accepted.")], returns: "number of milliseconds.",
+        throws: [e("TypeError", "ERR_INVALID_FORMAT", "text is not a string or cannot be read as a duration"), e("RangeError", "ERR_OVERFLOW", "the total exceeds Number.MAX_SAFE_INTEGER milliseconds")],
+        ex: `parseDuration("1h 2m 3s");                // 3723000
+parseDuration("1.5h");                    // 5400000
+parseDuration("2 days, 4 hours");         // 187200000
+parseDuration("500ms");                   // 500
+parseDuration("0.1s 0.2s");               // 300
+parseDuration(formatDuration(90061000));  // 90061000
+parseDuration("soon");                    // throws: ERR_INVALID_FORMAT` },
       { name: "isValidDate", sig: "isValidDate(value: unknown): value is Date",
         desc: "True for a Date instance that holds a real moment. Strings and numbers are false, and so is new Date(\"nope\").",
         params: [p("value", "unknown", "Anything.")], returns: "boolean.",
@@ -719,6 +787,17 @@ deepEqual([1, 2], { 0: 1, 1: 2 });                     // false` },
         ex: `const data = { a: { b: [{ c: 5 }] } };
 getByPath(data, "a.b[0].c");       // 5
 getByPath(data, "a.x.y", "none");  // "none"` },
+      { name: "setByPath", sig: "setByPath<T extends object>(obj: T, path: string | (string | number)[], value: unknown): T",
+        desc: "Immutable deep write: returns a copy with the value at the path and shares every branch it did not touch. Missing intermediates become arrays when the next key is an index, otherwise objects. Keys that reach Object.prototype (__proto__, constructor, prototype) throw, as does a path through a Map, Date or class instance.",
+        params: [p("obj", "T extends object", "Plain object or array to copy from. It is never mutated."), p("path", "string | (string | number)[]", 'Path such as "a.b[0].c" or ["a", "b", 0, "c"].'), p("value", "unknown", "Value to store.")], returns: "A new object of the same type.",
+        throws: [e("TypeError", "", "obj is not an object, the path uses an unsafe key, or it crosses a non-plain object"), e("RangeError", "", "the path is empty")],
+        ex: `const state = { user: { name: "An", tags: ["a"] }, keep: { x: 1 } };
+const next = setByPath(state, "user.tags[1]", "b");
+next.user.tags;            // ["a", "b"]
+state.user.tags;           // ["a"]
+next.keep === state.keep;  // true
+setByPath({}, "a.b[0].c", 1); // { a: { b: [{ c: 1 }] } }
+setByPath({}, "__proto__.x", 1); // throws: unsafe key` },
       { name: "isPlainObject", sig: "isPlainObject(value: unknown): value is Record<string, unknown>",
         desc: "True for object literals, Object.create(null) and new Object(). False for arrays, Dates, Maps and class instances.",
         params: [p("value", "unknown", "Anything.")], returns: "boolean.",

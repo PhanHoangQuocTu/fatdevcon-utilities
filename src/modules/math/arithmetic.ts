@@ -9,7 +9,6 @@ import {
   decimalToBigInt,
   decimalToNumber,
   decimalToString,
-  decimalWithPrecision,
   guardBigInt,
   divideDecimals,
   divisionByZero,
@@ -23,6 +22,7 @@ import {
   underflowError,
 } from "../../utils/numeric";
 import type { Decimal, NumericInput } from "../../utils/numeric";
+import type { Rounding } from "../../utils/decimal";
 
 export type { NumericInput };
 
@@ -49,7 +49,7 @@ export interface DivideOptions {
  */
 export type RoundingMode = "half-up" | "half-down" | "half-even" | "up" | "down" | "ceil" | "floor";
 
-const ROUNDING_MODES: Record<RoundingMode, Decimal.Rounding> = {
+const ROUNDING_MODES: Record<RoundingMode, Rounding> = {
   up: 0,
   down: 1,
   ceil: 2,
@@ -203,10 +203,10 @@ export function power(base: NumericInput, exponent: NumericInput, options: Divid
   }
 
   if (b.isInteger() && !e.isNeg()) {
-    const exact = guardBigInt(() => BigInt(b.toFixed()) ** BigInt(e.toFixed()));
+    const exact = guardBigInt(() => b.toBigInt() ** e.toBigInt());
     return emit(bigIntToDecimal(exact));
   }
-  return emit(new (decimalWithPrecision(precision))(b).pow(exp));
+  return emit(b.pow(exp, precision));
 }
 
 /** Absolute value; keeps the input kind. */

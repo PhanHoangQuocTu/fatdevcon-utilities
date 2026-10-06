@@ -1,6 +1,7 @@
 import { NumericTypeError } from "../../utils/errors";
 import { assertInteger, describeValue } from "../../utils/validate";
 import {
+  Decimal,
   ExactDecimal,
   checkBigInt,
   guardBigInt,
@@ -10,7 +11,7 @@ import {
   outOfRange,
   toDecimal,
 } from "../../utils/numeric";
-import type { Decimal, NumericInput } from "../../utils/numeric";
+import type { NumericInput } from "../../utils/numeric";
 
 /** Largest `n` with a finite `number` factorial: 171! overflows IEEE 754 doubles. */
 const MAX_FACTORIAL_NUMBER = 170;
@@ -32,7 +33,7 @@ const toInteger = (value: NumericInput, name: string): bigint => {
   if (!decimal.isInteger()) {
     throw new NumericTypeError("ERR_NOT_INTEGER", `${name} must be an integer, received ${describeValue(value)}`);
   }
-  return BigInt(decimal.toFixed());
+  return decimal.toBigInt();
 };
 
 // ---------------------------------------------------------------- factorial
@@ -173,13 +174,13 @@ const scale = (da: Decimal, db: Decimal): Scaled => {
   }
   const factor = new ExactDecimal(`1e${places}`);
   return {
-    a: BigInt(da.abs().mul(factor).toFixed()),
-    b: BigInt(db.abs().mul(factor).toFixed()),
+    a: da.abs().mul(factor).toBigInt(),
+    b: db.abs().mul(factor).toBigInt(),
     places,
   };
 };
 
-const fromScaled = (value: bigint, places: number): Decimal => new ExactDecimal(`${value}e-${places}`);
+const fromScaled = (value: bigint, places: number): Decimal => Decimal.from(value < 0n, value < 0n ? -value : value, -places);
 
 /**
  * Greatest common divisor; the sign of the arguments is ignored and decimals are supported
@@ -294,7 +295,7 @@ export function isPrime(n: NumericInput): boolean {
   if (typeof n === "string") {
     if (!toDecimal(n, "n").isInteger()) return false;
   }
-  const value = typeof n === "bigint" ? n : BigInt(toDecimal(n, "n").toFixed());
+  const value = typeof n === "bigint" ? n : toDecimal(n, "n").toBigInt();
   if (value <= 1n) return false;
   if (value >= 1n << BigInt(MAX_PRIME_BITS)) {
     throw outOfRange(`n may have at most ${MAX_PRIME_BITS} bits for a primality test`);

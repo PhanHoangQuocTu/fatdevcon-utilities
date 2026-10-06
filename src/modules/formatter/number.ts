@@ -1,6 +1,8 @@
-import Decimal from "decimal.js";
-import { ExactDecimal, outOfRange, toDecimal } from "../../utils/numeric";
-import { assertInteger } from "../../utils/validate";
+import { ExactDecimal, outOfRange, overflowError, toDecimal } from "../../utils/numeric";
+import { NumericRangeError, NumericTypeError } from "../../utils/errors";
+import { assertInteger, describeValue } from "../../utils/validate";
+import type { Decimal } from "../../utils/numeric";
+import { ROUND_HALF_UP } from "../../utils/decimal";
 import type { NumericInput } from "../../utils/numeric";
 import { getNumberFormat, toIntlNumber } from "../../utils/intl";
 
@@ -113,14 +115,55 @@ export function formatBytes(value: NumericInput, options: BytesFormatOptions = {
   const { thresholds, factors } = unitTable(base, units.length);
   let index = 0;
   while (index < last && bytes.gte(thresholds[index + 1])) index++;
-  let rounded = bytes.mul(factors[index]).toDecimalPlaces(decimals, Decimal.ROUND_HALF_UP);
+  let rounded = bytes.mul(factors[index]).toDecimalPlaces(decimals, ROUND_HALF_UP);
   // Promote values that round up to the next unit, e.g. 999999 -> "1 MB".
   if (index < last && rounded.gte(base)) {
     index++;
-    rounded = bytes.mul(factors[index]).toDecimalPlaces(decimals, Decimal.ROUND_HALF_UP);
+    rounded = bytes.mul(factors[index]).toDecimalPlaces(decimals, ROUND_HALF_UP);
   }
   const text = getNumberFormat(locale, { maximumFractionDigits: decimals }).format(
     toIntlNumber(rounded.toFixed(), "value") as number
   );
   return `${text} ${units[index]}`;
+}
+
+const BYTE_UNIT = /^\s*([+]?(?:[0-9]+\.?[0-9]*|\.[0-9]+)(?:e[+-]?[0-9]+)?)\s*([a-z]*)\s*$/i;
+
+export interface ParseBytesOptions {
+  /** What a bare "KB"/"MB"/"GB" means: 1000 (SI, default) or 1024. "KiB"/"MiB" are always 1024. */
+  base?: 1000 | 1024;
+  /** Return a `bigint`, exact for any size up to "QB"/"YiB"; without it the result must be a safe integer. */
+  bigint?: boolean;
+}
+
+/**
+ * Inverse of `formatBytes`: `"1.5 GB"`, `"512 KiB"`, `"2tb"`, `"1e3 B"` or `"1024"` to a whole number of bytes,
+ * computed exactly and rounded half-up to the nearest byte. Units are B, kB..QB (SI) and KiB..YiB (IEC),
+ * case-insensitive; a bare number is bytes. Throws `ERR_INVALID_FORMAT` for text it cannot read and
+ * `ERR_OVERFLOW` beyond `Number.MAX_SAFE_INTEGER` unless `bigint: true`.
+ */
+export function parseBytes(text: string, options: ParseBytesOptions & { bigint: true }): bigint;
+export function parseBytes(text: string, options?: ParseBytesOptions): number;
+export function parseBytes(text: string, options: ParseBytesOptions = {}): number | bigint {
+  const { base = 1000, bigint = false } = options;
+  if (typeof text !== "string") {
+    throw new NumericTypeError("ERR_INVALID_FORMAT", `text must be a string, received ${describeValue(text)}`);
+  }
+  if (base !== 1000 && base !== 1024) throw outOfRange("base must be 1000 or 1024");
+  const invalid = (): never => {
+    throw new NumericTypeError("ERR_INVALID_FORMAT", `Cannot read ${describeValue(text)} as a size such as "1.5 GB" or "512 KiB"`);
+  };
+  const match = BYTE_UNIT.exec(text);
+  if (!match) return invalid();
+  const unit = /^(?:b|([kmgtpezyrq])(i?)b)?$/.exec(match[2].toLowerCase());
+  if (!unit || (unit[2] && "rq".includes(unit[1]))) return invalid();
+  const power = unit[1] ? "kmgtpezyrq".indexOf(unit[1]) + 1 : 0;
+  const bytes = new ExactDecimal(match[1]).mul(new ExactDecimal(unit[2] ? 1024 : base).pow(power)).toDecimalPlaces(0);
+  if (!bytes.isFinite()) throw overflowError("Size");
+  const exact = bytes.toBigInt();
+  if (bigint) return exact;
+  if (exact > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new NumericRangeError("ERR_OVERFLOW", "Size exceeds Number.MAX_SAFE_INTEGER; pass { bigint: true } for an exact result");
+  }
+  return Number(exact);
 }

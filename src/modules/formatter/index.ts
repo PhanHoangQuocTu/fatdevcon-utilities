@@ -18,8 +18,8 @@ const formatNumber = (
 
 export { formatNumber };
 
-export { formatCompactNumber, formatPercent, formatCurrency, formatUnit, formatBytes } from "./number";
-export type { CompactNumberOptions, PercentFormatOptions, CurrencyFormatOptions, UnitFormatOptions, BytesFormatOptions } from "./number";
+export { formatCompactNumber, formatPercent, formatCurrency, formatUnit, formatBytes, parseBytes } from "./number";
+export type { CompactNumberOptions, PercentFormatOptions, CurrencyFormatOptions, UnitFormatOptions, BytesFormatOptions, ParseBytesOptions } from "./number";
 export * from "./text";
 export * from "./currency";
 export * from "./date";

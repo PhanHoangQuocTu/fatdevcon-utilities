@@ -6,7 +6,9 @@ const require = createRequire(import.meta.url);
 const esm = await import("@fatdevcon/utilities");
 const cjs = require("@fatdevcon/utilities");
 const metadata = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
-assert.equal(metadata.version, "0.3.4");
+assert.equal(metadata.version, "0.3.5");
+assert.equal(metadata.dependencies, undefined, "the package must have no runtime dependencies");
+assert.equal(metadata.peerDependencies, undefined);
 assert.equal(typeof Intl.Segmenter, "function");
 for (const api of [esm, cjs]) {
   assert.equal(api.formatCompactNumber(12500), "12.5K");
@@ -31,6 +33,17 @@ for (const api of [esm, cjs]) {
   assert.equal(api.getTimeZoneOffset(new Date("2026-01-15T12:00:00Z"), "Asia/Ho_Chi_Minh"), 420);
   assert.equal(api.getTimeZoneOffset(new Date("2026-01-15T12:00:00Z"), "Asia/Ho_Chi_Minh", { unit: "hours" }), 7);
   assert.equal(typeof api.formatInTimeZone, "function");
+  assert.equal(api.formatDate(new Date("2026-01-15T17:30:00Z"), "yyyy-MM-dd HH:mm xxx", { timeZone: "Asia/Ho_Chi_Minh" }), "2026-01-16 00:30 +07:00");
+  assert.equal(api.formatDate("2026-01-15", "EEEE, do MMMM yyyy"), "Thursday, 15th January 2026");
+  assert.equal(api.parseISO("2026-10-03T10:30:15.250+07:00").toISOString(), "2026-10-03T03:30:15.250Z");
+  assert.equal(api.formatDate(api.addMonths("2026-01-31", 1), "yyyy-MM-dd"), "2026-02-28");
+  assert.equal(api.differenceInCalendarDays("2026-01-01", "2025-01-01"), 365);
+  assert.equal(api.parseDuration("1h 2m 3s"), 3723000);
+  assert.equal(api.parseBytes("1.5 GB"), 1500000000);
+  assert.equal(api.parseBytes("1.5 QB", { bigint: true }), 1500000000000000000000000000000n);
+  assert.deepEqual(api.setByPath({ a: 1 }, "b.c[0]", true), { a: 1, b: { c: [true] } });
+  assert.equal(api.escapeRegExp("a.b*"), "a\\.b\\*");
+  assert.equal(api.round(1.005, 2), 1.01);
   assert.equal(api.summary("100000000000000000000000000000", "1"), "100000000000000000000000000001");
   assert.equal(api.multiply(2n ** 64n, 2n ** 64n), 2n ** 128n);
   assert.equal(api.factorial(25n), 15511210043330985984000000n);

@@ -8,6 +8,7 @@
  * - `ERR_UNDERFLOW`        (RangeError) a non-zero result is too small for a `number`
  * - `ERR_OUT_OF_RANGE`     (RangeError) an argument is outside its supported range
  * - `ERR_PRECISION_LOSS`   (RangeError) the runtime cannot represent the value exactly
+ * - `ERR_INVALID_FORMAT`   (TypeError)  text does not follow the expected format
  */
 export type NumericErrorCode =
   | "ERR_INVALID_NUMBER"
@@ -16,7 +17,8 @@ export type NumericErrorCode =
   | "ERR_OVERFLOW"
   | "ERR_UNDERFLOW"
   | "ERR_OUT_OF_RANGE"
-  | "ERR_PRECISION_LOSS";
+  | "ERR_PRECISION_LOSS"
+  | "ERR_INVALID_FORMAT";
 
 /** Thrown for a value of the wrong kind. Extends `TypeError`, so `instanceof TypeError` still works. */
 export class NumericTypeError extends TypeError {
