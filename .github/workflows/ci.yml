@@ -24,7 +24,7 @@ jobs:
       - run: npm run test:docs
       - run: npm run test:site
       - run: npm audit --audit-level=low --omit=dev
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist
