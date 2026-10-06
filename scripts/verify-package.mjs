@@ -6,7 +6,7 @@ const require = createRequire(import.meta.url);
 const esm = await import("@fatdevcon/utilities");
 const cjs = require("@fatdevcon/utilities");
 const metadata = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
-assert.equal(metadata.version, "0.3.6");
+assert.equal(metadata.version, "0.3.7");
 assert.equal(metadata.dependencies, undefined, "the package must have no runtime dependencies");
 assert.equal(metadata.peerDependencies, undefined);
 assert.equal(typeof Intl.Segmenter, "function");

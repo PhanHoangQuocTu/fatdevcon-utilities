@@ -22,7 +22,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="assets/style.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareSourceCode","name":"@fatdevcon/utilities","description":"Zero-dependency TypeScript utilities for exact decimal and bigint math, time zone and Intl formatting, dates, text, collections and async helpers.","applicationCategory":"DeveloperApplication","operatingSystem":"Node.js, Bun, browsers","programmingLanguage":["TypeScript","JavaScript"],"softwareVersion":"0.3.6","license":"https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/LICENSE","codeRepository":"https://github.com/PhanHoangQuocTu/fatdevcon-utilities","url":"https://phanhoangquoctu.github.io/fatdevcon-utilities/","downloadUrl":"https://www.npmjs.com/package/@fatdevcon/utilities"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareSourceCode","name":"@fatdevcon/utilities","description":"Zero-dependency TypeScript utilities for exact decimal and bigint math, time zone and Intl formatting, dates, text, collections and async helpers.","applicationCategory":"DeveloperApplication","operatingSystem":"Node.js, Bun, browsers","programmingLanguage":["TypeScript","JavaScript"],"softwareVersion":"0.3.7","license":"https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/LICENSE","codeRepository":"https://github.com/PhanHoangQuocTu/fatdevcon-utilities","url":"https://phanhoangquoctu.github.io/fatdevcon-utilities/","downloadUrl":"https://www.npmjs.com/package/@fatdevcon/utilities"}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do I avoid floating-point errors like 0.1 + 0.2 in JavaScript?","acceptedAnswer":{"@type":"Answer","text":"Use summary, subtract, multiply, divide and round from @fatdevcon/utilities. They calculate in exact decimal arithmetic, so summary(0.1, 0.2) is 0.3 and round(1.005, 2) is 1.01. Pass bigint or numeric strings when values exceed 2^53."}},{"@type":"Question","name":"Does @fatdevcon/utilities have dependencies?","acceptedAnswer":{"@type":"Answer","text":"No. Since version 0.3.5 the package has zero runtime dependencies, which keeps installs small and the supply chain short."}},{"@type":"Question","name":"Does it work with TypeScript, ESM and CommonJS?","acceptedAnswer":{"@type":"Answer","text":"Yes. It ships ESM, CommonJS and type declarations, and every public option and result type is exported."}},{"@type":"Question","name":"Which runtimes are supported?","acceptedAnswer":{"@type":"Answer","text":"Node.js 18 and newer, Bun, and modern browsers. Formatting and time zone helpers use the standard Intl APIs of the runtime."}},{"@type":"Question","name":"Can I format dates in a specific time zone?","acceptedAnswer":{"@type":"Answer","text":"Yes. Pass options.timeZone to formatDate, or use formatInTimeZone and getTimeZoneOffset with any IANA zone such as Asia/Ho_Chi_Minh."}}]}</script>
 </head>
 <body>
@@ -119,12 +119,12 @@
     <div class="wrap size">
       <div class="head" style="margin:0">
         <h2>Smaller by owning the hard parts</h2>
-        <p>Version 0.3.5 replaces decimal.js and date-fns with a BigInt decimal engine and an ISO 8601 parser and formatter written for this package. The replacements were compared against the originals on hundreds of thousands of randomized inputs, so results stay identical.</p>
+        <p>Since version 0.3.5 the package replaces decimal.js and date-fns with a BigInt decimal engine and an ISO 8601 parser and formatter written for this package. The replacements were compared against the originals on hundreds of thousands of randomized inputs, so results stay identical.</p>
       </div>
       <div>
-        <div class="bars" role="img" aria-label="Bundle size: version 0.3.4 was 90.9 kilobytes minified and 32.3 gzipped; version 0.3.5 is 59.1 minified and 21.4 gzipped.">
+        <div class="bars" role="img" aria-label="Bundle size: version 0.3.4 was 90.9 kilobytes minified and 32.3 gzipped; version 0.3.7 is 59.1 minified and 21.4 gzipped.">
           <div class="bar-row"><div class="bar-meta"><span>0.3.4, with two dependencies</span><b>32.3 kB gzip</b></div><div class="track"><div class="fill min" style="width:100%"></div><div class="fill" style="width:35.5%"></div></div></div>
-          <div class="bar-row"><div class="bar-meta"><span>0.3.5, no dependencies</span><b>21.4 kB gzip</b></div><div class="track"><div class="fill now min" style="width:65%"></div><div class="fill now" style="width:23.5%"></div></div></div>
+          <div class="bar-row"><div class="bar-meta"><span>0.3.7, no dependencies</span><b>21.4 kB gzip</b></div><div class="track"><div class="fill now min" style="width:65%"></div><div class="fill now" style="width:23.5%"></div></div></div>
         </div>
         <p class="bar-note">Light bar: minified (90.9 kB to 59.1 kB). Solid bar: minified and gzipped.</p>
       </div>
@@ -272,8 +272,8 @@ formatCurrency("12345678901234567890.129", "USD");
   <section class="block" id="releases">
     <div class="wrap">
       <div class="head">
-        <h2>Release 0.3.6</h2>
-        <p>0.3.6 is a small fix on top of 0.3.5, which removed every runtime dependency. The full history is in the <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/CHANGELOG.md">changelog</a>.</p>
+        <h2>Release 0.3.7</h2>
+        <p>0.3.7 fixes the README badges on npm and keeps the 0.3.5 engines: no runtime dependencies. The full history is in the <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/CHANGELOG.md">changelog</a>.</p>
       </div>
       <div class="notes">
         <div><h3>No runtime dependencies</h3><p>decimal.js and date-fns are replaced by in-package engines. Install size, bundle size and supply-chain surface all shrink, and results are unchanged: the old engines are kept as test oracles.</p></div>
@@ -302,7 +302,7 @@ formatCurrency("12345678901234567890.129", "USD");
 
 <footer>
   <div class="wrap foot">
-    <span>MIT licensed. Version 0.3.6.</span>
+    <span>MIT licensed. Version 0.3.7.</span>
     <nav aria-label="Project links">
       <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/LICENSE">License</a>
       <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/issues">Issues</a>

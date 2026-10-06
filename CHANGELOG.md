@@ -2,6 +2,11 @@
 
 All notable changes to `@fatdevcon/utilities`. The project follows [semantic versioning](https://semver.org/).
 
+## 0.3.7
+
+- README: the Socket badge rendered as a broken image on npm (its endpoint is behind a bot challenge); replaced with a static badge that links to the live report. The bundlephobia badge is replaced with a registry-backed unpacked-size badge.
+- Documentation site: the size comparison and release notes now show the current version.
+
 ## 0.3.6
 
 - Clearer package description for npm search and a more precise keyword set.

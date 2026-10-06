@@ -1,6 +1,6 @@
 {
   "name": "@fatdevcon/utilities",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "Zero-dependency TypeScript utility library: exact decimal and bigint math (no 0.1 + 0.2 errors), currency, bytes and time zone formatting, ISO 8601 dates, Unicode-safe text, deep object helpers, retry and async tools",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
