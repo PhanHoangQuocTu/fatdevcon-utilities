@@ -78,7 +78,7 @@ describe("timezone utilities", () => {
     expect(getTimeZoneOffset(winter, "UTC")).toBe(0);
 
     const now = new Date();
-    expect(getTimeZoneOffset(now)).toBe(-now.getTimezoneOffset());
+    expect(getTimeZoneOffset(now)).toBe(-now.getTimezoneOffset() + 0); // + 0 turns -0 into 0 when the runtime zone is UTC
   });
 
   test("formats and names zones through Intl", () => {
