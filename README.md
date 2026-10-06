@@ -6,11 +6,12 @@
 
 [![npm version](https://img.shields.io/npm/v/@fatdevcon/utilities.svg?style=flat-square)](https://www.npmjs.com/package/@fatdevcon/utilities)
 [![npm downloads](https://img.shields.io/npm/dm/@fatdevcon/utilities.svg?style=flat-square)](https://www.npmjs.com/package/@fatdevcon/utilities)
-[![minzipped size](https://img.shields.io/bundlephobia/minzip/@fatdevcon/utilities?style=flat-square)](https://bundlephobia.com/package/@fatdevcon/utilities)
+[![unpacked size](https://img.shields.io/npm/unpacked-size/@fatdevcon/utilities?style=flat-square)](https://www.npmjs.com/package/@fatdevcon/utilities)
+[![bundlephobia](https://img.shields.io/badge/bundlephobia-check%20size-0f766e?style=flat-square)](https://bundlephobia.com/package/@fatdevcon/utilities)
 ![dependencies](https://img.shields.io/badge/dependencies-0-brightgreen?style=flat-square)
 [![types](https://img.shields.io/npm/types/@fatdevcon/utilities.svg?style=flat-square)](https://www.npmjs.com/package/@fatdevcon/utilities)
 [![CI](https://img.shields.io/github/actions/workflow/status/PhanHoangQuocTu/fatdevcon-utilities/ci.yml?branch=master&style=flat-square&label=CI)](https://github.com/PhanHoangQuocTu/fatdevcon-utilities/actions/workflows/ci.yml)
-[![Socket](https://socket.dev/api/badge/npm/package/@fatdevcon/utilities)](https://socket.dev/npm/package/@fatdevcon/utilities)
+[![Socket report](https://img.shields.io/badge/Socket-view%20report-7c3aed?style=flat-square)](https://socket.dev/npm/package/@fatdevcon/utilities)
 [![license](https://img.shields.io/npm/l/@fatdevcon/utilities.svg?style=flat-square)](LICENSE)
 
 [Documentation](https://phanhoangquoctu.github.io/fatdevcon-utilities/) ·
