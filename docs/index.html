@@ -22,7 +22,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="assets/style.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareSourceCode","name":"@fatdevcon/utilities","description":"Zero-dependency TypeScript utilities for exact decimal and bigint math, time zone and Intl formatting, dates, text, collections and async helpers.","applicationCategory":"DeveloperApplication","operatingSystem":"Node.js, Bun, browsers","programmingLanguage":["TypeScript","JavaScript"],"softwareVersion":"0.3.5","license":"https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/LICENSE","codeRepository":"https://github.com/PhanHoangQuocTu/fatdevcon-utilities","url":"https://phanhoangquoctu.github.io/fatdevcon-utilities/","downloadUrl":"https://www.npmjs.com/package/@fatdevcon/utilities"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareSourceCode","name":"@fatdevcon/utilities","description":"Zero-dependency TypeScript utilities for exact decimal and bigint math, time zone and Intl formatting, dates, text, collections and async helpers.","applicationCategory":"DeveloperApplication","operatingSystem":"Node.js, Bun, browsers","programmingLanguage":["TypeScript","JavaScript"],"softwareVersion":"0.3.6","license":"https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/LICENSE","codeRepository":"https://github.com/PhanHoangQuocTu/fatdevcon-utilities","url":"https://phanhoangquoctu.github.io/fatdevcon-utilities/","downloadUrl":"https://www.npmjs.com/package/@fatdevcon/utilities"}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do I avoid floating-point errors like 0.1 + 0.2 in JavaScript?","acceptedAnswer":{"@type":"Answer","text":"Use summary, subtract, multiply, divide and round from @fatdevcon/utilities. They calculate in exact decimal arithmetic, so summary(0.1, 0.2) is 0.3 and round(1.005, 2) is 1.01. Pass bigint or numeric strings when values exceed 2^53."}},{"@type":"Question","name":"Does @fatdevcon/utilities have dependencies?","acceptedAnswer":{"@type":"Answer","text":"No. Since version 0.3.5 the package has zero runtime dependencies, which keeps installs small and the supply chain short."}},{"@type":"Question","name":"Does it work with TypeScript, ESM and CommonJS?","acceptedAnswer":{"@type":"Answer","text":"Yes. It ships ESM, CommonJS and type declarations, and every public option and result type is exported."}},{"@type":"Question","name":"Which runtimes are supported?","acceptedAnswer":{"@type":"Answer","text":"Node.js 18 and newer, Bun, and modern browsers. Formatting and time zone helpers use the standard Intl APIs of the runtime."}},{"@type":"Question","name":"Can I format dates in a specific time zone?","acceptedAnswer":{"@type":"Answer","text":"Yes. Pass options.timeZone to formatDate, or use formatInTimeZone and getTimeZoneOffset with any IANA zone such as Asia/Ho_Chi_Minh."}}]}</script>
 </head>
 <body>
@@ -272,8 +272,8 @@ formatCurrency("12345678901234567890.129", "USD");
   <section class="block" id="releases">
     <div class="wrap">
       <div class="head">
-        <h2>Release 0.3.5</h2>
-        <p>The package no longer depends on anything. The full history is in the <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/CHANGELOG.md">changelog</a>.</p>
+        <h2>Release 0.3.6</h2>
+        <p>0.3.6 is a small fix on top of 0.3.5, which removed every runtime dependency. The full history is in the <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/CHANGELOG.md">changelog</a>.</p>
       </div>
       <div class="notes">
         <div><h3>No runtime dependencies</h3><p>decimal.js and date-fns are replaced by in-package engines. Install size, bundle size and supply-chain surface all shrink, and results are unchanged: the old engines are kept as test oracles.</p></div>
@@ -302,7 +302,7 @@ formatCurrency("12345678901234567890.129", "USD");
 
 <footer>
   <div class="wrap foot">
-    <span>MIT licensed. Version 0.3.5.</span>
+    <span>MIT licensed. Version 0.3.6.</span>
     <nav aria-label="Project links">
       <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/LICENSE">License</a>
       <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/issues">Issues</a>

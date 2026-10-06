@@ -2,6 +2,11 @@
 
 All notable changes to `@fatdevcon/utilities`. The project follows [semantic versioning](https://semver.org/).
 
+## 0.3.6
+
+- Clearer package description for npm search and a more precise keyword set.
+- Test-only fix: the local time zone offset assertion no longer fails on runtimes whose zone is UTC (it compared `0` with `-0`). The library itself is unchanged.
+
 ## 0.3.5
 
 ### Changed
