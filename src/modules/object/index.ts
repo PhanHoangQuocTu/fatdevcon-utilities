@@ -22,6 +22,16 @@ const UNSAFE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 const hasOwn = (obj: object, key: PropertyKey): boolean =>
   Object.prototype.hasOwnProperty.call(obj, key);
 
+/** Define an own data property without invoking Object.prototype's __proto__ setter. */
+const setOwn = (obj: object, key: PropertyKey, value: unknown): void => {
+  Object.defineProperty(obj, key, {
+    configurable: true,
+    enumerable: true,
+    value,
+    writable: true,
+  });
+};
+
 /** True for object literals, `Object.create(null)` and `new Object()`; false for arrays, Dates, Maps and class instances. */
 const isPlainObject = (value: unknown): value is Record<string, unknown> => {
   if (typeof value !== "object" || value === null) return false;
@@ -35,7 +45,7 @@ const pick = <T extends object, K extends keyof T>(obj: T, keys: K[]): Pick<T, K
   assertArray(keys, "keys");
   const result = {} as Pick<T, K>;
   for (const key of keys) {
-    if (hasOwn(obj, key)) result[key] = obj[key];
+    if (hasOwn(obj, key)) setOwn(result, key, obj[key]);
   }
   return result;
 };
@@ -47,7 +57,7 @@ const omit = <T extends object, K extends keyof T>(obj: T, keys: K[]): Omit<T, K
   const excluded = new Set<PropertyKey>(keys);
   const result: Record<string, unknown> = {};
   for (const key of Object.keys(obj)) {
-    if (!excluded.has(key)) result[key] = (obj as Record<string, unknown>)[key];
+    if (!excluded.has(key)) setOwn(result, key, (obj as Record<string, unknown>)[key]);
   }
   return result as Omit<T, K>;
 };

@@ -33,7 +33,12 @@ export const getOffsetSeconds = (date: DateInput, timeZone: string): number => {
   const values = Object.fromEntries(
     parts.filter(({ type }) => type !== "literal").map(({ type, value }) => [type, Number(value)]),
   ) as Record<string, number>;
-  const localAsUtc = Date.UTC(values.year, values.month - 1, values.day, values.hour, values.minute, values.second);
+  // Date.UTC(0..99, ...) treats those years as 1900..1999. Use setters so
+  // offsets remain correct for supported historical instants as well.
+  const localAsUtcDate = new Date(0);
+  localAsUtcDate.setUTCFullYear(values.year, values.month - 1, values.day);
+  localAsUtcDate.setUTCHours(values.hour, values.minute, values.second, 0);
+  const localAsUtc = localAsUtcDate.getTime();
   const instantAtSecond = Math.floor(instant.getTime() / 1000) * 1000;
   const offset = (localAsUtc - instantAtSecond) / 1000;
   return offset === 0 ? 0 : offset;

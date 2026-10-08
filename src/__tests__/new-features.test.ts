@@ -418,6 +418,8 @@ describe("function utilities", () => {
     const alreadyAborted = new AbortController();
     alreadyAborted.abort();
     await expect(wait(1, { signal: alreadyAborted.signal })).rejects.toMatchObject({ name: "AbortError" });
+    await expect(wait(-1)).rejects.toThrow(RangeError);
+    await expect(wait(NaN)).rejects.toThrow(TypeError);
   });
   test("retry succeeds after failures, with backoff", async () => {
     const fn = jest.fn()

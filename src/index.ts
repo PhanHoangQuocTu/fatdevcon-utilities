@@ -11,5 +11,6 @@ export * from "./modules/function";
 export * from "./modules/validator";
 export * from "./modules/timezone";
 export * from "./modules/date";
+export * from "./modules/runtime";
 
 export type { Comparator, KeySelector } from "./types";

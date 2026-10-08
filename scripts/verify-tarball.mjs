@@ -6,17 +6,17 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
-const npm = process.env.npm_execpath;
-assert.ok(npm, "Run through npm run test:tarball");
+const npm = process.platform === "win32" ? "npm.cmd" : "npm";
 function run(binary, args, cwd = root) {
   const result = spawnSync(binary, args, { cwd, encoding: "utf8", env: process.env });
+  if (result.error) throw new Error([binary, ...args].join(" ") + "\n" + result.error.message);
   if (result.status !== 0) throw new Error([binary, ...args].join(" ") + "\n" + result.stdout + result.stderr + (result.error ?? ""));
   if (/npm warn|npm error/i.test(result.stderr)) throw new Error(result.stderr);
   return result.stdout;
 }
 const release = join(root, ".release");
 mkdirSync(release, { recursive: true });
-const pack = JSON.parse(run(process.execPath, [npm, "pack", "--ignore-scripts", "--json", "--pack-destination", release]))[0];
+const pack = JSON.parse(run(npm, ["pack", "--ignore-scripts", "--json", "--pack-destination", release]))[0];
 const names = pack.files.map(file => file.path);
 const allowed = ["package.json", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "CHANGELOG.md", "SECURITY.md"];
 for (const name of ["dist/index.js", "dist/index.mjs", "dist/index.d.ts", "dist/index.d.mts", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"]) assert.ok(names.includes(name), name);
@@ -25,7 +25,7 @@ assert.ok(!names.some(name => name.endsWith(".map")), "Source maps must not ship
 const artifact = resolve(release, pack.filename);
 const consumer = mkdtempSync(join(tmpdir(), "fatdevcon-022-"));
 writeFileSync(join(consumer, "package.json"), JSON.stringify({ name: "release-consumer", version: "1.0.0", private: true }));
-run(process.execPath, [npm, "install", "--no-fund", "--fetch-retries=0", artifact], consumer);
+run(npm, ["install", "--no-fund", "--fetch-retries=0", artifact], consumer);
 const installed = readdirSync(join(consumer, "node_modules")).filter((entry) => !entry.startsWith("."));
 assert.deepEqual(installed, ["@fatdevcon"], "Installing the package must add no other package");
 const shipped = JSON.parse(readFileSync(join(consumer, "node_modules/@fatdevcon/utilities/package.json"), "utf8"));
@@ -41,7 +41,7 @@ probe = probe.replace('new URL("../package.json", import.meta.url)', 'new URL(".
 writeFileSync(join(consumer, "probe.mjs"), probe);
 console.log(run(process.execPath, ["probe.mjs"], consumer).trim());
 console.log(run("bun", ["run", "probe.mjs"], consumer).trim());
-const fixture = `import { formatCurrency, shortenString, getCountryCurrencies, summary, factorial, divide, NumericRangeError, getAbortError, isAbortError, wait, withRetry, getTimeZoneOffset, formatInTimeZone, type Comparator, type BytesFormatOptions, type NumericInput, type AbortErrorType, type WithRetryParameters, type DateInput, type TimeZoneNameStyle, type TimeZoneOffsetOptions, formatDate, parseISO, addDays, addMonths, startOfDay, endOfDay, differenceInCalendarDays, parseDuration, parseBytes, setByPath, escapeRegExp, type FormatDateOptions, type ParseBytesOptions, type DateFnsLikeLocale } from "@fatdevcon/utilities";
+const fixture = `import { formatCurrency, shortenString, getCountryCurrencies, summary, factorial, divide, NumericRangeError, getAbortError, isAbortError, wait, withRetry, getTimeZoneOffset, formatInTimeZone, type Comparator, type BytesFormatOptions, type NumericInput, type AbortErrorType, type WithRetryParameters, type DateInput, type TimeZoneNameStyle, type TimeZoneOffsetOptions, formatDate, parseISO, addDays, addMonths, addYears, startOfDay, endOfDay, differenceInCalendarDays, isWithinInterval, isNode, enumerate, sumBy, safeJsonParse, buildQueryString, type DateInterval, type WeekOptions, type SafeJsonResult, type QueryValue, parseDuration, parseBytes, setByPath, escapeRegExp, type FormatDateOptions, type ParseBytesOptions, type DateFnsLikeLocale } from "@fatdevcon/utilities";
 const value: string = formatCurrency(1, "USD");
 const countries: string[] = getCountryCurrencies("VN");
 const compare: Comparator<number> = (a, b) => a - b;
@@ -79,13 +79,23 @@ const parseOptions: ParseBytesOptions = { base: 1024 };
 const nested: { a: number } = setByPath({ a: 1 }, "a", 2);
 const escaped: string = escapeRegExp("a.b");
 const customLocale: DateFnsLikeLocale = { code: "vi" };
+const interval: DateInterval = { start: dateInput, end: later };
+const week: WeekOptions = { weekStartsOn: 1 };
+const parsedJson: SafeJsonResult<unknown> = safeJsonParse("null");
+const query: QueryValue = ["a", "b"];
+const queryString: string = buildQueryString({ tag: query });
+const nextYear: Date = addYears(parsedDate, 1);
+const included: boolean = isWithinInterval(parsedDate, interval);
+const nodeRuntime: boolean = isNode();
+const enumerated: [number, string][] = enumerate(["a"]);
+const total: NumericInput = sumBy([{ amount: "0.1" }, { amount: "0.2" }], item => item.amount);
 // @ts-expect-error format must be a string
 formatDate(dateInput, 5);
 // @ts-expect-error amount must be a number
 addDays(dateInput, "1");
 // @ts-expect-error a bigint option returns a bigint, not a number
 const wrongBytes: number = parseBytes("1 QB", { bigint: true });
-void [dateText, days, milliseconds, bytes, exactBytes, parseOptions, nested, escaped, customLocale, wrongBytes];
+void [dateText, days, milliseconds, bytes, exactBytes, parseOptions, nested, escaped, customLocale, interval, week, parsedJson, queryString, nextYear, included, nodeRuntime, enumerated, total, wrongBytes];
 if (isAbortError(abortError)) { void abortError.message; }
 // @ts-expect-error a number pair returns a number, not a string
 const wrongKind: string = summary(1, 2);

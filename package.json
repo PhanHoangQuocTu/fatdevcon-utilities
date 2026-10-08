@@ -1,7 +1,7 @@
 {
   "name": "@fatdevcon/utilities",
-  "version": "0.3.7",
-  "description": "Zero-dependency TypeScript utility library: exact decimal and bigint math (no 0.1 + 0.2 errors), currency, bytes and time zone formatting, ISO 8601 dates, Unicode-safe text, deep object helpers, retry and async tools",
+  "version": "0.4.0",
+  "description": "Zero-dependency TypeScript utilities: exact decimal and bigint math, calendar/date helpers, SSR-safe runtime detection, formatting, collections, Unicode text, safe objects and async tools",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -96,7 +96,12 @@
     "memoize",
     "retry",
     "validator",
-    "algorithms"
+    "algorithms",
+    "typescript-utilities",
+    "date-utils",
+    "array-helpers",
+    "runtime-detection",
+    "ssr"
   ],
   "author": {
     "name": "PhanHoangQuocTu",

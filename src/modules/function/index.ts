@@ -35,6 +35,7 @@ export async function wait(
   time: number,
   { signal }: { signal?: AbortSignal | undefined } = {},
 ): Promise<void> {
+  assertWait(time, "time");
   return new Promise<void>((resolve, reject) => {
     if (signal?.aborted) {
       reject(getAbortError(signal));

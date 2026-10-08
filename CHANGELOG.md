@@ -2,6 +2,25 @@
 
 All notable changes to `@fatdevcon/utilities`. The project follows [semantic versioning](https://semver.org/).
 
+## 0.4.0
+
+### Added
+
+- Local-calendar date arithmetic (`addWeeks`, subtraction helpers and year helpers), boundaries, comparisons, injectable-now predicates, full-unit differences and calendar metadata.
+- Import-safe runtime capability checks for browser, DOM, Node, Bun-backed server contexts and browser workers.
+- Immutable collection ergonomics: `sort`, `enumerate`, `take`, `drop`, `first`, `last`, `minBy`, `maxBy` and exact `sumBy`.
+- Strict primitive guards, safe JSON result helpers, strict conversion helpers and prototype-safe query-string helpers.
+
+### Changed
+
+- Date/month arithmetic and IANA offset calculation now preserve proleptic Gregorian years `0`–`99` instead of inheriting JavaScript's `Date` constructor/`Date.UTC` 1900-year adjustment.
+- Package verification now validates SemVer shape instead of a release-specific version literal, so future release candidates do not inherit a stale assertion.
+- README and static API reference document the new API contracts, local-date semantics, runtime definitions and 0.3.7 → 0.4.0 upgrade path.
+
+### Compatibility
+
+- No intentional breaking changes. Existing root imports, exact numeric behavior, zero runtime dependencies and readable ESM/CJS output are retained.
+
 ## 0.3.7
 
 - README: the Socket badge rendered as a broken image on npm (its endpoint is behind a bot challenge); replaced with a static badge that links to the live report. The bundlephobia badge is replaced with a registry-backed unpacked-size badge.

@@ -36,9 +36,10 @@ formatDate(new Date("2026-01-15T17:30:00Z"), "yyyy-MM-dd HH:mm xxx", { timeZone:
 JavaScript numbers are binary doubles: `0.1 + 0.2` is not `0.3`, integers above 2^53 lose digits, and `Math.round(1.005 * 100) / 100` is `1`. This package gives you drop-in helpers that calculate exactly, then covers the formatting, date, text, collection and async work that surrounds real applications, in one small typed package.
 
 - **Exact decimal and big-number math** – numbers, `bigint` and numeric strings of any practical size, with no float drift and no silent wrong answers: overflow, underflow and bad input throw typed errors with a stable `code`.
-- **Zero runtime dependencies** – about 21 kB minified and gzipped for the whole package, tree-shakeable, and `npm install` adds exactly one package to `node_modules`.
+- **Zero runtime dependencies** – the v0.4.0 full-root bundle measures 67.8 kB minified / 23.8 kB gzip with the repository esbuild fixture; small named imports remain independently tree-shakeable, and `npm install` adds exactly one package to `node_modules`.
 - **Locale, currency and time zone aware** – compact numbers, percentages, currencies, byte sizes and dates through `Intl`, with ISO 4217 country metadata and DST-aware UTC offsets for any IANA zone.
 - **Dates without a date library** – ISO 8601 parsing, token formatting compatible with date-fns, calendar arithmetic and time zone formatting.
+- **Calendar and runtime aware** – local-calendar boundaries, comparisons and differences with deterministic clocks, plus SSR/browser/worker capability detection that is safe at import time.
 - **Unicode-safe text** – truncating, masking and shortening count user-perceived characters, so emoji, flags and accents are never cut in half.
 - **Everyday helpers** – `groupBy`, `deepMerge`, `setByPath`, `debounce`, `throttle`, abort-aware `wait` / `withRetry`, validators and classic sort and search algorithms, with no lodash required.
 - **Typed, ESM and CommonJS** – declarations included, inputs validated, nothing mutates what you pass in. Runs on Node.js 18+, Bun and modern browsers.
@@ -241,7 +242,7 @@ maskString("user@example.com", { visibleStart: 2, visibleEnd: 4 }); // "us******
 
 ### Dates
 
-Dates are plain `Date` objects in the runtime's local time zone unless a function says otherwise. Input may be a `Date`, a millisecond timestamp or a string; date-only ISO strings such as `"2026-10-03"` are read as **local** dates, so the day never shifts with the time zone. No dependency is involved: parsing and formatting are built into the package.
+Dates are plain `Date` objects in the runtime's local time zone unless a function says otherwise. Input may be a `Date`, a millisecond timestamp or a string; date-only ISO strings such as `"2026-10-03"` are read as **local** dates, so the day never shifts with the time zone. Calendar helpers use proleptic Gregorian rules, including years `0`–`99` without JavaScript's legacy 1900-year constructor adjustment. No dependency is involved: parsing and formatting are built into the package.
 
 | Function | Description | Example |
 | --- | --- | --- |
@@ -249,8 +250,15 @@ Dates are plain `Date` objects in the runtime's local time zone unless a functio
 | `parseISO(text)` | Parse ISO 8601 (calendar, week and ordinal dates, offsets, fractions); an Invalid Date for malformed text, never throws | `parseISO("2026-10-03T10:30+07:00")` |
 | `addDays(date, amount)` | Calendar days later or earlier, keeping the wall-clock time across DST | `addDays("2026-03-01", -1)` → 28 Feb 2026 |
 | `addMonths(date, amount)` | Calendar months later or earlier, clamped to the last day of shorter months | `addMonths("2026-01-31", 1)` → 28 Feb 2026 |
+| `addWeeks` / `subDays` / `subWeeks` / `subMonths` / `addYears` / `subYears` | Immutable local-calendar arithmetic; leap days and month ends clamp intentionally | `addYears("2024-02-29", 1)` → 28 Feb 2025 |
 | `startOfDay(date)` / `endOfDay(date)` | `00:00:00.000` / `23:59:59.999` of the local day | `endOfDay(now)` |
+| `startOfWeek` / `endOfWeek` / `startOfISOWeek` / `endOfISOWeek` | Local-week boundaries; `weekStartsOn` is 0–6, ISO weeks start Monday | `startOfWeek(now, { weekStartsOn: 1 })` |
+| `startOfMonth` / `endOfMonth` / `startOfYear` / `endOfYear` | Local calendar boundaries | `endOfMonth(now)` |
 | `differenceInCalendarDays(later, earlier)` | Whole calendar days between two dates, ignoring time of day and DST | `differenceInCalendarDays("2026-01-01", "2025-01-01")` → `365` |
+| `differenceInDays` / `differenceInMonths` / `differenceInYears` | Full local-calendar periods, with a partial final period truncated toward zero | `differenceInMonths(end, start)` |
+| `differenceInCalendarMonths` / `getDaysInMonth` / `getDayOfYear` / `isLeapYear` | Calendar metadata and boundary difference helpers | `getDaysInMonth(new Date(2024, 1))` → `29` |
+| `isBefore` / `isAfter` / `isEqualDate` | Instant comparisons | `isEqualDate(1, new Date(1))` → `true` |
+| `isSameDay` / `isSameMonth` / `isSameYear` / `isToday` / `isYesterday` / `isTomorrow` / `isWithinInterval` | Local calendar predicates; day-relative predicates accept `{ now }` for deterministic tests | `isWithinInterval(now, { start, end })` |
 | `formatRelativeTime(date, options?)` | "3 hours ago" / "in 2 days" via `Intl.RelativeTimeFormat`. Options: `locale`, `now`, `numeric` | `formatRelativeTime(yesterday)` → `"yesterday"` |
 | `formatDuration(milliseconds, options?)` | Compact duration; `maxUnits` keeps the largest N units | `formatDuration(3723000)` → `"1h 2m 3s"` |
 | `parseDuration(text)` | Inverse of `formatDuration`: `"1h 2m 3s"`, `"1.5h"`, `"2 days, 4 hours"` to milliseconds | `parseDuration("1h 2m 3s")` → `3723000` |
@@ -351,6 +359,10 @@ A `number` result that does not fit a double throws `ERR_OVERFLOW` or `ERR_UNDER
 | `unique(arr, keySelector?)` | Remove duplicates, optionally by key | `unique([1, 2, 2, 3])` → `[1, 2, 3]` |
 | `filterBy(arr, predicate)` | Keep the items that match | `filterBy([1, 2, 3, 4], (x) => x > 2)` → `[3, 4]` |
 | `sortBy(arr, keySelector, order = "asc")` | Sort by a key, `"asc"` or `"desc"` | `sortBy(users, (u) => u.name, "desc")` |
+| `sort(arr, compareFn?)` | Immutable stable ascending sort | `sort([5, 2, 9, 1])` → `[1, 2, 5, 9]` |
+| `enumerate(arr, startIndex?)` / `take(arr, count)` / `drop(arr, count)` | Indexed pairs and immutable slices; counts are non-negative integers | `enumerate(["a", "b"], 1)` → `[[1, "a"], [2, "b"]]` |
+| `first(arr)` / `last(arr)` | First/last item, or `undefined` when empty | `last(["a", "b"])` → `"b"` |
+| `minBy(arr, selector)` / `maxBy(arr, selector)` / `sumBy(arr, selector)` | Select extrema or exact-sum fields without mutating input | `sumBy([{ price: 10 }, { price: 20 }], x => x.price)` → `30` |
 | `groupBy(arr, keySelector)` | Group items into an object by key | `groupBy(users, (u) => u.role)` |
 | `chunk(arr, size)` | Split into chunks of `size` | `chunk([1, 2, 3, 4, 5], 2)` → `[[1, 2], [3, 4], [5]]` |
 | `flatten(arr)` | Flatten one level | `flatten([[1, 2], [3]])` → `[1, 2, 3]` |
@@ -459,6 +471,17 @@ Type guards that return a boolean and never throw. They check syntax only; they 
 | `isEmail(value)` | Pragmatic `local@domain.tld` check (254 / 64 character limits) | `isEmail("user@example.com")` → `true` |
 | `isUrl(value, options?)` | Absolute URL with an allowed protocol (`http:` / `https:` by default) | `isUrl("javascript:alert(1)")` → `false` |
 | `isUuid(value, version?)` | UUID string, versions 1 to 8 | `isUuid("123e4567-e89b-12d3-a456-426614174000")` → `true` |
+| `isNil` / `isDefined` / `isString` / `isNumber` / `isBoolean` / `isFunction` / `isPromiseLike` | Strict primitive and promise-like type guards; `isNumber` rejects `NaN` and infinities | `isDefined(0)` → `true` |
+
+### Runtime and safe conversion
+
+`isBrowser`, `isClient`, `isNode`, `isServer`, `isWebWorker` and `hasDOM` inspect globals only when invoked, so importing them is safe in SSR. `isClient` means browser main thread or browser worker; `isServer` means Node.js or Bun—an edge runtime with neither capability is deliberately not guessed.
+
+`safeJsonParse` and `safeJsonStringify` return `{ ok: true, value }` or `{ ok: false, error }` and never pretend generic TypeScript types validate JSON. `toString` is deterministic for primitives, valid Dates, arrays and plain objects; cycles and nested BigInts throw instead of being corrupted. `toNumber` rejects unsafe integer text/BigInts, `toBoolean` accepts only booleans, `0`/`1`, and `"true"`/`"false"`, and `toArray` makes array normalization explicit. `buildQueryString`/`parseQueryString` use URLSearchParams, preserve repeated keys and reject prototype-sensitive keys.
+
+## Upgrading 0.3.7 → 0.4.0
+
+All existing root imports and behaviors remain supported. This is an additive release: import the new date, runtime, collection, guard and conversion helpers from `@fatdevcon/utilities` as needed. No runtime dependencies or install-time scripts were introduced. `sort` is the new immutable convenience sort; no `sorted` alias was added because it would duplicate the same contract.
 
 ### Error handling
 
