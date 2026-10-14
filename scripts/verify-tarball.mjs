@@ -29,6 +29,8 @@ run(npm, ["install", "--no-fund", "--fetch-retries=0", artifact], consumer);
 const installed = readdirSync(join(consumer, "node_modules")).filter((entry) => !entry.startsWith("."));
 assert.deepEqual(installed, ["@fatdevcon"], "Installing the package must add no other package");
 const shipped = JSON.parse(readFileSync(join(consumer, "node_modules/@fatdevcon/utilities/package.json"), "utf8"));
+const manifest = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
+assert.equal(shipped.version, manifest.version, "packed version must match the working manifest");
 assert.equal(shipped.dependencies, undefined);
 for (const file of ["index.js", "index.mjs"]) {
   const code = readFileSync(join(consumer, "node_modules/@fatdevcon/utilities/dist", file), "utf8");
@@ -42,6 +44,32 @@ writeFileSync(join(consumer, "probe.mjs"), probe);
 console.log(run(process.execPath, ["probe.mjs"], consumer).trim());
 console.log(run("bun", ["run", "probe.mjs"], consumer).trim());
 const fixture = `import { formatCurrency, shortenString, getCountryCurrencies, summary, factorial, divide, NumericRangeError, getAbortError, isAbortError, wait, withRetry, getTimeZoneOffset, formatInTimeZone, type Comparator, type BytesFormatOptions, type NumericInput, type AbortErrorType, type WithRetryParameters, type DateInput, type TimeZoneNameStyle, type TimeZoneOffsetOptions, formatDate, parseISO, addDays, addMonths, addYears, startOfDay, endOfDay, differenceInCalendarDays, isWithinInterval, isNode, enumerate, sumBy, safeJsonParse, buildQueryString, type DateInterval, type WeekOptions, type SafeJsonResult, type QueryValue, parseDuration, parseBytes, setByPath, escapeRegExp, type FormatDateOptions, type ParseBytesOptions, type DateFnsLikeLocale } from "@fatdevcon/utilities";
+import { strip, lstrip, rstrip, title, firstChar, lastChar, safeToNumber, safeToInteger, safeToBigInt, safeToBoolean, safeToString, capitalize } from "@fatdevcon/utilities";
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;
+type Expect<T extends true> = T;
+type ConversionTypes = [
+  Expect<Equal<ReturnType<typeof safeToNumber>, number | null>>,
+  Expect<Equal<ReturnType<typeof safeToInteger>, number | null>>,
+  Expect<Equal<ReturnType<typeof safeToBigInt>, bigint | null>>,
+  Expect<Equal<ReturnType<typeof safeToBoolean>, boolean | null>>,
+  Expect<Equal<ReturnType<typeof safeToString>, string | null>>,
+  Expect<Equal<Parameters<typeof safeToNumber>, [value: unknown]>>
+];
+const external: unknown = JSON.parse("null");
+const conversions = [safeToNumber(external), safeToInteger(external), safeToBigInt(external), safeToBoolean(external), safeToString(external)];
+const cleaned: string[] = [strip(" x "), lstrip(".x", "."), rstrip("x.", "."), title("x"), firstChar("x"), lastChar("x"), capitalize("istanbul", "tr")];
+const fallback: number = safeToNumber(external) ?? 0;
+// @ts-expect-error safe results must be narrowed before use
+const unsafeNumber: number = safeToNumber(external);
+// @ts-expect-error cleaning is strict about string input
+strip(external);
+// @ts-expect-error custom strip characters must be a string
+rstrip("text", 1);
+// @ts-expect-error no implicit fallback option overload
+safeToNumber(external, { fallback: 0 });
+void [conversions, cleaned, fallback, unsafeNumber];
+const typeProof: ConversionTypes = [true, true, true, true, true, true];
+void typeProof;
 const value: string = formatCurrency(1, "USD");
 const countries: string[] = getCountryCurrencies("VN");
 const compare: Comparator<number> = (a, b) => a - b;

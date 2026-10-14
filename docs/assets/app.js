@@ -184,6 +184,22 @@ if (gauge && lib) {
 
 // ---------------------------------------------------------------- playground
 const SAMPLES = {
+  Cleaning: `title(strip("   nguyen van an   "))
+lstrip("   hello   ")
+rstrip("   hello   ")
+strip("abbahelloab", "ab")
+title("đẶNG vĂN lÂM-o'CONNOR")
+firstChar("👨‍👩‍👧‍👦family")
+lastChar("hello👍🏽")
+normalizeWhitespace("  Hello    world  ")`,
+  "Safe conversion": `safeToNumber(" 12.5 ")
+safeToNumber("9007199254740993")
+safeToNumber("1e-999")
+safeToNumber("") ?? 0
+safeToInteger("1.5")
+safeToBigInt("9007199254740993")
+safeToBoolean(" FALSE ")
+safeToString({ name: "An" })`,
   Money: `// Every export is in scope. One expression per line.
 summary(0.1, 0.2)
 multiply("19.99", 3)

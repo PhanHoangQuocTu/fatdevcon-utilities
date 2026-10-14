@@ -2,6 +2,36 @@
 
 All notable changes to `@fatdevcon/utilities`. The project follows [semantic versioning](https://semver.org/).
 
+## 0.4.1
+
+### Added
+
+- `strip`, `lstrip`, `rstrip`: ECMAScript whitespace trimming or an explicit Unicode code-point set.
+- `title`: Unicode word casing that preserves whitespace/punctuation and internal apostrophes.
+- `firstChar`, `lastChar`: grapheme endpoints with a documented code-point fallback without `Intl.Segmenter`.
+- `safeToNumber`, `safeToInteger`, `safeToBigInt`, `safeToBoolean`, `safeToString`: unknown-input conversion with explicit `null` failure results, safe integer checks and no object coercion in numeric/boolean conversion.
+
+### Improved
+
+- `capitalize` extracts only the first grapheme instead of segmenting the entire input; the rest of the string and the existing locale argument remain unchanged.
+- Segmenter instances initialize lazily and are reused without retaining user text.
+
+### Fixed
+
+- Importing the root package no longer fails solely because `Intl.Segmenter` is absent. Existing grapheme/word formatters still require it when called; new endpoints provide their documented fallback.
+
+### Tests
+
+- Added Unicode, hostile-object/proxy, precision, strict-API compatibility, JSON and seeded property/oracle regressions.
+- Extended installed ESM/CJS and TypeScript consumer probes for the new APIs and version consistency.
+- Added reproducible browser-consumer bundle measurement and bounded million-character/10,000-level JSON stress checks and benchmarks.
+
+### Documentation
+
+- Documented all new signatures, failure contracts, numeric syntax, floating-point limits, Unicode fallback and casing differences in README and the API reference.
+- Updated website release metadata and playground examples; preserved existing strict conversions, JSON result types and capitalization behavior.
+- Zero runtime dependencies, unminified builds and existing public import paths remain unchanged.
+
 ## 0.4.0
 
 ### Added

@@ -36,7 +36,7 @@ formatDate(new Date("2026-01-15T17:30:00Z"), "yyyy-MM-dd HH:mm xxx", { timeZone:
 JavaScript numbers are binary doubles: `0.1 + 0.2` is not `0.3`, integers above 2^53 lose digits, and `Math.round(1.005 * 100) / 100` is `1`. This package gives you drop-in helpers that calculate exactly, then covers the formatting, date, text, collection and async work that surrounds real applications, in one small typed package.
 
 - **Exact decimal and big-number math** – numbers, `bigint` and numeric strings of any practical size, with no float drift and no silent wrong answers: overflow, underflow and bad input throw typed errors with a stable `code`.
-- **Zero runtime dependencies** – the v0.4.0 full-root bundle measures 67.8 kB minified / 23.8 kB gzip with the repository esbuild fixture; small named imports remain independently tree-shakeable, and `npm install` adds exactly one package to `node_modules`.
+- **Zero runtime dependencies** – the v0.4.1 full-root browser fixture measures 70.8 kB minified / 24.8 kB gzip (`npm run test:bundle`, esbuild 0.27.2); small named imports remain independently tree-shakeable, and `npm install` adds exactly one package to `node_modules`.
 - **Locale, currency and time zone aware** – compact numbers, percentages, currencies, byte sizes and dates through `Intl`, with ISO 4217 country metadata and DST-aware UTC offsets for any IANA zone.
 - **Dates without a date library** – ISO 8601 parsing, token formatting compatible with date-fns, calendar arithmetic and time zone formatting.
 - **Calendar and runtime aware** – local-calendar boundaries, comparisons and differences with deterministic clocks, plus SSR/browser/worker capability detection that is safe at import time.
@@ -156,6 +156,8 @@ The tables below are a quick reference; the [documentation site](https://phanhoa
 - [Number formatting](#number-formatting)
 - [Currency metadata](#currency-metadata)
 - [Text](#text)
+- [Data Cleaning Utilities](#data-cleaning-utilities)
+- [Safe type conversion](#safe-type-conversion)
 - [Dates](#dates)
 - [Time zones](#time-zones)
 - [Math](#math)
@@ -239,6 +241,72 @@ maskString("user@example.com", { visibleStart: 2, visibleEnd: 4 }); // "us******
 ```
 
 `maskString` is for display only; it is not encryption or secure redaction. `slugify` does not guarantee uniqueness.
+
+### Data Cleaning Utilities
+
+```typescript
+import { strip, lstrip, rstrip, title, firstChar, lastChar } from "@fatdevcon/utilities";
+
+const name = title(strip("   nguyen van an   ")); // "Nguyen Van An"
+firstChar("Hello"); // "H"
+lastChar("Hello"); // "o"
+firstChar("👨‍👩‍👧‍👦family"); // "👨‍👩‍👧‍👦" with Intl.Segmenter
+strip("abbahelloab", "ab"); // "hello" (character set, not substring)
+lstrip("   hello   "); // "hello   "
+rstrip("   hello   "); // "   hello"
+title(" đẶNG vĂN lÂM-o'CONNOR "); // " Đặng Văn Lâm-O'connor "
+```
+
+| Function | Contract | Return type |
+| --- | --- | --- |
+| `strip(text, chars?)` | Remove whitespace or an explicit character set from both ends | `string` |
+| `lstrip(text, chars?)` | Remove it from the beginning only | `string` |
+| `rstrip(text, chars?)` | Remove it from the end only | `string` |
+| `title(text)` | Uppercase each word's first letter, lowercase its remainder, preserve separators | `string` |
+| `firstChar(text)` | First grapheme, empty string for empty input | `string` |
+| `lastChar(text)` | Last grapheme, empty string for empty input | `string` |
+
+Cleaning functions require strings and throw `TypeError` on other input; `chars`, when supplied, must also be a string. They do not mutate inputs. Default stripping follows **ECMAScript whitespace**, including NBSP/BOM but excluding NEL and zero-width space; it is not Python's exact whitespace policy. Custom `chars` is a Unicode **code-point set**, not a regex, substring or grapheme set. `""` strips nothing. Internal whitespace is preserved; use the existing `normalizeWhitespace(text)` to trim and collapse it.
+
+`title` treats Unicode letter/mark runs as words. Straight and curly apostrophes inside words stay inside them (`o'connor` → `O'connor`); hyphens, underscores, digits and other punctuation separate words. Spacing is preserved. It uses locale-independent Unicode casing, which can expand letters (`ß` → `SS`), and neither removes accents nor normalizes Unicode. This is not Python equivalence or a universal personal-name formatter. Existing `titleCase` additionally splits camelCase and replaces separators with spaces. Accent removal remains opt-in with `removeDiacritics`.
+
+`firstChar`/`lastChar` use `Intl.Segmenter` when available. Without it (or without `Intl`) they return **one code point**, preserving valid surrogate pairs but splitting combining/ZWJ/flag/modifier sequences: `firstChar("e\u0301")` becomes `"e"`, `lastChar("👍🏽")` becomes `"🏽"`. Already-unpaired surrogates are preserved, not repaired. Importing the library no longer requires Segmenter; existing grapheme/word formatters still require it when called.
+
+`capitalize(text, locale?)` keeps its existing contract: uppercase the first grapheme and leave the remainder unchanged. For `"hELLO WORLD"` → `"Hello world"`, use `capitalize(text.toLowerCase())`.
+
+### Safe type conversion
+
+All five helpers accept `unknown` and return `null` for invalid input. Use `??` for an explicit fallback; there is no options overload.
+
+| Function | Accepted input | Return type |
+| --- | --- | --- |
+| `safeToNumber(value)` | Finite numbers, safe BigInts, trimmed ASCII decimal/scientific strings | `number \| null` |
+| `safeToInteger(value)` | Safe integer numbers/BigInts, trimmed signed decimal digit strings | `number \| null` |
+| `safeToBigInt(value)` | BigInts, safe integer numbers, trimmed signed decimal digit strings | `bigint \| null` |
+| `safeToBoolean(value)` | Booleans, numeric `0`/`1`, trimmed case-insensitive `true`/`false`/`0`/`1` strings | `boolean \| null` |
+| `safeToString(value)` | Strings, finite numbers, booleans, BigInts, Symbols, valid Dates, arrays and plain objects | `string \| null` |
+
+```typescript
+import { safeToNumber, safeToInteger, safeToBigInt, safeToBoolean, safeToString } from "@fatdevcon/utilities";
+
+safeToNumber(" 12.5 "); // 12.5
+safeToNumber("1e3"); // 1000
+safeToNumber("9007199254740993"); // null
+safeToNumber("1e-999"); // null (nonzero underflow)
+safeToNumber("") ?? 0; // 0 (explicit fallback)
+safeToInteger("1.5"); // null
+safeToInteger("1e3"); // null (integer text requires digits and optional sign)
+safeToBigInt("9007199254740993"); // 9007199254740993n
+safeToBoolean(" FALSE "); // false
+safeToString({ name: "An" }); // '{"name":"An"}'
+safeToString(null); // null
+```
+
+Numbers reject nonfinite values, unsafe integer **results** (including Number inputs already above the safe integer range), overflow and nonzero values that round to zero. Decimal/scientific text accepts signs, leading zeros, `.5` and `1.`; separators, radix prefixes, Unicode digits and trailing units are rejected. Negative zero is preserved by number/integer conversion. Ordinary fractions use binary floating-point rounding, including subnormal rounding; these are not exact-decimal conversion APIs. Keep strings/BigInts and use the existing exact math helpers when every decimal digit matters. Integer/BigInt strings deliberately reject dots and exponents; neither helper truncates fractions or reconstructs precision lost before the call. BigInt has no negative zero.
+
+Numeric and boolean helpers never coerce objects, arrays, Symbols or functions. Boolean conversion does not accept `yes`/`no`, `on`/`off`, or general truthiness. `safeToString` returns `null` for nullish/nonfinite values, invalid Dates, unsupported class instances, cycles, nested BigInts and synchronous conversion exceptions. Dates use ISO text; arrays/plain objects use the existing JSON conversion policy, including omission of undefined properties and conversion of undefined/nonfinite array entries to null. Getters and `toJSON` can run; their exceptions are caught but their side effects cannot be prevented. JSON is not a lossless representation of arbitrary JavaScript values. Resource exhaustion, process termination and arbitrary callback behavior are outside the safety guarantee.
+
+Existing `toNumber`, `toBoolean`, `toString`, `safeJsonParse` and `safeJsonStringify` retain their contracts. In particular, `safeJsonParse` returns a discriminated result for malformed JSON but throws `TypeError` for non-string arguments. Use existing `parseISO` for ISO dates instead of another conversion alias.
 
 ### Dates
 
@@ -479,13 +547,17 @@ Type guards that return a boolean and never throw. They check syntax only; they 
 
 `safeJsonParse` and `safeJsonStringify` return `{ ok: true, value }` or `{ ok: false, error }` and never pretend generic TypeScript types validate JSON. `toString` is deterministic for primitives, valid Dates, arrays and plain objects; cycles and nested BigInts throw instead of being corrupted. `toNumber` rejects unsafe integer text/BigInts, `toBoolean` accepts only booleans, `0`/`1`, and `"true"`/`"false"`, and `toArray` makes array normalization explicit. `buildQueryString`/`parseQueryString` use URLSearchParams, preserve repeated keys and reject prototype-sensitive keys.
 
+## Upgrading 0.4.0 → 0.4.1
+
+This release adds six cleaning and five nullable conversion helpers. Existing names, signatures, import paths, error policies and `capitalize`/`titleCase` results remain supported. `capitalize` now extracts just the first grapheme, and text segmenters initialize lazily. Zero runtime dependencies and readable ESM/CJS output are unchanged. Use `npm run test:bundle` for reproducible browser-consumer bundle sizes and `npm run test:cleaning:stress` for bounded stress checks and timings; an optional baseline ESM path can be passed after `--` to the latter.
+
 ## Upgrading 0.3.7 → 0.4.0
 
 All existing root imports and behaviors remain supported. This is an additive release: import the new date, runtime, collection, guard and conversion helpers from `@fatdevcon/utilities` as needed. No runtime dependencies or install-time scripts were introduced. `sort` is the new immutable convenience sort; no `sorted` alias was added because it would duplicate the same contract.
 
 ### Error handling
 
-Invalid input throws a standard error instead of returning `NaN` or a wrong result. Numeric errors are `NumericTypeError` (extends `TypeError`) or `NumericRangeError` (extends `RangeError`) and carry a stable `code`, so `instanceof` checks keep working while you can branch on the exact reason. Messages name the argument and show the value, e.g. `a must be a finite number, bigint or numeric string, received "12abc"`.
+Strict APIs throw a standard error on invalid input instead of returning `NaN` or a wrong result. Numeric errors are `NumericTypeError` (extends `TypeError`) or `NumericRangeError` (extends `RangeError`) and carry a stable `code`, so `instanceof` checks keep working while you can branch on the exact reason. Messages name the argument and show the value, e.g. `a must be a finite number, bigint or numeric string, received "12abc"`.
 
 | `code` | Class | When | Example |
 | --- | --- | --- | --- |

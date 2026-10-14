@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#0e1a2e">
 <meta name="robots" content="index,follow">
 <title>Exact decimal math and utilities for TypeScript | @fatdevcon/utilities</title>
-<meta name="description" content="Zero-dependency TypeScript utilities: exact decimal and bigint math, Intl and time zone formatting, date helpers, Unicode text, collections, retry and async helpers.">
+<meta name="description" content="Zero-dependency TypeScript utilities: data cleaning, safe type conversion, exact decimal and bigint math, dates, Unicode text, collections and async helpers.">
 <meta name="keywords" content="typescript utilities, decimal math javascript, bigint, floating point precision, format currency, time zone, date formatting, lodash alternative, npm">
 <link rel="canonical" href="https://phanhoangquoctu.github.io/fatdevcon-utilities/">
 <meta property="og:type" content="website">
@@ -22,7 +22,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="assets/style.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareSourceCode","name":"@fatdevcon/utilities","description":"Zero-dependency TypeScript utilities for exact decimal and bigint math, time zone and Intl formatting, dates, text, collections and async helpers.","applicationCategory":"DeveloperApplication","operatingSystem":"Node.js, Bun, browsers","programmingLanguage":["TypeScript","JavaScript"],"softwareVersion":"0.4.0","license":"https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/LICENSE","codeRepository":"https://github.com/PhanHoangQuocTu/fatdevcon-utilities","url":"https://phanhoangquoctu.github.io/fatdevcon-utilities/","downloadUrl":"https://www.npmjs.com/package/@fatdevcon/utilities"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareSourceCode","name":"@fatdevcon/utilities","description":"Zero-dependency TypeScript utilities for data cleaning, safe type conversion, exact decimal and bigint math, dates, Unicode text, collections and async helpers.","applicationCategory":"DeveloperApplication","operatingSystem":"Node.js, Bun, browsers","programmingLanguage":["TypeScript","JavaScript"],"softwareVersion":"0.4.1","license":"https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/LICENSE","codeRepository":"https://github.com/PhanHoangQuocTu/fatdevcon-utilities","url":"https://phanhoangquoctu.github.io/fatdevcon-utilities/","downloadUrl":"https://www.npmjs.com/package/@fatdevcon/utilities"}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do I avoid floating-point errors like 0.1 + 0.2 in JavaScript?","acceptedAnswer":{"@type":"Answer","text":"Use summary, subtract, multiply, divide and round from @fatdevcon/utilities. They calculate in exact decimal arithmetic, so summary(0.1, 0.2) is 0.3 and round(1.005, 2) is 1.01. Pass bigint or numeric strings when values exceed 2^53."}},{"@type":"Question","name":"Does @fatdevcon/utilities have dependencies?","acceptedAnswer":{"@type":"Answer","text":"No. Since version 0.3.5 the package has zero runtime dependencies, which keeps installs small and the supply chain short."}},{"@type":"Question","name":"Does it work with TypeScript, ESM and CommonJS?","acceptedAnswer":{"@type":"Answer","text":"Yes. It ships ESM, CommonJS and type declarations, and every public option and result type is exported."}},{"@type":"Question","name":"Which runtimes are supported?","acceptedAnswer":{"@type":"Answer","text":"Node.js 18 and newer, Bun, and modern browsers. Formatting and time zone helpers use the standard Intl APIs of the runtime."}},{"@type":"Question","name":"Can I format dates in a specific time zone?","acceptedAnswer":{"@type":"Answer","text":"Yes. Pass options.timeZone to formatDate, or use formatInTimeZone and getTimeZoneOffset with any IANA zone such as Asia/Ho_Chi_Minh."}}]}</script>
 </head>
 <body>
@@ -108,7 +108,7 @@
     <div class="wrap">
       <dl class="facts">
         <div><dt>0</dt><dd>runtime dependencies. Nothing else to audit or keep patched.</dd></div>
-        <div><dt>23.8 kB</dt><dd>v0.4.0 full-root minified + gzip, while named imports stay tree-shakeable.</dd></div>
+        <div><dt>24.8 kB</dt><dd>v0.4.1 full-root minified + gzip, while named imports stay tree-shakeable.</dd></div>
         <div><dt>ESM + CJS</dt><dd>with bundled type declarations and an exact, typed error model.</dd></div>
         <div><dt>Node 18+</dt><dd>Bun and modern browsers, using the runtime's own Intl data.</dd></div>
       </dl>
@@ -122,11 +122,11 @@
         <p>Since version 0.3.5 the package replaces decimal.js and date-fns with a BigInt decimal engine and an ISO 8601 parser and formatter written for this package. The replacements were compared against the originals on hundreds of thousands of randomized inputs, so results stay identical.</p>
       </div>
       <div>
-        <div class="bars" role="img" aria-label="Bundle size: version 0.3.4 was 90.9 kilobytes minified and 32.3 gzipped; local reproducible version 0.3.7 was 59.3 kilobytes minified and 21.7 gzipped; version 0.4.0 is 67.8 kilobytes minified and 23.8 gzipped.">
+        <div class="bars" role="img" aria-label="Bundle size: version 0.3.4 was 90.9 kilobytes minified and 32.3 gzipped; local reproducible version 0.3.7 was 59.3 kilobytes minified and 21.7 gzipped; version 0.4.1 is 70.8 kilobytes minified and 24.8 gzipped.">
           <div class="bar-row"><div class="bar-meta"><span>0.3.4, with two dependencies</span><b>32.3 kB gzip</b></div><div class="track"><div class="fill min" style="width:100%"></div><div class="fill" style="width:35.5%"></div></div></div>
-          <div class="bar-row"><div class="bar-meta"><span>0.4.0, no dependencies</span><b>23.8 kB gzip</b></div><div class="track"><div class="fill now min" style="width:74.6%"></div><div class="fill now" style="width:26.2%"></div></div></div>
+          <div class="bar-row"><div class="bar-meta"><span>0.4.1, no dependencies</span><b>24.8 kB gzip</b></div><div class="track"><div class="fill now min" style="width:77.9%"></div><div class="fill now" style="width:27.3%"></div></div></div>
         </div>
-        <p class="bar-note">Light bar: minified (90.9 kB to 67.8 kB). Solid bar: minified and gzipped. Measurements use the reproducible esbuild fixture documented in the release notes.</p>
+        <p class="bar-note">Light bar: minified (90.9 kB to 70.8 kB). Solid bar: minified and gzipped. Current sizes use <code>npm run test:bundle</code> (esbuild 0.27.2); historical figures used earlier fixtures.</p>
       </div>
     </div>
   </section>
@@ -210,7 +210,7 @@ const config = await withRetry(() => fetch("/config.json").then((r) => r.json())
     <div class="wrap">
       <div class="head">
         <h2>API reference</h2>
-        <p><span id="api-count">120</span> functions with parameters, return values, errors and examples. Every example is executed against the built package before each release.</p>
+        <p><span id="api-count">195</span> functions with parameters, return values, errors and examples. Every example is executed against the built package before each release.</p>
       </div>
       <div class="api-layout">
         <aside class="api-side">
@@ -272,14 +272,14 @@ formatCurrency("12345678901234567890.129", "USD");
   <section class="block" id="releases">
     <div class="wrap">
       <div class="head">
-        <h2>Release 0.4.0</h2>
-        <p>0.4.0 adds local-calendar helpers, SSR-safe runtime detection, immutable collection ergonomics and strict safe-conversion helpers while retaining zero runtime dependencies. The full history is in the <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/CHANGELOG.md">changelog</a>.</p>
+        <h2>Release 0.4.1</h2>
+        <p>0.4.1 adds data cleaning and nullable safe type conversion, preserves existing APIs and retains zero runtime dependencies. The full history is in the <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/CHANGELOG.md">changelog</a>.</p>
       </div>
       <div class="notes">
-        <div><h3>No runtime dependencies</h3><p>decimal.js and date-fns are replaced by in-package engines. Install size, bundle size and supply-chain surface all shrink, and results are unchanged: the old engines are kept as test oracles.</p></div>
-        <div><h3>Readable build output</h3><p>The published files are no longer minified, so stack traces and audits read like source. Bundlers minify them as usual.</p></div>
-        <div><h3>New helpers</h3><p><code>parseISO</code>, <code>addDays</code>, <code>addMonths</code>, <code>startOfDay</code>, <code>endOfDay</code>, <code>differenceInCalendarDays</code>, <code>parseDuration</code>, <code>parseBytes</code>, <code>setByPath</code> and <code>escapeRegExp</code>.</p></div>
-        <div><h3>formatDate options</h3><p>New <code>timeZone</code> and <code>locale</code> options (Intl tags or date-fns locale objects), and an empty pattern now returns an empty string instead of throwing.</p></div>
+        <div><h3>Clean external data</h3><p><code>strip</code>, <code>lstrip</code>, <code>rstrip</code> and <code>title</code> preserve internal text according to explicit whitespace and Unicode casing policies.</p></div>
+        <div><h3>Predictable conversion</h3><p><code>safeToNumber</code>, <code>safeToInteger</code>, <code>safeToBigInt</code>, <code>safeToBoolean</code> and <code>safeToString</code> accept unknown input and return <code>null</code> on invalid conversion. Use <code>??</code> for a fallback.</p></div>
+        <div><h3>Unicode endpoints</h3><p><code>firstChar</code> and <code>lastChar</code> return graphemes when Segmenter is available, with an explicit code-point fallback otherwise. Root imports no longer require Segmenter.</p></div>
+        <div><h3>Compatible and measured</h3><p><code>capitalize</code> now extracts only the first grapheme while leaving the rest unchanged. Strict conversions, readable ESM/CJS output and zero runtime dependencies remain intact.</p></div>
       </div>
     </div>
   </section>
@@ -302,7 +302,7 @@ formatCurrency("12345678901234567890.129", "USD");
 
 <footer>
   <div class="wrap foot">
-    <span>MIT licensed. Version 0.4.0.</span>
+    <span>MIT licensed. Version 0.4.1.</span>
     <nav aria-label="Project links">
       <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/blob/master/LICENSE">License</a>
       <a href="https://github.com/PhanHoangQuocTu/fatdevcon-utilities/issues">Issues</a>

@@ -1,7 +1,7 @@
 {
   "name": "@fatdevcon/utilities",
-  "version": "0.4.0",
-  "description": "Zero-dependency TypeScript utilities: exact decimal and bigint math, calendar/date helpers, SSR-safe runtime detection, formatting, collections, Unicode text, safe objects and async tools",
+  "version": "0.4.1",
+  "description": "Zero-dependency TypeScript utilities: data cleaning, safe type conversion, exact decimal and bigint math, dates, formatting, Unicode text, collections, safe objects and async tools",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -33,7 +33,9 @@
     "audit": "npm audit --audit-level=low --omit=dev",
     "test:docs": "node scripts/verify-docs.mjs",
     "test:site": "node scripts/verify-site.mjs",
-    "docs:sync": "node scripts/sync-docs.mjs"
+    "docs:sync": "node scripts/sync-docs.mjs",
+    "test:bundle": "node scripts/measure-bundle.mjs",
+    "test:cleaning:stress": "node scripts/benchmark-cleaning.mjs"
   },
   "keywords": [
     "typescript",
@@ -101,7 +103,11 @@
     "date-utils",
     "array-helpers",
     "runtime-detection",
-    "ssr"
+    "ssr",
+    "data-cleaning",
+    "safe-conversion",
+    "type-conversion",
+    "string-utils"
   ],
   "author": {
     "name": "PhanHoangQuocTu",

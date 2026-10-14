@@ -34,6 +34,87 @@ const VALUE_NUM = p("value", NUM, "The number to format. NaN and Infinity throw.
 const LOCALE_P = (def = '"en-US"') => p("locale", LOCALE, "BCP 47 language tag, an array of tags, or an Intl.Locale.", def);
 
 const GROUPS = [
+  {
+    id: "cleaning", title: "Data cleaning",
+    note: "Strict string inputs: other types throw TypeError. No automatic accent removal or Unicode normalization. Default whitespace follows ECMAScript, not Python's exact table. Existing normalizeWhitespace collapses internal whitespace; removeDiacritics remains opt-in. capitalize retains its uppercase-first-grapheme-only contract.",
+    fns: [
+      { name: "strip", sig: "strip(text: string, chars?: string): string",
+        desc: "Remove whitespace from both ends, or characters in an explicit Unicode code-point set. Internal text stays unchanged. NBSP/BOM are whitespace; NEL and zero-width space are not.",
+        params: [p("text", "string", "Input text."), p("chars", "string", "Literal code-point set, not a substring, regex or grapheme set. Empty string strips nothing.", "ECMAScript whitespace")],
+        returns: "A string, empty when all characters are removed.",
+        ex: `strip("   nguyen van an   "); // "nguyen van an"
+strip("abbahelloab", "ab"); // "hello"
+strip("  a  ", ""); // "  a  "` },
+      { name: "lstrip", sig: "lstrip(text: string, chars?: string): string",
+        desc: "Remove whitespace or an explicit code-point set from the beginning only. Uses strip's whitespace and validation policy.",
+        params: [p("text", "string", "Input text."), p("chars", "string", "Literal code-point set; empty string strips nothing.", "ECMAScript whitespace")],
+        returns: "A string with its trailing and internal text preserved.",
+        ex: `lstrip("   hello   "); // "hello   "
+lstrip("🌍hello🌍", "🌍"); // "hello🌍"` },
+      { name: "rstrip", sig: "rstrip(text: string, chars?: string): string",
+        desc: "Remove whitespace or an explicit code-point set from the end only. Uses strip's whitespace and validation policy.",
+        params: [p("text", "string", "Input text."), p("chars", "string", "Literal code-point set; empty string strips nothing.", "ECMAScript whitespace")],
+        returns: "A string with its leading and internal text preserved.",
+        ex: `rstrip("   hello   "); // "   hello"
+rstrip("🌍hello🌍", "🌍"); // "🌍hello"` },
+      { name: "title", sig: "title(text: string): string",
+        desc: "Uppercase the first letter and lowercase the rest of each Unicode letter/mark word. Internal straight/curly apostrophes stay inside words; hyphens, underscores and numbers delimit words. Preserve whitespace, punctuation and accents. Locale-independent Unicode casing can expand letters; this is not Python-equivalent or universal personal-name formatting. Unlike titleCase, camelCase is not split and separators are not replaced.",
+        params: [p("text", "string", "Input text; no normalization is performed.")], returns: "Title-cased text, or an empty string for empty input.",
+        ex: `title(strip("   nguyen van an   ")); // "Nguyen Van An"
+title(" đẶNG vĂN lÂM-o'CONNOR "); // " Đặng Văn Lâm-O'connor "
+title("hello123world"); // "Hello123World"` },
+      { name: "firstChar", sig: "firstChar(text: string): string",
+        desc: "First user-perceived grapheme with Intl.Segmenter. Without Segmenter/Intl, returns one code point: valid surrogate pairs stay intact but combining/ZWJ/flag/modifier sequences can split. Already-unpaired surrogates are preserved.",
+        params: [p("text", "string", "Input text.")], returns: "The first grapheme (or fallback code point), or an empty string.",
+        ex: `firstChar("Hello"); // "H"
+firstChar(""); // ""` },
+      { name: "lastChar", sig: "lastChar(text: string): string",
+        desc: "Last user-perceived grapheme with Intl.Segmenter. Without Segmenter/Intl, returns one code point; for example a trailing skin-tone modifier is returned alone. Preserves valid surrogate pairs and already-unpaired surrogates.",
+        params: [p("text", "string", "Input text.")], returns: "The last grapheme (or fallback code point), or an empty string.",
+        ex: `lastChar("Hello"); // "o"
+lastChar(""); // ""` },
+    ],
+  },
+  {
+    id: "safe-conversion", title: "Safe type conversion",
+    note: "Accept unknown input and return null on invalid data. Use result ?? fallback; there is no options overload. Existing strict toNumber/toBoolean/toString and discriminated JSON results are unchanged. Numeric/boolean helpers never coerce objects. Synchronous callback failures are caught by safeToString, but arbitrary callback side effects and resource exhaustion are outside its guarantee.",
+    fns: [
+      { name: "safeToNumber", sig: "safeToNumber(value: unknown): number | null",
+        desc: "Convert finite primitive numbers, safe BigInts and trimmed ASCII decimal/scientific strings. Reject blank text, separators, radix prefixes, units, unsafe integer results (including number inputs), overflow and nonzero underflow to zero. Ordinary fractions/subnormals use binary rounding; use exact math for decimal precision. Preserve negative zero.",
+        params: [p("value", "unknown", "Number, BigInt or decimal text; signs, leading zeros, .5, 1. and exponents are accepted.")], returns: "A finite number with any integer result in the safe integer range, or null.",
+        ex: `safeToNumber(" 12.5 "); // 12.5
+safeToNumber("1e3"); // 1000
+safeToNumber("9007199254740993"); // null
+safeToNumber("1e-999"); // null
+safeToNumber("") ?? 0; // 0` },
+      { name: "safeToInteger", sig: "safeToInteger(value: unknown): number | null",
+        desc: "Accept safe integer numbers/BigInts and trimmed signed decimal digit strings. Reject fractions and dot/exponent/radix string syntax; never truncate. Preserve negative zero.",
+        params: [p("value", "unknown", "Integer-like input; string examples: -10, +1, 001.")], returns: "A safe integer number or null.",
+        ex: `safeToInteger(" +123 "); // 123
+safeToInteger(1.5); // null
+safeToInteger("1.0"); // null
+safeToInteger("1e3"); // null` },
+      { name: "safeToBigInt", sig: "safeToBigInt(value: unknown): bigint | null",
+        desc: "Accept BigInts, safe integer numbers and trimmed signed decimal digit strings of any practical length. Reject fractions, dot/exponent/radix text and unsafe numbers whose precision may already be lost. BigInt has no negative zero.",
+        params: [p("value", "unknown", "Integer-like input.")], returns: "An exact BigInt or null.",
+        ex: `safeToBigInt("9007199254740993"); // 9007199254740993n
+safeToBigInt(9007199254740992); // null
+safeToBigInt("1.5"); // null` },
+      { name: "safeToBoolean", sig: "safeToBoolean(value: unknown): boolean | null",
+        desc: "Accept booleans, numeric 0/1 and trimmed case-insensitive true/false/0/1 strings. No yes/no, on/off, BigInt coercion or general truthiness.",
+        params: [p("value", "unknown", "A supported boolean representation.")], returns: "true, false, or null for invalid input.",
+        ex: `safeToBoolean(" FALSE "); // false
+safeToBoolean("1"); // true
+safeToBoolean("yes"); // null` },
+      { name: "safeToString", sig: "safeToString(value: unknown): string | null",
+        desc: "Display strings, finite numbers, booleans, BigInts and Symbols; valid Dates use ISO text, arrays/plain objects use existing JSON semantics. Nullish/nonfinite values, invalid Dates, unsupported objects, cycles, nested BigInts and synchronous conversion failures return null. Getters/toJSON can execute; JSON can omit undefined properties and convert nonfinite/undefined array entries to null. This is not lossless serialization or a callback sandbox.",
+        params: [p("value", "unknown", "A supported display value.")], returns: "Display/JSON text or null; a valid empty string stays empty.",
+        ex: `safeToString({ name: "An" }); // '{"name":"An"}'
+safeToString(123n); // "123"
+safeToString(null); // null
+safeToString([1n]); // null` },
+    ],
+  },
   /* ------------------------------------------------------------------ */
   {
     id: "arithmetic", title: "Arithmetic",

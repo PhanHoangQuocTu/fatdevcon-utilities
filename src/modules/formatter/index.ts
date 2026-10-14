@@ -24,3 +24,4 @@ export * from "./text";
 export * from "./currency";
 export * from "./date";
 export * from "./case";
+export * from "./cleaning";

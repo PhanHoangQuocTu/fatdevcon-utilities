@@ -1,4 +1,4 @@
-const wordSegmenter = new Intl.Segmenter("en", { granularity: "word" });
+import { getWordSegmenter } from "../../utils/segmenter";
 
 function assertText(value: unknown): asserts value is string {
   if (typeof value !== "string") throw new TypeError("text must be a string");
@@ -69,7 +69,7 @@ export function unescapeHtml(text: string): string {
 export function countWords(text: string): number {
   assertText(text);
   let count = 0;
-  for (const segment of wordSegmenter.segment(text)) {
+  for (const segment of getWordSegmenter().segment(text)) {
     if (segment.isWordLike) count++;
   }
   return count;

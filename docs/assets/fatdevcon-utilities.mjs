@@ -1072,14 +1072,23 @@ function parseBytes(text, options = {}) {
   return Number(exact);
 }
 
+// src/utils/segmenter.ts
+var graphemeSegmenter;
+var wordSegmenter;
+function getGraphemeSegmenter() {
+  return graphemeSegmenter ?? (graphemeSegmenter = new Intl.Segmenter("en", { granularity: "grapheme" }));
+}
+function getWordSegmenter() {
+  return wordSegmenter ?? (wordSegmenter = new Intl.Segmenter("en", { granularity: "word" }));
+}
+
 // src/modules/formatter/text.ts
-var segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
 function assertText(value, name = "text") {
   if (typeof value !== "string") throw new TypeError(name + " must be a string");
 }
 function graphemes(text) {
   assertText(text);
-  return Array.from(segmenter.segment(text), (item) => item.segment);
+  return Array.from(getGraphemeSegmenter().segment(text), (item) => item.segment);
 }
 function assertLength(value, name) {
   if (!Number.isSafeInteger(value)) throw new TypeError(name + " must be a safe integer");
@@ -1144,8 +1153,10 @@ function slugify(text) {
   return removeDiacritics(text).toLowerCase().replace(/[^\p{L}\p{M}\p{N}]+/gu, "-").replace(/^-+|-+$/g, "");
 }
 function capitalize(text, locale) {
-  const chars = graphemes(text);
-  return chars.length ? chars[0].toLocaleUpperCase(locale) + chars.slice(1).join("") : "";
+  assertText(text);
+  if (!text) return "";
+  const first2 = getGraphemeSegmenter().segment(text).containing(0).segment;
+  return first2.toLocaleUpperCase(locale) + text.slice(first2.length);
 }
 function maskString(text, options = {}) {
   const chars = graphemes(text);
@@ -2511,7 +2522,6 @@ function parseDuration(text) {
 }
 
 // src/modules/formatter/case.ts
-var wordSegmenter = new Intl.Segmenter("en", { granularity: "word" });
 function assertText2(value) {
   if (typeof value !== "string") throw new TypeError("text must be a string");
 }
@@ -2564,7 +2574,7 @@ function unescapeHtml(text) {
 function countWords(text) {
   assertText2(text);
   let count = 0;
-  for (const segment of wordSegmenter.segment(text)) {
+  for (const segment of getWordSegmenter().segment(text)) {
     if (segment.isWordLike) count++;
   }
   return count;
@@ -2576,6 +2586,72 @@ function reverseText(text) {
     (item) => item.segment
   );
   return graphemes2.reverse().join("");
+}
+
+// src/modules/formatter/cleaning.ts
+function assertText3(value, name = "text") {
+  if (typeof value !== "string") throw new TypeError(`${name} must be a string`);
+}
+function previousIndex(text, end) {
+  const last2 = text.charCodeAt(end - 1);
+  const previous = text.charCodeAt(end - 2);
+  return end - (last2 >= 56320 && last2 <= 57343 && previous >= 55296 && previous <= 56319 ? 2 : 1);
+}
+function stripCharacters(text, chars, left, right) {
+  assertText3(chars, "chars");
+  if (!chars || !text) return text;
+  const characters = new Set(chars);
+  let start = 0;
+  let end = text.length;
+  if (left) {
+    for (const char of text) {
+      if (!characters.has(char)) break;
+      start += char.length;
+    }
+  }
+  if (right) {
+    while (end > start) {
+      const previous = previousIndex(text, end);
+      if (!characters.has(text.slice(previous, end))) break;
+      end = previous;
+    }
+  }
+  return text.slice(start, end);
+}
+function strip(text, chars) {
+  assertText3(text);
+  return chars === void 0 ? text.trim() : stripCharacters(text, chars, true, true);
+}
+function lstrip(text, chars) {
+  assertText3(text);
+  return chars === void 0 ? text.trimStart() : stripCharacters(text, chars, true, false);
+}
+function rstrip(text, chars) {
+  assertText3(text);
+  return chars === void 0 ? text.trimEnd() : stripCharacters(text, chars, false, true);
+}
+function title(text) {
+  assertText3(text);
+  return text.replace(/\p{L}[\p{L}\p{M}]*(?:['’]\p{L}[\p{L}\p{M}]*)*/gu, (word) => {
+    const lower = word.toLowerCase();
+    const first2 = String.fromCodePoint(lower.codePointAt(0));
+    return first2.toUpperCase() + lower.slice(first2.length);
+  });
+}
+function endpoint(text, last2) {
+  assertText3(text);
+  if (!text) return "";
+  if (typeof Intl !== "undefined" && typeof Intl.Segmenter === "function") {
+    const segments = getGraphemeSegmenter().segment(text);
+    return segments.containing(last2 ? text.length - 1 : 0).segment;
+  }
+  return last2 ? text.slice(previousIndex(text, text.length)) : String.fromCodePoint(text.codePointAt(0));
+}
+function firstChar(text) {
+  return endpoint(text, false);
+}
+function lastChar(text) {
+  return endpoint(text, true);
 }
 
 // src/modules/formatter/index.ts
@@ -2969,6 +3045,57 @@ function toBoolean(value) {
 function toArray(value) {
   if (value === null || value === void 0) return [];
   return Array.isArray(value) ? [...value] : [value];
+}
+function safeToNumber(value) {
+  if (typeof value === "bigint") {
+    return value <= BigInt(Number.MAX_SAFE_INTEGER) && value >= BigInt(Number.MIN_SAFE_INTEGER) ? Number(value) : null;
+  }
+  if (typeof value === "string") {
+    const text = value.trim();
+    if (!DECIMAL_TEXT.test(text)) return null;
+    const result = Number(text);
+    if (result === 0) {
+      const exponent = text.search(/[eE]/);
+      if (/[1-9]/.test(exponent < 0 ? text : text.slice(0, exponent))) return null;
+    }
+    return Number.isFinite(result) && (!Number.isInteger(result) || Number.isSafeInteger(result)) ? result : null;
+  }
+  return typeof value === "number" && Number.isFinite(value) && (!Number.isInteger(value) || Number.isSafeInteger(value)) ? value : null;
+}
+var INTEGER_TEXT = /^[+-]?\d+$/;
+function safeToInteger(value) {
+  if (typeof value === "string") {
+    const text = value.trim();
+    if (!INTEGER_TEXT.test(text)) return null;
+    const result2 = Number(text);
+    return Number.isSafeInteger(result2) ? result2 : null;
+  }
+  const result = safeToNumber(value);
+  return result !== null && Number.isSafeInteger(result) ? result : null;
+}
+function safeToBigInt(value) {
+  if (typeof value === "bigint") return value;
+  if (typeof value === "number") return Number.isSafeInteger(value) ? BigInt(value) : null;
+  if (typeof value !== "string") return null;
+  const text = value.trim();
+  return INTEGER_TEXT.test(text) ? BigInt(text) : null;
+}
+function safeToBoolean(value) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") value = value.trim().toLowerCase();
+  if (value === 1 || value === "1" || value === "true") return true;
+  if (value === 0 || value === "0" || value === "false") return false;
+  return null;
+}
+function safeToString(value) {
+  if (value === null || value === void 0 || typeof value === "number" && !Number.isFinite(value)) return null;
+  try {
+    if (value instanceof Date && !Number.isFinite(value.getTime())) return null;
+    const result = toString(value);
+    return typeof result === "string" ? result : null;
+  } catch {
+    return null;
+  }
 }
 
 // src/modules/helper/query.ts
@@ -4066,4 +4193,4 @@ function isServer() {
   return isNode() || isBun();
 }
 
-export { NumericRangeError, NumericTypeError, abs, addDays, addMonths, addWeeks, addYears, averageBig, averageValueInArray, binarySearch, bubbleSort, buildQueryString, camelCase, capitalize, chunk, clamp, compact, compareNumbers, countBy, countWords, countingSort, countingSortByDigit, debounce, deepClone, deepEqual, deepMerge, difference, differenceInCalendarDays, differenceInCalendarMonths, differenceInDays, differenceInMonths, differenceInYears, divide, drop, endOfDay, endOfISOWeek, endOfMonth, endOfWeek, endOfYear, enumerate, escapeHtml, escapeRegExp, factorial, fibonacci, filterBy, findIndexes, findMax, findMin, first, flatten, flattenDeep, formatBytes, formatCompactNumber, formatCurrency, formatDate, formatDuration, formatInTimeZone, formatNumber, formatPercent, formatRelativeTime, formatUnit, gcd, getAbortError, getByPath, getCountryCurrencies, getCurrencyName, getCurrencySymbol, getDayOfYear, getDaysInMonth, getTimeZoneName, getTimeZoneOffset, groupBy, hasDOM, heapSort, heapify, insertionSort, intersection, isAbortError, isAfter, isBefore, isBoolean, isBrowser, isClient, isDefined, isEmail, isEmpty, isEqualDate, isFunction, isLeapYear2 as isLeapYear, isNil, isNode, isNumber, isNumeric, isPlainObject3 as isPlainObject, isPrime, isPromiseLike, isSameDay, isSameMonth, isSameYear, isServer, isString, isTimeZone, isToday, isTomorrow, isUrl, isUuid, isValidDate, isWebWorker, isWithinInterval, isYesterday, kebabCase, keyBy, last, lcm, linearSearch, mapValues, maskString, maxBy, median, medianBig, memoize, merge, mergeObjects, mergeSort, minBy, modulo, multiply, normalizeWhitespace, omit, once, parseBytes, parseDuration, parseISO, parseQueryString, partition, pascalCase, percentage, pick, power, quickSort, radixSort, randomInt, range, removeDiacritics, retry, reverseText, round, safeJsonParse, safeJsonStringify, sample, selectionSort, setByPath, shortenString, shuffle, sleep, slugify, snakeCase, sort, sortBy, startOfDay, startOfISOWeek, startOfMonth, startOfWeek2 as startOfWeek, startOfYear, subDays, subMonths, subWeeks, subYears, subtract, sumBig, sumBy, sumValueInArray, summary, take, throttle, titleCase, toArray, toBoolean, toDecimalString, toNumber, toString, truncateText, unescapeHtml, union, unique, wait, withRetry, withTimeout, zip };
+export { NumericRangeError, NumericTypeError, abs, addDays, addMonths, addWeeks, addYears, averageBig, averageValueInArray, binarySearch, bubbleSort, buildQueryString, camelCase, capitalize, chunk, clamp, compact, compareNumbers, countBy, countWords, countingSort, countingSortByDigit, debounce, deepClone, deepEqual, deepMerge, difference, differenceInCalendarDays, differenceInCalendarMonths, differenceInDays, differenceInMonths, differenceInYears, divide, drop, endOfDay, endOfISOWeek, endOfMonth, endOfWeek, endOfYear, enumerate, escapeHtml, escapeRegExp, factorial, fibonacci, filterBy, findIndexes, findMax, findMin, first, firstChar, flatten, flattenDeep, formatBytes, formatCompactNumber, formatCurrency, formatDate, formatDuration, formatInTimeZone, formatNumber, formatPercent, formatRelativeTime, formatUnit, gcd, getAbortError, getByPath, getCountryCurrencies, getCurrencyName, getCurrencySymbol, getDayOfYear, getDaysInMonth, getTimeZoneName, getTimeZoneOffset, groupBy, hasDOM, heapSort, heapify, insertionSort, intersection, isAbortError, isAfter, isBefore, isBoolean, isBrowser, isClient, isDefined, isEmail, isEmpty, isEqualDate, isFunction, isLeapYear2 as isLeapYear, isNil, isNode, isNumber, isNumeric, isPlainObject3 as isPlainObject, isPrime, isPromiseLike, isSameDay, isSameMonth, isSameYear, isServer, isString, isTimeZone, isToday, isTomorrow, isUrl, isUuid, isValidDate, isWebWorker, isWithinInterval, isYesterday, kebabCase, keyBy, last, lastChar, lcm, linearSearch, lstrip, mapValues, maskString, maxBy, median, medianBig, memoize, merge, mergeObjects, mergeSort, minBy, modulo, multiply, normalizeWhitespace, omit, once, parseBytes, parseDuration, parseISO, parseQueryString, partition, pascalCase, percentage, pick, power, quickSort, radixSort, randomInt, range, removeDiacritics, retry, reverseText, round, rstrip, safeJsonParse, safeJsonStringify, safeToBigInt, safeToBoolean, safeToInteger, safeToNumber, safeToString, sample, selectionSort, setByPath, shortenString, shuffle, sleep, slugify, snakeCase, sort, sortBy, startOfDay, startOfISOWeek, startOfMonth, startOfWeek2 as startOfWeek, startOfYear, strip, subDays, subMonths, subWeeks, subYears, subtract, sumBig, sumBy, sumValueInArray, summary, take, throttle, title, titleCase, toArray, toBoolean, toDecimalString, toNumber, toString, truncateText, unescapeHtml, union, unique, wait, withRetry, withTimeout, zip };

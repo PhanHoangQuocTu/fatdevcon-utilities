@@ -1,11 +1,11 @@
-const segmenter = new Intl.Segmenter("en", { granularity: "grapheme" });
+import { getGraphemeSegmenter } from "../../utils/segmenter";
 
 function assertText(value: unknown, name = "text"): asserts value is string {
   if (typeof value !== "string") throw new TypeError(name + " must be a string");
 }
 function graphemes(text: string): string[] {
   assertText(text);
-  return Array.from(segmenter.segment(text), item => item.segment);
+  return Array.from(getGraphemeSegmenter().segment(text), item => item.segment);
 }
 function assertLength(value: number, name: string): void {
   if (!Number.isSafeInteger(value)) throw new TypeError(name + " must be a safe integer");
@@ -86,8 +86,10 @@ export function slugify(text: string): string {
 
 /** Uppercase the first grapheme; leave the remaining text unchanged. */
 export function capitalize(text: string, locale?: Intl.LocalesArgument): string {
-  const chars = graphemes(text);
-  return chars.length ? chars[0].toLocaleUpperCase(locale) + chars.slice(1).join("") : "";
+  assertText(text);
+  if (!text) return "";
+  const first = getGraphemeSegmenter().segment(text).containing(0)!.segment;
+  return first.toLocaleUpperCase(locale) + text.slice(first.length);
 }
 
 export interface MaskStringOptions {

@@ -2,5 +2,6 @@
 export { merge, countingSortByDigit, heapify } from "../algorithms/helpers";
 export { safeJsonParse, safeJsonStringify, toString, toNumber, toBoolean, toArray } from "./conversion";
 export type { SafeJsonResult } from "./conversion";
+export { safeToNumber, safeToInteger, safeToBigInt, safeToBoolean, safeToString } from "./conversion";
 export { buildQueryString, parseQueryString } from "./query";
 export type { QueryValue, ParsedQuery } from "./query";
