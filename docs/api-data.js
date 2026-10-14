@@ -33,7 +33,7 @@ const PRECISION = p("options.precision", "number", "Significant digits kept when
 const VALUE_NUM = p("value", NUM, "The number to format. NaN and Infinity throw.");
 const LOCALE_P = (def = '"en-US"') => p("locale", LOCALE, "BCP 47 language tag, an array of tags, or an Intl.Locale.", def);
 
-const GROUPS = [
+export const GROUPS = [
   {
     id: "cleaning", title: "Data cleaning",
     note: "Strict string inputs: other types throw TypeError. No automatic accent removal or Unicode normalization. Default whitespace follows ECMAScript, not Python's exact table. Existing normalizeWhitespace collapses internal whitespace; removeDiacritics remains opt-in. capitalize retains its uppercase-first-grapheme-only contract.",
@@ -1083,5 +1083,3 @@ isUuid("123e4567-e89b-12d3-a456-426614174000", 4); // false` },
     ],
   },
 ];
-
-if (typeof module !== "undefined") module.exports = { GROUPS };

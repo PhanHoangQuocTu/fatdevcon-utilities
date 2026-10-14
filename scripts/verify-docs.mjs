@@ -2,13 +2,12 @@
 // result with the trailing `// expected` comment. Run after `npm run build`.
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { readFile } from "node:fs/promises";
 import { inspect } from "node:util";
+import { runInThisContext } from "node:vm";
+import { GROUPS } from "../docs/api-data.js";
 
 const require = createRequire(import.meta.url);
 const api = require("../dist/index.js");
-const source = await readFile(new URL("../docs/api-data.js", import.meta.url), "utf8");
-const { GROUPS } = new Function(`${source}; return { GROUPS };`)();
 
 // Find a `//` comment that is not inside a string literal.
 const splitComment = (line) => {
@@ -94,6 +93,19 @@ const matches = (actual, expected) => {
 };
 
 const names = Object.keys(api);
+const executeExample = (body) => {
+  const previous = new Map(names.map((name) => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
+  try {
+    for (const name of names) Object.defineProperty(globalThis, name, { configurable: true, writable: true, value: api[name] });
+    return runInThisContext(`(() => {${body}})()`, { timeout: 1_000 });
+  } finally {
+    for (const name of names) {
+      const descriptor = previous.get(name);
+      if (descriptor) Object.defineProperty(globalThis, name, descriptor);
+      else delete globalThis[name];
+    }
+  }
+};
 let checked = 0;
 let skipped = 0;
 const failures = [];
@@ -121,8 +133,7 @@ for (const group of GROUPS) {
       const wantsThrow = expected.startsWith("throws");
       const body = `${setup}\nreturn (${code.replace(/;\s*$/, "")});`;
       try {
-        const run = new Function(...names, body);
-        const actual = run(...names.map((n) => api[n]));
+        const actual = executeExample(body);
         if (wantsThrow) {
           failures.push(`${fn.name}: expected a throw from \`${code}\` but got ${render(actual)}`);
         } else if (!matches(render(actual), normalize(expected))) {

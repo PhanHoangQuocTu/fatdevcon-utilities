@@ -36,7 +36,7 @@ formatDate(new Date("2026-01-15T17:30:00Z"), "yyyy-MM-dd HH:mm xxx", { timeZone:
 JavaScript numbers are binary doubles: `0.1 + 0.2` is not `0.3`, integers above 2^53 lose digits, and `Math.round(1.005 * 100) / 100` is `1`. This package gives you drop-in helpers that calculate exactly, then covers the formatting, date, text, collection and async work that surrounds real applications, in one small typed package.
 
 - **Exact decimal and big-number math** – numbers, `bigint` and numeric strings of any practical size, with no float drift and no silent wrong answers: overflow, underflow and bad input throw typed errors with a stable `code`.
-- **Zero runtime dependencies** – the v0.4.1 full-root browser fixture measures 70.8 kB minified / 24.8 kB gzip (`npm run test:bundle`, esbuild 0.27.2); small named imports remain independently tree-shakeable, and `npm install` adds exactly one package to `node_modules`.
+- **Zero runtime dependencies** – the v0.4.2 full-root browser fixture measures 70.8 kB minified / 24.8 kB gzip (`npm run test:bundle`, esbuild 0.27.2); small named imports remain independently tree-shakeable, and `npm install` adds exactly one package to `node_modules`.
 - **Locale, currency and time zone aware** – compact numbers, percentages, currencies, byte sizes and dates through `Intl`, with ISO 4217 country metadata and DST-aware UTC offsets for any IANA zone.
 - **Dates without a date library** – ISO 8601 parsing, token formatting compatible with date-fns, calendar arithmetic and time zone formatting.
 - **Calendar and runtime aware** – local-calendar boundaries, comparisons and differences with deterministic clocks, plus SSR/browser/worker capability detection that is safe at import time.
@@ -547,7 +547,11 @@ Type guards that return a boolean and never throw. They check syntax only; they 
 
 `safeJsonParse` and `safeJsonStringify` return `{ ok: true, value }` or `{ ok: false, error }` and never pretend generic TypeScript types validate JSON. `toString` is deterministic for primitives, valid Dates, arrays and plain objects; cycles and nested BigInts throw instead of being corrupted. `toNumber` rejects unsafe integer text/BigInts, `toBoolean` accepts only booleans, `0`/`1`, and `"true"`/`"false"`, and `toArray` makes array normalization explicit. `buildQueryString`/`parseQueryString` use URLSearchParams, preserve repeated keys and reject prototype-sensitive keys.
 
-## Upgrading 0.4.0 → 0.4.1
+## Upgrading 0.4.1 to 0.4.2
+
+This release preserves all package APIs. The documentation playground now accepts supported synchronous function calls and literal input values only; it no longer executes arbitrary JavaScript. Documentation uses local system fonts, so it makes no third-party font request.
+
+## Upgrading 0.4.0 to 0.4.1
 
 This release adds six cleaning and five nullable conversion helpers. Existing names, signatures, import paths, error policies and `capitalize`/`titleCase` results remain supported. `capitalize` now extracts just the first grapheme, and text segmenters initialize lazily. Zero runtime dependencies and readable ESM/CJS output are unchanged. Use `npm run test:bundle` for reproducible browser-consumer bundle sizes and `npm run test:cleaning:stress` for bounded stress checks and timings; an optional baseline ESM path can be passed after `--` to the latter.
 

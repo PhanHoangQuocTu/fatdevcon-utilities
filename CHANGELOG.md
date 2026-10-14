@@ -2,6 +2,23 @@
 
 All notable changes to `@fatdevcon/utilities`. The project follows [semantic versioning](https://semver.org/).
 
+## 0.4.2
+
+### Fixed
+
+- Replaced the documentation playground's dynamic source execution with a bounded parser for allowlisted synchronous public calls and data literals. Editable text is no longer compiled or executed as JavaScript.
+- Moved API reference data to an ESM export and removed dynamic compilation of that data from documentation verification.
+
+### Improved
+
+- Refined the static documentation interface with local system font stacks, retained light and dark themes, keyboard navigation, responsive API browsing and stable anchors.
+- Removed third-party font requests from the documentation site. The site now uses only local browser fonts and the checked-in package artifact.
+- Added safe-playground checks to the static-site verification and audited all 195 documented public functions against the built package.
+
+### Compatibility
+
+- No public library API, runtime dependency, ESM/CJS import path, declaration contract or exact numeric behavior changed.
+
 ## 0.4.1
 
 ### Added

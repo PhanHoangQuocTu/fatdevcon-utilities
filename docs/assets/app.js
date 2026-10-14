@@ -2,6 +2,9 @@
 // drift gauge, the playground, the searchable API reference, copy buttons and the theme switch.
 // The demos run the real, unminified package from ./fatdevcon-utilities.mjs (a copy of dist/index.mjs).
 
+import { GROUPS } from "../api-data.js";
+import { runPlayground } from "./playground-parser.js";
+
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const esc = (value) => String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -156,7 +159,7 @@ if (gauge && lib) {
     }
     if (error) {
       setRow("native", nativeExpression, esc(nativeText), "");
-      setRow("exact", exactExpression, "—", `${error.code ?? error.name}: ${error.message}`, true);
+      setRow("exact", exactExpression, "Unavailable", `${error.code ?? error.name}: ${error.message}`, true);
       return;
     }
     const { html, note } = markDrift(nativeText, exactText);
@@ -195,12 +198,12 @@ normalizeWhitespace("  Hello    world  ")`,
   "Safe conversion": `safeToNumber(" 12.5 ")
 safeToNumber("9007199254740993")
 safeToNumber("1e-999")
-safeToNumber("") ?? 0
+safeToNumber("")
 safeToInteger("1.5")
 safeToBigInt("9007199254740993")
 safeToBoolean(" FALSE ")
 safeToString({ name: "An" })`,
-  Money: `// Every export is in scope. One expression per line.
+  Money: `// Supported function calls and data literals only.
 summary(0.1, 0.2)
 multiply("19.99", 3)
 divide("1", "3", { precision: 12 })
@@ -211,19 +214,18 @@ percentage(25, 200)`,
   "Big numbers": `factorial(30n)
 summary("100000000000000000000000000000", 1)
 power(2n, 100n)
-isPrime(2n ** 127n - 1n)
+isPrime("170141183460469231731687303715884105727")
 fibonacci(100n)
 gcd("0.5", "0.25")
 formatBytes("1500000000000000000000000000000")`,
-  Dates: `const start = new Date(2026, 0, 31, 9, 30)
-formatDate(start, "EEEE, do MMMM yyyy HH:mm")
-formatDate(addMonths(start, 1), "yyyy-MM-dd")
-differenceInCalendarDays("2026-12-25", start)
-formatDate(new Date("2026-01-15T17:30:00Z"), "HH:mm xxx", { timeZone: "Asia/Ho_Chi_Minh" })
-getTimeZoneOffset(new Date("2026-01-15T12:00:00Z"), "America/New_York", { unit: "hours" })
+  Dates: `formatDate("2026-01-31T09:30:00", "EEEE, do MMMM yyyy HH:mm")
+formatDate(addMonths("2026-01-31T09:30:00", 1), "yyyy-MM-dd")
+differenceInCalendarDays("2026-12-25", "2026-01-31")
+formatDate("2026-01-15T17:30:00Z", "HH:mm xxx", { timeZone: "Asia/Ho_Chi_Minh" })
+getTimeZoneOffset("2026-01-15T12:00:00Z", "America/New_York", { unit: "hours" })
 parseDuration("1h 2m 3s")
 formatDuration(90061000, { maxUnits: 2 })`,
-  Text: `slugify("Đặng Thị Tú — Hà Nội 2026")
+  Text: `slugify("Đặng Thị Tú, Hà Nội 2026")
 truncateText("👨‍👩‍👧‍👦🇻🇳 emoji stay whole", 8)
 maskString("4111111111111111")
 camelCase("hello big world")
@@ -254,45 +256,18 @@ const formatResult = (value) => {
   return render(value, 0);
 };
 
-// Remove a trailing // comment that is not inside a string.
-const stripComment = (line) => {
-  let quote = null;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (quote) {
-      if (ch === "\\") i++;
-      else if (ch === quote) quote = null;
-    } else if (ch === '"' || ch === "'" || ch === "`") quote = ch;
-    else if (ch === "/" && line[i + 1] === "/") return line.slice(0, i);
-  }
-  return line;
-};
-
-const runPlayground = (source) => {
-  const names = Object.keys(lib);
-  const values = names.map((name) => lib[name]);
-  let setup = "";
-  return source.split("\n").map((raw) => {
-    const code = stripComment(raw).trim().replace(/;$/, "");
-    if (!code) return { kind: "skip", text: raw.trim() ? "" : "" };
-    const declaration = /^(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*([\s\S]+)$/.exec(code);
-    const expression = declaration ? declaration[2] : code;
-    try {
-      const value = new Function(...names, `${setup}\nreturn (${expression});`)(...values);
-      if (declaration) setup += `const ${declaration[1]} = (${expression});\n`;
-      if (value && typeof value.then === "function") return { kind: "bad", text: "Promises are not awaited here. Use the API examples for async helpers." };
-      return { kind: "ok", text: `${declaration ? `${declaration[1]} = ` : ""}${formatResult(value)}` };
-    } catch (error) {
-      return { kind: "bad", text: formatResult(error) };
-    }
-  });
-};
-
 const area = $("#play-input");
 const output = $("#play-output");
 if (area && output && lib) {
   const update = () => {
-    output.innerHTML = runPlayground(area.value).map(({ kind, text }) => `<div class="${kind}">${text ? esc(text) : "&nbsp;"}</div>`).join("");
+    const fragment = document.createDocumentFragment();
+    for (const result of runPlayground(area.value, lib)) {
+      const line = document.createElement("div");
+      line.className = result.kind;
+      line.textContent = result.kind === "ok" ? formatResult(result.value) : result.text || " ";
+      fragment.append(line);
+    }
+    output.replaceChildren(fragment);
   };
   area.value = SAMPLES.Money;
   area.addEventListener("input", update);
@@ -315,7 +290,7 @@ const extraTable = (t) => `<div class="scroll"><table><tr>${t.head.map((h) => `<
 
 const reference = $("#api-reference");
 const nav = $("#nav-groups");
-if (reference && typeof GROUPS !== "undefined") {
+if (reference) {
   reference.innerHTML = GROUPS.map(
     (g) => `<section id="${g.id}" class="group"><h3 class="group-title">${esc(g.title)}</h3>${g.note ? `<p class="group-note">${esc(g.note)}</p>` : ""}${g.fns
       .map(

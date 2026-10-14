@@ -1,6 +1,6 @@
 {
   "name": "@fatdevcon/utilities",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Zero-dependency TypeScript utilities: data cleaning, safe type conversion, exact decimal and bigint math, dates, formatting, Unicode text, collections, safe objects and async tools",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

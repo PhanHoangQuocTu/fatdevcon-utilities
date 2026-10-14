@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { GROUPS } from "../docs/api-data.js";
+import { runPlayground } from "../docs/assets/playground-parser.js";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
-const [site, robots, sitemap, script, style, bundle, built, data] = await Promise.all([
+const [site, robots, sitemap, script, style, bundle, built, parser] = await Promise.all([
   read("../docs/index.html"),
   read("../docs/robots.txt"),
   read("../docs/sitemap.xml"),
@@ -10,7 +12,7 @@ const [site, robots, sitemap, script, style, bundle, built, data] = await Promis
   read("../docs/assets/style.css"),
   read("../docs/assets/fatdevcon-utilities.mjs"),
   read("../dist/index.mjs"),
-  read("../docs/api-data.js"),
+  read("../docs/assets/playground-parser.js"),
 ]);
 const { version } = JSON.parse(await read("../package.json"));
 const url = "https://phanhoangquoctu.github.io/fatdevcon-utilities/";
@@ -31,7 +33,6 @@ for (const value of [
   'id="examples"',
   'id="releases"',
   'id="faq"',
-  'src="api-data.js"',
   'type="module" src="assets/app.js"',
   'href="assets/style.css"',
   npm,
@@ -44,14 +45,20 @@ assert.ok(site.includes(`"softwareVersion":"${version}"`), "structured data must
 assert.ok(site.includes(`Release ${version}`), "release section must describe the current version");
 
 for (const [, json] of site.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)) JSON.parse(json);
-new Function(data.replace("if (typeof module", "void 0 && (typeof module").replace(/module\.exports = \{ GROUPS \};/, ""));
 assert.ok(/^import |await import\(/m.test(script), "app.js must be an ES module");
 assert.ok(/:focus-visible/.test(style) && /prefers-reduced-motion/.test(style) && /prefers-color-scheme: dark/.test(style), "styles must keep focus, motion and dark-mode handling");
+assert.doesNotMatch(`${script}\n${parser}`, /\b(?:eval|new\s+Function)\b/, "documentation must not dynamically execute editable source text");
+
+const playgroundApi = await import("../dist/index.mjs");
+assert.deepEqual(runPlayground('summary(0.1, 0.2)', playgroundApi), [{ kind: "ok", value: 0.3 }]);
+assert.match(runPlayground('summary(0.1, 0.2) + 1', playgroundApi)[0].text, /Unexpected input/);
+assert.match(runPlayground('constructor()', playgroundApi)[0].text, /not available/);
+assert.match(runPlayground('safeToString({ __proto__: "x" })', playgroundApi)[0].text, /not allowed/);
 
 // Every internal anchor in the static page must exist, either in the page or as a documented function.
 const ids = new Set([...site.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]));
-const fnNames = new Set([...data.matchAll(/\{ name: "([A-Za-z0-9]+)"/g)].map((m) => m[1]));
-const groupIds = new Set([...data.matchAll(/id: "([a-z-]+)", title:/g)].map((m) => m[1]));
+const fnNames = new Set(GROUPS.flatMap((group) => group.fns.map((fn) => fn.name)));
+const groupIds = new Set(GROUPS.map((group) => group.id));
 for (const [, target] of site.matchAll(/href="#([^"]+)"/g)) {
   assert.ok(ids.has(target) || fnNames.has(target) || groupIds.has(target), `broken anchor #${target}`);
 }
